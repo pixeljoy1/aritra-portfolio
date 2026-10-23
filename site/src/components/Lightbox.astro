@@ -28,6 +28,7 @@
     i = (n + items.length) % items.length;            // wraps, carousel style
     const el = items[i], d = el.dataset;
     stage.replaceChildren();
+    stage.classList.toggle('lb__stage--round', !!d.lbRound);
     if (d.lbVideo) {
       const v = document.createElement('video');
       v.src = d.lbVideo; v.poster = d.lbSrc ?? ''; v.controls = true; v.autoplay = true; v.loop = true; v.muted = true; v.playsInline = true;

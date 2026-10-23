@@ -182,5 +182,22 @@
         "alt": "Final render of the bedroom"
       }
     ]
+  },
+  "photos": {
+    "portrait": {
+      "src": "/img/photos/portrait.webp",
+      "sm": "/img/photos/portrait-sm.webp",
+      "alt": "Aritra Mitra smiling beside the Jindal School of Art and Architecture sign"
+    },
+    "vr-wide": {
+      "src": "/img/photos/vr-wide.webp",
+      "sm": "/img/photos/vr-wide-sm.webp",
+      "alt": "A student in a VR headset in the green university VR lab, with a headset, PC and a walkthrough model on screen"
+    },
+    "vr-close": {
+      "src": "/img/photos/vr-close.webp",
+      "sm": "/img/photos/vr-close-sm.webp",
+      "alt": "Close view of the student holding VR controllers in the lab"
+    }
   }
 }

@@ -53,3 +53,8 @@ All former "[PLACEHOLDER]" / "[CONFIRM]" text on the site was replaced with firs
 - Course titles: Tiger Run = "Personal project" (per résumé); others use the Drive folder / résumé names.
 - GitHub links now point at the site's own repo (`pixeljoy1/aritra-portfolio`), not a personal Aritra account.
 - Still needs the real thing: scans of Prep Sheet #2 and pencils (crop out any candidate/centre numbers).
+
+## Photos (2026-10-23)
+- About: round portrait at the Jindal School of Art & Architecture sign (`assets/photos/portrait.jpg`, cropped so the sign reads).
+- Year 1 "Starting point · May 2024": two VR-lab photos (`vr-lab-*.jpg`). The May 2024 date comes from the photos' camera metadata. **Confirm** the date, that the person in the headset is OK to show (if it is a classmate, get consent), and the caption wording.
+- Masking is CSS (square WebP crops, `border-radius: 50%`); crops are defined in `scripts/stage2_publish.py` (PHOTOS).

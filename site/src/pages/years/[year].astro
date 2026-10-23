@@ -5,6 +5,8 @@ import Base from '../../layouts/Base.astro';
 import Panel from '../../components/Panel.astro';
 import { YEARS } from '../../config';
 import artefacts from '../../data/artefacts.json';
+import media from '../../data/media.json';
+const photos = (media as any).photos;
 export async function getStaticPaths() {
   const ys = await getCollection('years');
   return YEARS.map((y, i) => ({
@@ -21,6 +23,17 @@ const bySem = [...new Set(mine.map((a) => a.semester))].sort();
     <p class="label"><a href={u("/years/")}>← ALL YEARS</a></p>
     <h1 class="display">YEAR {y.n} · {y.label}</h1>
     <p class="lede">{entry?.data.summary ?? ''}</p>
+    {y.slug === '2024-25' && (
+      <Panel variant="indigo" label="STARTING POINT · MAY 2024">
+        <p>Before the first semester, a visit to the university's VR lab: a headset, a PC and an architectural walkthrough running on screen. This is the kind of space the programme is about.</p>
+        <div class="roundrow">
+          {['vr-wide', 'vr-close'].map((k) => (
+            <a href={u(photos[k].src)} data-lb data-lb-group={y.slug} data-lb-round="1" data-lb-src={u(photos[k].src)} data-lb-alt={photos[k].alt}
+              data-lb-title="In the VR lab, May 2024" data-lb-meta="Starting point"><img class="round" src={u(photos[k].sm)} alt={photos[k].alt} width="160" height="160" loading="lazy" /></a>
+          ))}
+        </div>
+      </Panel>
+    )}
     {entry?.data.groups.map((g) => (
       <Panel label={`${g.semester} · ${g.topic}`}>
         <ul>

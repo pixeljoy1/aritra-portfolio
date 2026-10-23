@@ -1,11 +1,19 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Panel from '../../components/Panel.astro';
-import { SITE } from '../../config';
+import { SITE, u } from '../../config';
+import media from '../../data/media.json';
+const ph = (media as any).photos.portrait;
 ---
 <Base title="About">
   <div class="wrap">
     <h1 class="display">ABOUT</h1>
+    <figure class="portrait">
+      <a href={u(ph.src)} data-lb data-lb-group="about" data-lb-round="1" data-lb-src={u(ph.src)} data-lb-alt={ph.alt} data-lb-title="Aritra Mitra at the Jindal School of Art and Architecture" data-lb-meta="About">
+        <img class="round" src={u(ph.sm)} srcset={`${u(ph.sm)} 320w, ${u(ph.src)} 800w`} sizes="(min-width: 640px) 220px, 160px" alt={ph.alt} width="220" height="220" />
+      </a>
+      <figcaption class="label label--indigo">JINDAL SCHOOL OF ART &amp; ARCHITECTURE</figcaption>
+    </figure>
     <p>I'm Aritra, a third-year BDes student in Immersive Digital Environments at O.P. Jindal Global University, designing games and spaces people can step into.</p>
     <p>I like to start with a question, then research, prototype, get critiqued and iterate. Tiger Run grew out of a Grade 10 drawing about wildlife conservation. SoleSync began with a trust problem in buying sneakers and ended as a prototype I critiqued three times. My environment and lighting work comes from studying how real light behaves, then rebuilding it in Maya and Unreal Engine.</p>
     <p>Outside the studio I photograph wildlife as @wildscapeexplorers. I'm looking for an internship in game design, immersive environments or UX, where I can learn fast and contribute to real production work.</p>

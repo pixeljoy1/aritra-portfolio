@@ -193,3 +193,14 @@ button.chip { min-height: 44px; padding: 0 var(--s4); cursor: pointer; }
 .resume__preview { display: block; max-width: 620px; margin-bottom: var(--s6); text-decoration: none; }
 .resume__preview img { width: 100%; height: auto; border: 2px solid var(--mint); border-radius: var(--radius); background: #fff; display: block; }
 .resume__preview .label { display: block; margin-top: var(--s2); }
+
+/* Round-masked photos */
+.round { border-radius: 50%; aspect-ratio: 1; object-fit: cover; border: 3px solid var(--mint); display: block; background: #000; }
+.portrait { margin: var(--s4) 0 var(--s5); display: flex; flex-direction: column; align-items: flex-start; gap: var(--s2); }
+.portrait .round { width: 160px; height: 160px; box-shadow: 0 5px 0 var(--mint-dark); }
+@media (min-width: 640px) { .portrait .round { width: 220px; height: 220px; } }
+.portrait figcaption { margin: 0; }
+.roundrow { display: flex; flex-wrap: wrap; gap: var(--s4); margin-top: var(--s4); }
+.roundrow .round { width: 140px; height: 140px; }
+.lb__stage--round { border-radius: 50%; border-width: 3px; }
+.lb__stage--round img { width: min(86vw, calc(100dvh - 240px), 640px); height: min(86vw, calc(100dvh - 240px), 640px); max-width: none; max-height: none; object-fit: cover; }

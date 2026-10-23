@@ -138,6 +138,20 @@ for slug, rel, ss, y, s, topic, title in VIDEOS:
     subprocess.run(['ffmpeg','-y','-loglevel','error','-ss',str(ss),'-t','6','-i',str(src),'-vf','scale=-2:480,fps=24','-c:v','libx264','-crf','31','-preset','slow','-an','-movflags','+faststart',str(clip)], check=True)
     print(f'{slug}: poster {poster.stat().st_size//1024} KB, clip {clip.stat().st_size//1024} KB')
     artefacts.append({'year': y, 'semester': s, 'topic': topic, 'title': title, 'image': f'/video/{slug}.webp', 'large': f'/video/{slug}.webp', 'video': f'/video/{slug}.mp4', 'pdf': None, 'work': None, 'pages': None})
+# Round-masked photos: stored as square crops, masked with CSS (border-radius 50%).
+PHOTOS = [  # key, file, crop box (square), alt
+ ('portrait', 'portrait.jpg', (150, 300, 790, 940), 'Aritra Mitra smiling beside the Jindal School of Art and Architecture sign'),
+ ('vr-wide', 'vr-lab-wide.jpg', (300, 0, 1794, 1494), 'A student in a VR headset in the green university VR lab, with a headset, PC and a walkthrough model on screen'),
+ ('vr-close', 'vr-lab-closeup.jpg', (80, 60, 1080, 1060), 'Close view of the student holding VR controllers in the lab'),
+]
+pdir = PUB / 'img' / 'photos'
+if pdir.exists(): shutil.rmtree(pdir)
+media['photos'] = {}
+for key, f, box, alt in PHOTOS:
+    im = Image.open(ROOT / 'assets' / 'photos' / f).convert('RGB').crop(box)
+    sz = save(im, pdir / f'{key}.webp', 800); save(im, pdir / f'{key}-sm.webp', 320)
+    media['photos'][key] = {'src': f'/img/photos/{key}.webp', 'sm': f'/img/photos/{key}-sm.webp', 'alt': alt}
+    print(f'photos/{key}: {sz//1024} KB')
 DATA.mkdir(parents=True, exist_ok=True)
 (DATA / 'media.json').write_text(json.dumps(media, indent=2)); (DATA / 'artefacts.json').write_text(json.dumps(artefacts, indent=2))
 print('done:', sum(f.stat().st_size for f in PUB.rglob('*') if f.is_file()) // 1024, 'KB in public/')
