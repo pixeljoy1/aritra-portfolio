@@ -20,6 +20,7 @@ const work = defineCollection({
     heroAlt: z.string().optional(),
     links: z.record(z.string()).default({}),
     simulatedData: z.boolean().default(false),
+    live: z.boolean().default(false),   // real client work: shown anonymised under "Live projects experience"
     order: z.number().default(99),
   }),
 });

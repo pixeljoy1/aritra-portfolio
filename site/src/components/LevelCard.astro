@@ -3,7 +3,7 @@ import { u, workUrl } from '../config';
 import Sprite from './Sprite.astro';
 import Chip from './Chip.astro';
 import media from '../data/media.json';
-const { slug, title, oneLiner, level, year, semesters, tags = [], hero, heroAlt = '', icon, disciplines = [] } = Astro.props as any;
+const { tagLabel, slug, title, oneLiner, level, year, semesters, tags = [], hero, heroAlt = '', icon, disciplines = [] } = Astro.props as any;
 const m = (media as any)[slug];
 const thumb = hero ?? m?.thumb;
 const thumbAlt = heroAlt || m?.heroAlt || '';
@@ -15,7 +15,7 @@ const yr = { '2024-25': 'Y1', '2025-26': 'Y2', '2026-27': 'Y3' }[year as string]
       <div class="card__ph">{icon ? <Sprite name={icon} u={6} /> : null}</div>}
   </div>
   <div class="card__body">
-    <p class="label label--pink">LEVEL {String(level).padStart(2, '0')}</p>
+    <p class="label label--pink">{tagLabel ?? `LEVEL ${String(level).padStart(2, '0')}`}</p>
     <h3 class="card__title">{title}</h3>
     <p>{oneLiner}</p>
     <div class="tags">{tags.map((t: string) => <Chip>{t}</Chip>)}</div>

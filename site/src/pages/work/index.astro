@@ -3,8 +3,10 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import LevelCard from '../../components/LevelCard.astro';
 import Chip from '../../components/Chip.astro';
-const all = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
-const icons: Record<string, string> = { 'tiger-run': 'tiger' };
+const everything = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+const all = everything.filter((w) => !w.data.live);
+const live = everything.filter((w) => w.data.live);
+const icons: Record<string, string> = { 'tiger-run': 'tiger', 'live-project-ux-research': 'lens' };
 const discs = [['all', 'ALL'], ['game-environment', 'GAME + ENVIRONMENT'], ['ux-systems', 'UX + SYSTEMS'], ['motion-lighting', 'MOTION + LIGHTING']];
 const years = [['all', 'ALL YEARS'], ['2024-25', 'Y1'], ['2025-26', 'Y2'], ['2026-27', 'Y3']];
 ---
@@ -21,6 +23,15 @@ const years = [['all', 'ALL YEARS'], ['2024-25', 'Y1'], ['2025-26', 'Y2'], ['202
       {all.map((w, i) => <LevelCard {...w.data} level={i + 1} icon={icons[w.data.slug]} tags={w.data.disciplines} />)}
     </div>
     <p id="empty" class="muted" hidden>Nothing here yet.</p>
+    {live.length > 0 && (
+      <section id="live" class="livesec">
+        <h2 class="h2">Live projects experience</h2>
+        <p class="lede">Real client work I have taken part in. Clients and products are not named and no figures are shown, but the method and what I learned are.</p>
+        <div class="grid">
+          {live.map((w, i) => <LevelCard {...w.data} level={i + 1} tagLabel={`LIVE ${String(i + 1).padStart(2, '0')}`} icon={icons[w.data.slug]} tags={['live project', ...w.data.disciplines]} />)}
+        </div>
+      </section>
+    )}
   </div>
 </Base>
 <script>

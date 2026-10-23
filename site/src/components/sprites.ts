@@ -17,6 +17,10 @@ export const SPRITES: Record<string, { pal: Record<string, string>; rows: string
       '......II......', '.....III......', '......II......', '......II......', '.....IIII.....', '....IIIIII....',
     ],
   },
+  lens: {
+    pal: { M: '#21EF80', G: '#FFFFFF', B: '#585EFF' },
+    rows: ['...MMMMM....', '..MGGGGGM...', '.MGGGGGGGM..', '.MGGGGGGGM..', '.MGGGGGGGM..', '.MGGGGGGGM..', '..MGGGGGM...', '...MMMMMBB..', '........BBB.', '.........BBB', '..........BB'],
+  },
   heart: {
     pal: { R: '#FF63D8' },
     rows: ['.RR.RR.', 'RRRRRRR', 'RRRRRRR', '.RRRRR.', '..RRR..', '...R...'],

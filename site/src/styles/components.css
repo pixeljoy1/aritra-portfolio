@@ -240,3 +240,5 @@ div.card:hover { transform: none; box-shadow: none; }
 .lv__offer-p { margin: 0; max-width: 44ch; font-size: 16px; }
 .lv__offer p.label { margin: 0; }
 .lv__offer-actions { display: flex; gap: var(--s3); flex-wrap: wrap; justify-content: center; margin: var(--s2) 0 0; }
+
+.livesec { margin-top: var(--s7); }

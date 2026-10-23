@@ -70,3 +70,9 @@ All former "[PLACEHOLDER]" / "[CONFIRM]" text on the site was replaced with firs
 - The game (`site/src/scripts/level.ts`, modal in `site/src/components/BrickFooter.astro`): get Aritra his internship. Faster, snappier movement (top speed 140, instant turns, jump buffer and ledge grace), a plain dark background, coins, bricks and ? blocks, a mushroom ("SKILL UP!"), cacti and chomping plants, a flag, then the wizard's tower: the wizard hands Aritra an internship scroll and an "INTERNSHIP OFFER" card appears with a mailto link and Play again. Timer 120 s, so a run never lasts more than 2 minutes; a clean run takes about 25 to 60 s.
 - Verified in a test build: the autopilot clears it with all lives; mushroom, brick bump and shrink-on-hit were checked by script. Not verified by hand: how it feels on a real keyboard or phone, and sound. Tune MAXV, JUMP_V, GRAV, TIME_LIMIT at the top of level.ts.
 - All art is original pixel art in the site palette (no Nintendo assets).
+
+## Live projects experience (2026-10-23)
+- New section on `/work/` ("Live projects experience", anchor `#live`) and a case study `/work/live-project-ux-research/` (Y1, S2, January 2025), also linked from the Year 1 page. Source: the study report and protocol in Drive ("REBIT- Report_v 1.0" and the deck/report versions).
+- **Anonymised on purpose:** the client, the portal, the agency, locations, participant details, all numbers (sample size, percentages, scores) and verbatim quotes are left out. Never add the project code names or file names that include the client to the site. Screens and charts from the deck must not be published.
+- Aritra's roles (note-taker, observer, test participant) come from him; the description of what each role involved and "what I took away" are drafted and need his review. The scenario list, session structure and finding themes come from the report.
+- The report's Background section was empty in the source; the Drive files themselves are not published.

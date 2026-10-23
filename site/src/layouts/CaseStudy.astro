@@ -21,6 +21,11 @@ const linkEntries = Object.entries(d.links).filter(([, v]) => v);
       {d.duration && <div><dt>Duration</dt><dd>{d.duration}</dd></div>}
     </dl>
     {m && <a class="case__hero-link" href={u(m.hero)} data-lb data-lb-group={d.slug} data-lb-src={u(m.hero)} data-lb-alt={m.heroAlt} data-lb-title={m.heroAlt} data-lb-meta={d.title}><img class="case__hero" src={u(m.hero)} alt={m.heroAlt} width="1400" height="788" /></a>}
+    {d.live && (
+      <Panel variant="pink" label="CONFIDENTIAL">
+        <p>This was real client work. The client and the product are <strong>not named</strong>, and no figures, participant details or screens are shown. What follows is the method and what I learned.</p>
+      </Panel>
+    )}
     {d.simulatedData && (
       <Panel variant="pink" label="DATA NOTE">
         <p>Survey and interview data in this project were <strong>simulated for coursework</strong>. Market figures come from published sources.</p>
