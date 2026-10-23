@@ -1,0 +1,19 @@
+---
+title: "Attendance Portal"
+slug: "attendance-portal"
+oneLiner: "An attendance app concept with five layers of anti-cheating, designed for students, professors and admins."
+year: "2025-26"
+semesters: ["S4"]
+course: "User-Centred Design [CONFIRM]"
+disciplines: ["ux-systems"]
+status: "standard"
+tools: ["Figma"]
+role: "[CONFIRM role]"
+order: 6
+---
+## At a glance
+- **Problem:** facial-recognition attendance fails in practice and manual roll calls waste class time.
+- **What I did:** designed an app with five anti-cheating layers: expiring code, geofence, device binding, session window and anomaly detection, plus journeys for students, professors and admins.
+- **Status:** a design concept, not a built or tested product.
+
+[PLACEHOLDER: verify Figma links are public before adding them.]

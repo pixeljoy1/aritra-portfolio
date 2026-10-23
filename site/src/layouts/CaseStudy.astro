@@ -2,8 +2,10 @@
 import { u } from '../config';
 import Base from './Base.astro';
 import Panel from '../components/Panel.astro';
+import media from '../data/media.json';
 const { entry, prev, next } = Astro.props as any;
 const d = entry.data;
+const m = (media as any)[d.slug];
 const yr = { '2024-25': 'Y1', '2025-26': 'Y2', '2026-27': 'Y3' }[d.year as string];
 const linkEntries = Object.entries(d.links).filter(([, v]) => v);
 ---
@@ -18,12 +20,18 @@ const linkEntries = Object.entries(d.links).filter(([, v]) => v);
       <div><dt>Tools</dt><dd>{d.tools.length ? d.tools.join(', ') : '[CONFIRM TOOLS]'}</dd></div>
       {d.duration && <div><dt>Duration</dt><dd>{d.duration}</dd></div>}
     </dl>
+    {m && <img class="case__hero" src={u(m.hero)} alt={m.heroAlt} width="1400" height="788" />}
     {d.simulatedData && (
       <Panel variant="pink" label="DATA NOTE">
         <p>Survey and interview data in this project were <strong>simulated for coursework</strong>. Market figures come from published sources.</p>
       </Panel>
     )}
     <div class="prose"><slot /></div>
+    {m?.gallery?.length > 0 && (
+      <section><h2 class="h2">Gallery</h2>
+        <div class="gallery">{m.gallery.map((g: any) => <a href={u(g.src)} class="gallery__item"><img src={u(g.src)} alt={g.alt} width="1100" height="620" loading="lazy" /></a>)}</div>
+      </section>
+    )}
     {linkEntries.length > 0 && (
       <section><h2 class="h2">Links</h2>
         <ul>{linkEntries.map(([k, v]) => <li><a href={v as string}>{k}</a></li>)}</ul></section>

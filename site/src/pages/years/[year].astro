@@ -40,11 +40,13 @@ const bySem = [...new Set(mine.map((a) => a.semester))].sort();
         <div class="grid">
           {mine.filter((a) => a.semester === sem).map((a) => (
             <div class="card artefact">
-              {a.image ? <a class="card__thumb" href={u(a.pdf ?? a.image)}><img src={u(a.image)} alt={`Preview of ${a.title}`} width="640" height="360" loading="lazy" /></a> : <div class="card__thumb"><div class="card__ph"><span>[NO PREVIEW]</span></div></div>}
+              {a.video
+                ? <video class="card__thumb" controls preload="none" playsinline poster={u(a.image)} src={u(a.video)} aria-label={a.title}></video>
+                : <a class="card__thumb" href={u(a.work ? `/work/${a.work}/` : a.image)}><img src={u(a.image)} alt={`Preview of ${a.title}`} width="640" height="360" loading="lazy" /></a>}
               <div class="card__body">
                 <p class="label label--indigo">{a.topic}</p>
-                <p>{a.title}</p>
-                {a.pdf ? <a class="label" href={u(a.pdf)}>OPEN PDF{a.pages ? ` · ${a.pages} PAGES` : ''} →</a> : <p class="label muted">PDF COMING</p>}
+                <p>{a.work ? <a href={u(`/work/${a.work}/`)}>{a.title}</a> : a.title}</p>
+                {a.pdf && <a class="label" href={u(a.pdf)}>OPEN PDF →</a>}
               </div>
             </div>
           ))}

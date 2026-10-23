@@ -1,1 +1,196 @@
-[]
+[
+  {
+    "year": "2024-25",
+    "semester": "S1",
+    "topic": "Perspective + digital skills",
+    "title": "Furniture modelling in SketchUp",
+    "image": "/img/year/2024-25-S1-00.webp",
+    "pdf": null,
+    "work": null,
+    "pages": null
+  },
+  {
+    "year": "2024-25",
+    "semester": "S2",
+    "topic": "Digital Skills 2",
+    "title": "House: SketchUp to render",
+    "image": "/img/year/2024-25-S2-01.webp",
+    "pdf": null,
+    "work": "house",
+    "pages": null
+  },
+  {
+    "year": "2024-25",
+    "semester": "S2",
+    "topic": "IDE Forensic",
+    "title": "Year 1 jury presentation: Unity set and AR test",
+    "image": "/img/year/2024-25-S2-02.webp",
+    "pdf": null,
+    "work": null,
+    "pages": null
+  },
+  {
+    "year": "2024-25",
+    "semester": "S2",
+    "topic": "Built Environments",
+    "title": "Campus architecture study",
+    "image": "/img/year/2024-25-S2-03.webp",
+    "pdf": null,
+    "work": null,
+    "pages": null
+  },
+  {
+    "year": "2025-26",
+    "semester": "S3",
+    "topic": "Lighting for Immersive Environments",
+    "title": "Lighting progression",
+    "image": "/img/year/2025-26-S3-04.webp",
+    "pdf": null,
+    "work": "lighting-progression",
+    "pages": null
+  },
+  {
+    "year": "2025-26",
+    "semester": "S3",
+    "topic": "Stuff and Space",
+    "title": "Forest environment in Maya",
+    "image": "/img/year/2025-26-S3-05.webp",
+    "pdf": null,
+    "work": "stuff-and-space",
+    "pages": null
+  },
+  {
+    "year": "2025-26",
+    "semester": "S3",
+    "topic": "Immersive Technologies",
+    "title": "Sofa modelling in Maya",
+    "image": "/img/year/2025-26-S3-06.webp",
+    "pdf": null,
+    "work": null,
+    "pages": null
+  },
+  {
+    "year": "2025-26",
+    "semester": "S4",
+    "topic": "Environment Design",
+    "title": "Spatial Narrative and Environment Design",
+    "image": "/img/year/2025-26-S4-07.webp",
+    "pdf": null,
+    "work": "spatial-narrative-environment",
+    "pages": null
+  },
+  {
+    "year": "2025-26",
+    "semester": "S4",
+    "topic": "User-Centred Design",
+    "title": "SoleSync UCD analysis",
+    "image": "/img/year/2025-26-S4-08.webp",
+    "pdf": null,
+    "work": "solesync",
+    "pages": null
+  },
+  {
+    "year": "2025-26",
+    "semester": "S4",
+    "topic": "User-Centred Design",
+    "title": "Attendance Portal",
+    "image": "/img/year/2025-26-S4-09.webp",
+    "pdf": null,
+    "work": "attendance-portal",
+    "pages": null
+  },
+  {
+    "year": "2025-26",
+    "semester": "S4",
+    "topic": "User-Centred Design",
+    "title": "Integrated mobile creative station",
+    "image": "/img/year/2025-26-S4-10.webp",
+    "pdf": null,
+    "work": null,
+    "pages": null
+  },
+  {
+    "year": "2025-26",
+    "semester": "S4",
+    "topic": "Material and Texture Design",
+    "title": "Procedural wood and pattern textures",
+    "image": "/img/year/2025-26-S4-11.webp",
+    "pdf": null,
+    "work": null,
+    "pages": null
+  },
+  {
+    "year": "2025-26",
+    "semester": "S4",
+    "topic": "Surface Design",
+    "title": "Surface textures on cubes",
+    "image": "/img/year/2025-26-S4-12.webp",
+    "pdf": null,
+    "work": null,
+    "pages": null
+  },
+  {
+    "year": "2026-27",
+    "semester": "S5",
+    "topic": "Human-AI Design",
+    "title": "SoleSync Stage 2: AI-assisted prototype",
+    "image": "/img/year/2026-27-S5-13.webp",
+    "pdf": null,
+    "work": "solesync",
+    "pages": null
+  },
+  {
+    "year": "2026-27",
+    "semester": "S5",
+    "topic": "Advanced Lighting",
+    "title": "Unreal Engine lighting studies",
+    "image": "/img/year/2026-27-S5-14.webp",
+    "pdf": null,
+    "work": "lighting-progression",
+    "pages": null
+  },
+  {
+    "year": "2024-25",
+    "semester": "S2",
+    "topic": "Digital Skills 2",
+    "title": "House walkthrough render (clip)",
+    "image": "/video/house-render.webp",
+    "video": "/video/house-render.mp4",
+    "pdf": null,
+    "work": null,
+    "pages": null
+  },
+  {
+    "year": "2025-26",
+    "semester": "S4",
+    "topic": "Motion Graphics",
+    "title": "Motion graphics assignment 1 (clip)",
+    "image": "/video/motion-1.webp",
+    "video": "/video/motion-1.mp4",
+    "pdf": null,
+    "work": null,
+    "pages": null
+  },
+  {
+    "year": "2025-26",
+    "semester": "S4",
+    "topic": "Motion Graphics",
+    "title": "Motion graphics assignment 3 (clip)",
+    "image": "/video/motion-3.webp",
+    "video": "/video/motion-3.mp4",
+    "pdf": null,
+    "work": null,
+    "pages": null
+  },
+  {
+    "year": "2026-27",
+    "semester": "S5",
+    "topic": "Filmmaking",
+    "title": "Use of Space: pan and tilt (clip)",
+    "image": "/video/use-of-space-pan.webp",
+    "video": "/video/use-of-space-pan.mp4",
+    "pdf": null,
+    "work": null,
+    "pages": null
+  }
+]

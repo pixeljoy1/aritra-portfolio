@@ -1,0 +1,180 @@
+{
+  "spatial-narrative-environment": {
+    "hero": "/img/spatial-narrative-environment/hero.webp",
+    "thumb": "/img/spatial-narrative-environment/thumb.webp",
+    "heroAlt": "Final render of the textured rooftop-dish building on a rocky base",
+    "gallery": [
+      {
+        "src": "/img/spatial-narrative-environment/01.webp",
+        "alt": "Concept and narrative board with references and texture swatches"
+      },
+      {
+        "src": "/img/spatial-narrative-environment/02.webp",
+        "alt": "Initial blocking of the building in grey"
+      },
+      {
+        "src": "/img/spatial-narrative-environment/03.webp",
+        "alt": "Final modelling, two colour-coded views"
+      },
+      {
+        "src": "/img/spatial-narrative-environment/04.webp",
+        "alt": "Texturing process: weathered walls, crates and cage"
+      },
+      {
+        "src": "/img/spatial-narrative-environment/05.webp",
+        "alt": "Render of the building front with crates and a rust-stained hut"
+      },
+      {
+        "src": "/img/spatial-narrative-environment/06.webp",
+        "alt": "Close render of the wire cage and barrels against mossy walls"
+      },
+      {
+        "src": "/img/spatial-narrative-environment/07.webp",
+        "alt": "Rooftop render with a rusted dish and vents"
+      }
+    ]
+  },
+  "lighting-progression": {
+    "hero": "/img/lighting-progression/hero.webp",
+    "thumb": "/img/lighting-progression/thumb.webp",
+    "heroAlt": "Unreal Engine night scene: a cabin on a moonlit lake",
+    "gallery": [
+      {
+        "src": "/img/lighting-progression/01.webp",
+        "alt": "Unreal Engine interior of a cabin lit in teal"
+      },
+      {
+        "src": "/img/lighting-progression/02.webp",
+        "alt": "Unreal Engine interior with warm lamp light on a rug"
+      },
+      {
+        "src": "/img/lighting-progression/03.webp",
+        "alt": "Moonlit cabin from a low angle"
+      },
+      {
+        "src": "/img/lighting-progression/04.webp",
+        "alt": "Cabin exterior at night with scattered furniture"
+      },
+      {
+        "src": "/img/lighting-progression/05.webp",
+        "alt": "Grass and cabin under a stormy sky"
+      },
+      {
+        "src": "/img/lighting-progression/06.webp",
+        "alt": "Unreal Engine recreation of a real room with ceiling spotlights"
+      },
+      {
+        "src": "/img/lighting-progression/07.webp",
+        "alt": "Same room in daylight"
+      }
+    ]
+  },
+  "solesync": {
+    "hero": "/img/solesync/hero.webp",
+    "thumb": "/img/solesync/thumb.webp",
+    "heroAlt": "SoleSync app screens: shop, product page and care flow",
+    "gallery": [
+      {
+        "src": "/img/solesync/01.webp",
+        "alt": "SoleSync splash screen"
+      },
+      {
+        "src": "/img/solesync/02.webp",
+        "alt": "Stage 2 iteration: screens critiqued against research"
+      },
+      {
+        "src": "/img/solesync/03.webp",
+        "alt": "Stage 2 iteration: revised screens"
+      },
+      {
+        "src": "/img/solesync/04.webp",
+        "alt": "Concept slide: SoleSync as a sneaker marketplace and care service"
+      },
+      {
+        "src": "/img/solesync/05.webp",
+        "alt": "Research and design process diagram"
+      },
+      {
+        "src": "/img/solesync/06.webp",
+        "alt": "USP slide with app screens"
+      },
+      {
+        "src": "/img/solesync/07.webp",
+        "alt": "UI design: product, wishlist and care tracking screens"
+      }
+    ]
+  },
+  "stuff-and-space": {
+    "hero": "/img/stuff-and-space/hero.webp",
+    "thumb": "/img/stuff-and-space/thumb.webp",
+    "heroAlt": "Maya forest environment with a whirlpool",
+    "gallery": [
+      {
+        "src": "/img/stuff-and-space/01.webp",
+        "alt": "Moodboard of dark, misty, lamp-lit scenes"
+      },
+      {
+        "src": "/img/stuff-and-space/02.webp",
+        "alt": "SketchUp layout of the forest clearing"
+      },
+      {
+        "src": "/img/stuff-and-space/03.webp",
+        "alt": "Moon asset with a cratered texture"
+      },
+      {
+        "src": "/img/stuff-and-space/04.webp",
+        "alt": "Whirlpool in the engine"
+      }
+    ]
+  },
+  "attendance-portal": {
+    "hero": "/img/attendance-portal/hero.webp",
+    "thumb": "/img/attendance-portal/thumb.webp",
+    "heroAlt": "Attendance portal sign-up screen",
+    "gallery": [
+      {
+        "src": "/img/attendance-portal/01.webp",
+        "alt": "User journeys for students and professors"
+      },
+      {
+        "src": "/img/attendance-portal/02.webp",
+        "alt": "Five-layer anti-cheating system"
+      },
+      {
+        "src": "/img/attendance-portal/03.webp",
+        "alt": "Problem statement: manual attendance wastes class time"
+      }
+    ]
+  },
+  "house": {
+    "hero": "/img/house/hero.webp",
+    "thumb": "/img/house/thumb.webp",
+    "heroAlt": "SketchUp model of a three-storey house with a roof terrace",
+    "gallery": [
+      {
+        "src": "/img/house/01.webp",
+        "alt": "Rendered house exterior with a person for scale"
+      },
+      {
+        "src": "/img/house/02.webp",
+        "alt": "Coloured floor plan of the house"
+      },
+      {
+        "src": "/img/house/03.webp",
+        "alt": "Rendered bedroom interior"
+      },
+      {
+        "src": "/img/house/04.webp",
+        "alt": "Final exterior render at dusk"
+      },
+      {
+        "src": "/img/house/05.webp",
+        "alt": "Final render of the living room"
+      },
+      {
+        "src": "/img/house/06.webp",
+        "alt": "Final render of the bedroom"
+      }
+    ]
+  }
+}

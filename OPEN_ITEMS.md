@@ -32,3 +32,10 @@ Lightbox for case-study galleries (`previewer.js` pattern), pinned horizontal Wo
 - **Blocked on files:** the Drive connector can only return file contents as text/base64 inside the chat, which doesn't work for multi-MB decks. Download the `JSAA_Work` folder from Drive (SEM1..SEM5) into `assets/drive/`.
 - PPTX previews use embedded images only (no LibreOffice/Ghostscript here). For a real PDF of a deck, export it from Drive (File > Download > PDF) next to the .pptx.
 - Aritra still nominates the best slides per featured project.
+
+## Drive artefacts: published (build 3)
+- `scripts/stage1_candidates.py` (contact sheets) and `scripts/stage2_publish.py` (optimised export). Site only references `site/public/img|video`, never `assets/`. public/ is ~4.4 MB (WebP <=140 KB each, four 6 s clips <=320 KB).
+- **Deliberately left out:** Lighting S3 portrait photos (identifiable classmates; need consent or crops), Doom/Quake game screenshots (third-party), brand logos, the Lamborghini ad and Ronaldo cover (third-party), `.tm/.blend/.mb` sources, full videos (upload to YouTube unlisted if wanted), the 205 MB jury deck.
+- No full PDFs published: Spatial Narrative (31 MB) and SystemDesign_Final (5.6 MB) exceed the 4 MB budget; add a shrunk copy later if wanted.
+- Image choices were made by eye from contact sheets: Aritra should confirm the picks and alt text; run stage 2 again after editing the `SET`/`ART` lists.
+- New case studies need Aritra's copy: `house`, `stuff-and-space`, `attendance-portal` (placeholders), plus SoleSync/Spatial one-liners.

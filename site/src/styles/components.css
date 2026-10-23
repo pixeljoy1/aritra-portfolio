@@ -138,3 +138,9 @@ button.chip { min-height: 44px; padding: 0 var(--s4); cursor: pointer; }
 
 .cartridge--game { aspect-ratio: auto; height: min(78vh, 720px); min-height: 480px; }
 @media (min-width: 960px) { .cartridge--game { height: 640px; } }
+
+.case__hero { width: 100%; height: auto; border: 2px solid var(--mint); border-radius: var(--radius); margin-bottom: var(--s5); display: block; }
+.gallery { display: grid; gap: var(--s3); grid-template-columns: 1fr; }
+@media (min-width: 640px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
+.gallery__item img { width: 100%; height: auto; border: 2px solid var(--indigo); border-radius: var(--radius); display: block; }
+.artefact video.card__thumb { width: 100%; object-fit: cover; background: #000; }
