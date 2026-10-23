@@ -49,6 +49,8 @@ function makeArt() {
     coin: bake(['..YYYY..', '.YYOOYY.', 'YYYOOYYY', 'YYYOOYYY', 'YYYOOYYY', 'YYYOOYYY', 'YYYOOYYY', 'YYYOOYYY', '.YYOOYY.', '..YYYY..'], { Y: COL.yellow, O: '#E0A820' }),
     mush: bake(['...PPPPPP...', '.PPPPWWPPPP.', 'PPWWPWWPPWWP', 'PPWWPPPPPWWP', 'PPPPPPPPPPPP', '.CCCCCCCCCC.', '..CECCCCEC..', '..CCCCCCCC..', '..CCCCCCCC..', '...CCCCCC...'], { P: COL.pink, W: COL.white, C: '#FFE7C2', E: COL.ink }),
     cactus: crop([...cactusTop, ...trunk], { G: '#3DDC7A', D: COL.mintD }),
+    // poisonous bouncing turtle: purple, green shell with yellow spikes, red eye
+    turtle: bake(['...Y..Y..Y....', '..SSDSSDSSDS..', '.SSSSSSSSSSSSP', '.SDSSDSSDSSPPP', '.SSSSSSSSSSPRP', '.DDDDDDDDDDPPW', '..PPPPPPPPPP..', '..PP.PP..PP...', '..PP.PP..PP...'], { Y: COL.yellow, S: COL.mint, D: COL.mintD, P: '#7A3FD1', R: '#FF3B3B', W: '#FFFFFF' }),
     plantOpen: bake(plantOpen, pp), plantShut: bake(plantShut, pp),
     gTop: tile((g) => { g.fillStyle = COL.mint; g.fillRect(0, 0, T, 3); g.fillStyle = COL.mintD; g.fillRect(0, 3, T, 2); brickRows(g, 5, COL.ind, COL.indD, false); }),
     gBot: tile((g) => brickRows(g, 0, COL.ind, COL.indD, true)),
@@ -78,7 +80,8 @@ function buildWorld() {
   const row = (x0: number, n: number, y: number) => { for (let i = 0; i < n; i++) coins.push({ x: (x0 + i) * T + 4, y: y * T + 3, got: false }); };
   row(12, 5, 8); row(37, 3, 6); row(70, 4, 5); row(80, 7, 4); row(96, 5, 7); row(112, 5, 6); row(128, 6, 5); row(141, 7, 5); row(160, 4, 6);
   for (let i = 0; i < 5; i++) coins.push({ x: (64 + i) * T + 2, y: (8 - Math.sin((i / 4) * Math.PI) * 3) * T, got: false });
-  return { g, pipes, cacti, coins };
+  const turtles = [24, 76, 85, 95, 140].map((c) => ({ x: c * T, y: GROUND * T - 9, vx: -30, vy: 0, home: c * T, hop: (c % 7) * 0.15, dead: false }));
+  return { g, pipes, cacti, coins, turtles };
 }
 
 /* ---------- engine ---------- */
@@ -90,7 +93,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
   let auto = false, s = 1, viewW = 400, world = buildWorld(), raf = 0, last = 0, t = 0, running = false, muted = false;
   let phase: 'ready' | 'play' | 'dying' | 'slide' | 'walk' | 'scroll' | 'clear' | 'over' = ambient ? 'play' : 'ready';
   let h = { x: 40, y: GROUND * T - 20, vx: 0, vy: 0, ground: true, big: false, face: 1, inv: 0, anim: 0 };
-  let scrollT = 0, coyote = 0, buf = 0, score = 0, coinN = 0, lives = 3, timeLeft = TIME_LIMIT, hold = 0, jumpWas = false, flagBonus = 0, deadT = 0, cam = 0, ambientWait = 0;
+  let flagT = 0, scrollT = 0, coyote = 0, buf = 0, score = 0, coinN = 0, lives = 3, timeLeft = TIME_LIMIT, hold = 0, jumpWas = false, flagBonus = 0, deadT = 0, cam = 0, ambientWait = 0;
   let mush: { x: number; y: number; vx: number; vy: number }[] = [];
   let bumps: { x: number; y: number; t: number }[] = [];
   let bits: { x: number; y: number; vx: number; vy: number; c: string; t: number }[] = [];
@@ -121,7 +124,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
   const reset = (respawn = false) => {
     world = buildWorld(); mush = []; bumps = []; bits = []; pops = [];
     h = { x: 40, y: GROUND * T - 20, vx: 0, vy: 0, ground: true, big: false, face: 1, inv: 0, anim: 0 };
-    timeLeft = TIME_LIMIT; cam = 0; hold = 0; ambientWait = 0; scrollT = 0; coyote = 0; buf = 0; phase = ambient || respawn ? 'play' : 'ready';
+    timeLeft = TIME_LIMIT; cam = 0; hold = 0; ambientWait = 0; scrollT = 0; flagT = 0; coyote = 0; buf = 0; phase = ambient || respawn ? 'play' : 'ready';
   };
   const fullReset = () => { score = 0; coinN = 0; lives = 3; reset(); };
   const add = (n: number, x: number, y: number) => { score += n; pops.push({ x, y, txt: String(n), t: 0 }); };
@@ -191,11 +194,13 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     const cact = world.cacti.some((c) => c.x > h.x + w && c.x - (h.x + w) < 22 && c.y + c.h > h.y);
     const pipe = world.pipes.some((p) => p.x * T > h.x + w && p.x * T - (h.x + w) < 20);
     const under = h.ground && [20, 21, 22, 23, 24, 142, 143, 144, 145, 146].some((c) => Math.abs(h.x + w / 2 - (c * T + 8)) < 2.5) && Math.random() < 0.5;
-    keys.jump = h.ground ? wall || cact || pipe || under : keys.jump && h.vy < 0;   // hold while rising = full-height jump
+    const turt = world.turtles.some((tt) => !tt.dead && tt.x > h.x + w - 4 && tt.x - (h.x + w) < 36 && tt.y + 9 > h.y + 4);
+    keys.jump = h.ground ? wall || cact || pipe || turt || under : keys.jump && h.vy < 0;   // hold while rising = full-height jump
   }
 
   function update(dt: number) {
     t += dt;
+    if (phase === 'slide' || phase === 'walk' || phase === 'scroll' || phase === 'clear') flagT = Math.min(1, flagT + dt / 1.4);   // the flag is raised once he reaches the pole
     if (phase === 'ready') return;
     if (phase === 'over' || phase === 'clear') {
       if (ambient && phase === 'clear') { ambientWait += dt; if (ambientWait > 2.6) { reset(); } }
@@ -239,6 +244,18 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     world.coins.forEach((c) => { if (!c.got && rect(hb, { x: c.x, y: c.y, w: 8, h: 10 })) { c.got = true; coinN++; add(200, c.x, c.y - 4); beep(988, 1319, 0.12); } });
     // hazards
     world.cacti.forEach((c) => { if (rect(hb, { x: c.x + 1, y: c.y + 2, w: c.w - 2, h: c.h - 2 })) hurt('cactus'); });
+    world.turtles.forEach((tt) => {
+      if (tt.dead) return;
+      tt.vy += GRAV * dt; tt.x += tt.vx * dt; tt.y += tt.vy * dt;
+      if (Math.abs(tt.x - tt.home) > 3 * T || solid(Math.floor((tt.x + (tt.vx > 0 ? 14 : 0)) / T), Math.floor((tt.y + 4) / T))) { tt.vx = -tt.vx; tt.x += tt.vx * dt * 2; }
+      const gy = Math.floor((tt.y + 9) / T);
+      if (tt.vy > 0 && solid(Math.floor((tt.x + 7) / T), gy)) { tt.y = gy * T - 9; tt.vy = 0; tt.hop -= dt; if (tt.hop <= 0) { tt.vy = -170; tt.hop = 0.9; } }
+      const tr = { x: tt.x + 1, y: tt.y + 1, w: 12, h: 8 };
+      if (rect(hb, tr)) {
+        if (h.vy > 40 && h.y + hh - 6 < tt.y + 4) { tt.dead = true; h.vy = -190; add(100, tt.x, tt.y - 8); beep(520, 180, 0.12, 'square', 0.04); }   // stomp
+        else hurt('turtle');
+      }
+    });
     world.pipes.forEach((p) => {
       const near = Math.abs(h.x + w / 2 - (p.x * T + 16)) < 28;
       p.phase += dt; const c = p.phase % 4.2;
@@ -306,8 +323,8 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     if (phase === 'clear') { const bob = Math.sin(t * 5) * 2; S(bakeStar(), WIZ_X - 2, ty0 - 70 + bob, 15, 15); }
     // flagpole
     R(FLAG_X, 3 * T, 2, 7 * T, '#cfcfe8'); R(FLAG_X - 2, 3 * T - 4, 6, 5, COL.yellow);
-    const slide = phase === 'slide' || phase === 'walk' || phase === 'scroll' || phase === 'clear';
-    R(FLAG_X + 2, 3 * T + 2 + (slide ? 70 : 0), 12, 8, COL.pink);
+    const flagLow = GROUND * T - 14, flagHigh = 3 * T + 2, fe = 1 - (1 - flagT) * (1 - flagT);
+    R(FLAG_X + 2, flagLow + (flagHigh - flagLow) * fe, 12, 8, COL.pink);
     // plants (behind pipe bodies)
     world.pipes.forEach((p) => {
       if (p.ext > 0) {
@@ -332,6 +349,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     const cw = Math.abs(Math.cos(t * 5));
     world.coins.forEach((c) => { if (!c.got && c.x > camX - 20 && c.x < camX + viewW + 20) S(art.coin, c.x + (8 - 8 * cw) / 2, c.y, Math.max(2, 8 * cw), 10); });
     world.cacti.forEach((c) => S(art.cactus, c.x, c.y, 12, 18));
+    world.turtles.forEach((tt) => { if (!tt.dead && tt.x > camX - 30 && tt.x < camX + viewW + 30) S(art.turtle, tt.x, tt.y, 14, 9, tt.vx < 0); });
     mush.forEach((m) => S(art.mush, m.x, m.y, 12, 10));
     // hero
     drawHero();
@@ -365,6 +383,14 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     sh(`TIME ${String(Math.max(0, Math.ceil(timeLeft))).padStart(3, '0')}`, Math.round(viewW * 0.58), 6, timeLeft < 20 ? COL.pink : COL.mint);
     for (let i = 0; i < lives; i++) ctx.drawImage(art.heart, viewW - 12 - i * 10, 6, 7, 6);
     const msg = phase === 'ready' ? ['LEVEL 1', 'GET ARITRA HIS INTERNSHIP', 'REACH THE WIZARD · PRESS ANY KEY'] : phase === 'over' ? ['GAME OVER', 'NOT YET', 'PRESS ENTER TO TRY AGAIN'] : null;
+    if (phase === 'clear') {     // confirmation dialog, in the scene
+      const bw = Math.min(viewW - 24, 252), bx = 10, by = 28;   // top-left, clear of the flag and the tower
+      ctx.fillStyle = '#000'; ctx.fillRect(bx, by, bw, 58); ctx.strokeStyle = COL.mint; ctx.lineWidth = 2; ctx.strokeRect(bx + 1, by + 1, bw - 2, 56);
+      ctx.fillStyle = COL.pink; ctx.fillRect(bx + 4, by + 4, 4, 4); ctx.fillRect(bx + bw - 8, by + 4, 4, 4);
+      ctx.textAlign = 'center'; ctx.font = '8px "Press Start 2P", monospace';
+      sh('CONGRATULATIONS!', bx + bw / 2, by + 11, COL.yellow); sh('ARITRA GOT THE', bx + bw / 2, by + 26, COL.white); sh('INTERNSHIP!', bx + bw / 2, by + 38, COL.white);
+      ctx.textAlign = 'left';
+    }
     if (msg) {
       ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(0, 54, viewW, 84); ctx.textAlign = 'center';
       ctx.font = '12px "Press Start 2P", monospace'; sh(msg[0], viewW / 2, 66, phase === 'over' ? COL.pink : COL.yellow);
@@ -399,7 +425,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     step(sec: number) { for (let i = 0; i < Math.round(sec * 60); i++) { update(1 / 60); const tg = Math.min(CASTLE_X + 64 - viewW, Math.max(0, h.x - viewW * 0.38)); cam += (tg - cam) * 0.13; } },
     tp(x: number) { h.x = x; h.y = GROUND * T - size().h; h.vx = 0; cam = Math.max(0, x - viewW * 0.38); },
     setAuto(v: boolean) { auto = v; if (v && phase === 'ready') phase = 'play'; },
-    debug() { return { phase, x: Math.round(h.x), y: Math.round(h.y), big: h.big, score, coins: coinN, lives, time: Math.round(timeLeft), lastDeath, mush: mush.length }; },
+    debug() { return { phase, x: Math.round(h.x), y: Math.round(h.y), big: h.big, score, coins: coinN, lives, time: Math.round(timeLeft), lastDeath, mush: mush.length, turtles: world.turtles.filter((q) => !q.dead).length }; },
     anyKey() { if (!ambient && phase === 'ready') phase = 'play'; },
     toggleMute() { muted = !muted; return muted; },
     get phase() { return phase; },
