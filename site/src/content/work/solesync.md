@@ -11,7 +11,7 @@ tools: ["Figma", "Google Stitch"]
 role: "Researcher and designer (solo) [CONFIRM]"
 simulatedData: true
 order: 2
-links: {}
+links: { "System design deck, 3 projects (PDF)": "/pdf/system-design-final.pdf" }
 ---
 ## At a glance
 - **Problem:** buying and caring for sneakers in India has a trust gap: "Is it real? Is it fair? Will I ruin it?"

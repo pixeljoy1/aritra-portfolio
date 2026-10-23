@@ -34,7 +34,7 @@ const linkEntries = Object.entries(d.links).filter(([, v]) => v);
     )}
     {linkEntries.length > 0 && (
       <section><h2 class="h2">Links</h2>
-        <ul>{linkEntries.map(([k, v]) => <li><a href={v as string}>{k}</a></li>)}</ul></section>
+        <ul>{linkEntries.map(([k, v]) => <li><a href={(v as string).startsWith('/') ? u(v as string) : (v as string)}>{k}</a></li>)}</ul></section>
     )}
     <nav class="prevnext" aria-label="More case studies">
       {prev ? <a href={u(`/work/${prev.data.slug}/`)}>← {prev.data.title}</a> : <span></span>}

@@ -9,6 +9,7 @@ disciplines: ["ux-systems"]
 status: "standard"
 tools: ["Figma"]
 role: "[CONFIRM role]"
+links: { "System design deck, 3 projects (PDF)": "/pdf/system-design-final.pdf" }
 order: 6
 ---
 ## At a glance

@@ -36,6 +36,6 @@ Lightbox for case-study galleries (`previewer.js` pattern), pinned horizontal Wo
 ## Drive artefacts: published (build 3)
 - `scripts/stage1_candidates.py` (contact sheets) and `scripts/stage2_publish.py` (optimised export). Site only references `site/public/img|video`, never `assets/`. public/ is ~4.4 MB (WebP <=140 KB each, four 6 s clips <=320 KB).
 - **Deliberately left out:** Lighting S3 portrait photos (identifiable classmates; need consent or crops), Doom/Quake game screenshots (third-party), brand logos, the Lamborghini ad and Ronaldo cover (third-party), `.tm/.blend/.mb` sources, full videos (upload to YouTube unlisted if wanted), the 205 MB jury deck.
-- No full PDFs published: Spatial Narrative (31 MB) and SystemDesign_Final (5.6 MB) exceed the 4 MB budget; add a shrunk copy later if wanted.
+- Two shrunk PDFs published (`scripts/shrink_pdfs.py`): Spatial Narrative (1.9 MB, 12 pp) and SystemDesign_Final (1.1 MB, 17 pp, covers Mobile Work Station, Attendance Portal, SoleSync). Text kept.
 - Image choices were made by eye from contact sheets: Aritra should confirm the picks and alt text; run stage 2 again after editing the `SET`/`ART` lists.
 - New case studies need Aritra's copy: `house`, `stuff-and-space`, `attendance-portal` (placeholders), plus SoleSync/Spatial one-liners.
