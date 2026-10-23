@@ -27,3 +27,6 @@ export const YEARS = [
 
 // Base-aware URL helper (site is served from a sub-path on github.io until the custom domain is live).
 export const u = (path: string) => import.meta.env.BASE_URL.replace(/\/$/, '') + path;
+
+// Tiger Run's card goes straight to the game page; every other project opens its case study.
+export const workUrl = (slug: string) => u(slug === 'tiger-run' ? '/play/' : `/work/${slug}/`);

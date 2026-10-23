@@ -1,5 +1,5 @@
 ---
-import { u } from '../../config';
+import { u, workUrl } from '../../config';
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Panel from '../../components/Panel.astro';
@@ -26,7 +26,7 @@ const bySem = [...new Set(mine.map((a) => a.semester))].sort();
         <ul>
           {g.items.map((it) => (
             <li>
-              {it.work ? <a href={u(`/work/${it.work}/`)}>{it.title}</a> : it.title}
+              {it.work ? <a href={workUrl(it.work)}>{it.title}</a> : it.title}
               {it.course && <span class="muted"> — {it.course}</span>}
               {it.note && <span class="placeholder"> {it.note}</span>}
             </li>
@@ -42,13 +42,13 @@ const bySem = [...new Set(mine.map((a) => a.semester))].sort();
             <div class="card artefact">
               <a class="card__thumb" href={u(a.large ?? a.image)} data-lb data-lb-group={y.slug}
                 data-lb-src={u(a.large ?? a.image)} data-lb-video={a.video ? u(a.video) : ''} data-lb-alt={`Preview of ${a.title}`}
-                data-lb-title={a.title} data-lb-meta={`${a.semester} · ${a.topic}`} data-lb-link={a.work ? u(`/work/${a.work}/`) : ''}>
+                data-lb-title={a.title} data-lb-meta={`${a.semester} · ${a.topic}`} data-lb-link={a.work ? workUrl(a.work) : ''}>
                 <img src={u(a.image)} alt={`Preview of ${a.title}`} width="640" height="360" loading="lazy" />
                 {a.video && <span class="play-badge">▶ PLAY</span>}
               </a>
               <div class="card__body">
                 <p class="label label--indigo">{a.topic}</p>
-                <p>{a.work ? <a href={u(`/work/${a.work}/`)}>{a.title}</a> : a.title}</p>
+                <p>{a.work ? <a href={workUrl(a.work)}>{a.title}</a> : a.title}</p>
                 {a.pdf && <a class="label" href={u(a.pdf)}>OPEN PDF →</a>}
               </div>
             </div>

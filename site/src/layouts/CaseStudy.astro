@@ -1,5 +1,5 @@
 ---
-import { u } from '../config';
+import { u, workUrl } from '../config';
 import Base from './Base.astro';
 import Panel from '../components/Panel.astro';
 import media from '../data/media.json';
@@ -37,8 +37,8 @@ const linkEntries = Object.entries(d.links).filter(([, v]) => v);
         <ul>{linkEntries.map(([k, v]) => <li><a href={(v as string).startsWith('/') ? u(v as string) : (v as string)}>{k}</a></li>)}</ul></section>
     )}
     <nav class="prevnext" aria-label="More case studies">
-      {prev ? <a href={u(`/work/${prev.data.slug}/`)}>← {prev.data.title}</a> : <span></span>}
-      {next ? <a href={u(`/work/${next.data.slug}/`)}>{next.data.title} →</a> : <span></span>}
+      {prev ? <a href={workUrl(prev.data.slug)}>← {prev.data.title}</a> : <span></span>}
+      {next ? <a href={workUrl(next.data.slug)}>{next.data.title} →</a> : <span></span>}
     </nav>
   </article>
 </Base>

@@ -1,5 +1,5 @@
 ---
-import { u } from '../config';
+import { u, workUrl } from '../config';
 import Sprite from './Sprite.astro';
 import Chip from './Chip.astro';
 import media from '../data/media.json';
@@ -9,7 +9,7 @@ const thumb = hero ?? m?.thumb;
 const thumbAlt = heroAlt || m?.heroAlt || '';
 const yr = { '2024-25': 'Y1', '2025-26': 'Y2', '2026-27': 'Y3' }[year as string];
 ---
-<a href={u(`/work/${slug}/`)} class="card" data-disc={disciplines.join(' ')} data-year={year}>
+<a href={workUrl(slug)} class="card" data-disc={disciplines.join(' ')} data-year={year}>
   <div class="card__thumb">
     {thumb ? <img src={u(thumb)} alt={thumbAlt} width="640" height="360" loading="lazy" /> :
       <div class="card__ph">{icon ? <Sprite name={icon} u={6} /> : null}<span>[IMAGE PLACEHOLDER]</span></div>}
