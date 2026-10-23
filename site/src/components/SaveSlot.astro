@@ -1,0 +1,13 @@
+---
+import { u } from '../config';
+import Panel from './Panel.astro';
+const { n, label, slug, name, semesters, count } = Astro.props as any;
+---
+<a href={u(`/years/${slug}/`)} class="slot-link">
+  <Panel label={`SLOT ${n} · YEAR ${n}`}>
+    <h3 class="display slot__year">{label}</h3>
+    <p class="slot__name">{name}</p>
+    <p class="label label--indigo">{semesters.join(' · ')} · {count} {count === 1 ? 'PROJECT' : 'PROJECTS'}</p>
+    <div class="slot__thumbs" aria-hidden="true"><span></span><span></span><span></span></div>
+  </Panel>
+</a>

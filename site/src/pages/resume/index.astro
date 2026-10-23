@@ -1,0 +1,33 @@
+---
+import { u } from '../../config';
+import Base from '../../layouts/Base.astro';
+import Button from '../../components/Button.astro';
+---
+<Base title="Resume">
+  <div class="wrap">
+    <h1 class="display">RESUME</h1>
+    <p><Button href={u("/resume.pdf")} download id="dl">DOWNLOAD PDF</Button></p>
+    <p class="muted">Last updated: <span id="updated">[PLACEHOLDER: month year]</span></p>
+    <div class="cartridge resume-frame" id="frame">
+      <div class="card__ph" id="ph" style="height:100%"><span>[RESUME PLACEHOLDER — PDF coming]</span></div>
+    </div>
+  </div>
+</Base>
+<script>
+  // Shows the PDF in the window as soon as /resume.pdf exists; otherwise keeps the placeholder.
+  const dl = document.getElementById('dl') as HTMLAnchorElement;
+  const pdfUrl = import.meta.env.BASE_URL.replace(/\/$/, '') + '/resume.pdf';
+  fetch(pdfUrl, { method: 'HEAD' }).then((r) => {
+    const pdf = r.ok && (r.headers.get('content-type') ?? '').includes('pdf');
+    if (pdf) {
+      document.getElementById('ph')!.remove();
+      const f = document.createElement('iframe');
+      f.src = pdfUrl; f.title = 'Resume PDF';
+      document.getElementById('frame')!.append(f);
+    } else {
+      dl.setAttribute('aria-disabled', 'true');
+      dl.addEventListener('click', (e) => e.preventDefault());
+      dl.style.opacity = '.5';
+    }
+  }).catch(() => {});
+</script>

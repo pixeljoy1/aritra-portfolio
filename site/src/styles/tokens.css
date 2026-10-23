@@ -1,0 +1,25 @@
+@font-face { font-family: 'Press Start 2P'; src: url('/fonts/press-start-2p-latin-400-normal.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Silkscreen'; font-weight: 400; src: url('/fonts/silkscreen-latin-400-normal.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Silkscreen'; font-weight: 700; src: url('/fonts/silkscreen-latin-700-normal.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Atkinson Hyperlegible'; font-weight: 400; src: url('/fonts/atkinson-hyperlegible-latin-400-normal.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Atkinson Hyperlegible'; font-weight: 700; src: url('/fonts/atkinson-hyperlegible-latin-700-normal.woff2') format('woff2'); font-display: swap; }
+
+:root {
+  --black: #000000; --panel-bg: #04120A;
+  --mint: #21EF80; --mint-dark: #12B862; --pink: #FF63D8;
+  --indigo: #585EFF; --indigo-text: #7A7FFF; --indigo-dark: #2E33B8;
+  --yellow: #FFD23F; --white: #FFFFFF; --muted: #BDB6C8;
+  /* Tiger Run palette: tiger-themed sections only */
+  --tiger-orange: #FF9F1C; --tiger-stripe: #B34700; --tiger-cream: #FFE7C2;
+  --run-pill: #F5C518; --run-ink: #171310; --run-blood: #B02A1E; --run-bone: #FFF6E2; --run-forest: #123024;
+  --focus: 3px solid var(--mint);
+
+  --u: 4px;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+  --radius: 6px; --max: 1120px; --pad: 16px;
+
+  --f-display: 'Press Start 2P', monospace;
+  --f-ui: 'Silkscreen', monospace;
+  --f-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+@media (min-width: 960px) { :root { --pad: 32px; } }

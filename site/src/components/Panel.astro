@@ -1,0 +1,7 @@
+---
+const { variant = 'mint', label, class: cls = '' } = Astro.props as { variant?: 'mint' | 'pink' | 'indigo'; label?: string; class?: string };
+---
+<section class={`panel panel--${variant} ${cls}`}>
+  {label && <p class="panel__label">{label}</p>}
+  <slot />
+</section>

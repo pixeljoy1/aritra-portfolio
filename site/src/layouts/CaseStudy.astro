@@ -1,0 +1,36 @@
+---
+import { u } from '../config';
+import Base from './Base.astro';
+import Panel from '../components/Panel.astro';
+const { entry, prev, next } = Astro.props as any;
+const d = entry.data;
+const yr = { '2024-25': 'Y1', '2025-26': 'Y2', '2026-27': 'Y3' }[d.year as string];
+const linkEntries = Object.entries(d.links).filter(([, v]) => v);
+---
+<Base title={d.title} description={d.oneLiner}>
+  <article class="wrap case">
+    <p class="label"><a href={u("/work/")}>← WORK</a> <span class="label--indigo">· {yr} · {d.semesters.join(' ')}</span></p>
+    <h1 class="display">{d.title}</h1>
+    <p class="lede">{d.oneLiner}</p>
+    <dl class="meta">
+      <div><dt>Course</dt><dd>{d.course}</dd></div>
+      <div><dt>Role</dt><dd>{d.role}</dd></div>
+      <div><dt>Tools</dt><dd>{d.tools.length ? d.tools.join(', ') : '[CONFIRM TOOLS]'}</dd></div>
+      {d.duration && <div><dt>Duration</dt><dd>{d.duration}</dd></div>}
+    </dl>
+    {d.simulatedData && (
+      <Panel variant="pink" label="DATA NOTE">
+        <p>Survey and interview data in this project were <strong>simulated for coursework</strong>. Market figures come from published sources.</p>
+      </Panel>
+    )}
+    <div class="prose"><slot /></div>
+    {linkEntries.length > 0 && (
+      <section><h2 class="h2">Links</h2>
+        <ul>{linkEntries.map(([k, v]) => <li><a href={v as string}>{k}</a></li>)}</ul></section>
+    )}
+    <nav class="prevnext" aria-label="More case studies">
+      {prev ? <a href={u(`/work/${prev.data.slug}/`)}>← {prev.data.title}</a> : <span></span>}
+      {next ? <a href={u(`/work/${next.data.slug}/`)}>{next.data.title} →</a> : <span></span>}
+    </nav>
+  </article>
+</Base>

@@ -1,0 +1,20 @@
+---
+import { u } from '../config';
+import Sprite from './Sprite.astro';
+import Chip from './Chip.astro';
+const { slug, title, oneLiner, level, year, semesters, tags = [], hero, heroAlt = '', icon, disciplines = [] } = Astro.props as any;
+const yr = { '2024-25': 'Y1', '2025-26': 'Y2', '2026-27': 'Y3' }[year as string];
+---
+<a href={u(`/work/${slug}/`)} class="card" data-disc={disciplines.join(' ')} data-year={year}>
+  <div class="card__thumb">
+    {hero ? <img src={hero} alt={heroAlt} width="640" height="360" loading="lazy" /> :
+      <div class="card__ph">{icon ? <Sprite name={icon} u={6} /> : null}<span>[IMAGE PLACEHOLDER]</span></div>}
+  </div>
+  <div class="card__body">
+    <p class="label label--pink">LEVEL {String(level).padStart(2, '0')}</p>
+    <h3 class="card__title">{title}</h3>
+    <p>{oneLiner}</p>
+    <div class="tags">{tags.map((t: string) => <Chip>{t}</Chip>)}</div>
+    <p class="label label--indigo">{yr} · {semesters.join(' ')}</p>
+  </div>
+</a>

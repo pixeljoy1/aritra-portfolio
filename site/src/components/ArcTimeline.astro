@@ -1,0 +1,73 @@
+---
+import { u } from '../config';
+import { getCollection } from 'astro:content';
+import Sprite from './Sprite.astro';
+import { YEARS } from '../config';
+
+// One node per semester, built from the years collection (no hardcoded data).
+const ys = await getCollection('years');
+const nodes = YEARS.flatMap((y) => {
+  const entry = ys.find((e) => e.data.slug === y.slug);
+  return y.semesters.map((s) => {
+    const g = entry?.data.groups.find((x) => x.semester === s);
+    return { sem: s, year: y, topic: g?.topic ?? 'Coming', items: g?.items ?? [] };
+  });
+});
+const at = (i: number) => Math.round(((i + 0.5) / nodes.length) * 100);
+---
+<section class="arc" aria-label="Semester timeline">
+  <!-- Desktop: horizontal line, nodes placed by --at -->
+  <div class="arc__desktop">
+    <div class="arc__line"><div class="arc__fill" id="arcFill"></div></div>
+    <ol class="arc__nodes">
+      {nodes.map((n, i) => (
+        <li class="arc__node" style={`--at:${at(i)}%`}>
+          <span class="arc__dot"><Sprite name="star" u={3} /></span>
+          <div class="arc__meta">
+            <p class="label label--indigo">{n.sem} · Y{n.year.n}</p>
+            <p class="arc__topic">{n.topic}</p>
+            <a class="label" href={u(`/years/${n.year.slug}/`)}>{n.year.label} →</a>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+  <!-- Mobile: separately authored vertical cards (revealed by IntersectionObserver) -->
+  <ol class="arc__cards">
+    {nodes.map((n) => (
+      <li class="arc__card reveal">
+        <p class="label label--indigo">{n.sem} · Y{n.year.n} · {n.year.label}</p>
+        <p class="arc__topic">{n.topic}</p>
+        <ul>{n.items.slice(0, 3).map((it) => <li>{it.title}</li>)}</ul>
+        <a class="label" href={u(`/years/${n.year.slug}/`)}>OPEN YEAR →</a>
+      </li>
+    ))}
+  </ol>
+</section>
+<script>
+  import { initReveal } from '../scripts/reveal';
+  initReveal('.arc__card');
+
+  const fill = document.getElementById('arcFill');
+  const nodes = [...document.querySelectorAll<HTMLElement>('.arc__node')];
+  const line = fill?.parentElement;
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let ticking = false;
+
+  const update = () => {
+    ticking = false;
+    if (!fill || !line) return;
+    const wide = innerWidth > 768;
+    const p = !wide ? 0 : still ? 1
+      : Math.min(1, Math.max(0, (innerHeight * 0.82 - line.getBoundingClientRect().top) / (innerHeight * 0.65)));
+    fill.style.width = p * 100 + '%';
+    nodes.forEach((n) => {
+      const at = (parseFloat(n.style.getPropertyValue('--at')) || 0) / 100;
+      n.classList.toggle('lit', at <= p);
+    });
+  };
+  const req = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+  addEventListener('scroll', req, { passive: true });
+  addEventListener('resize', req);
+  update();
+</script>

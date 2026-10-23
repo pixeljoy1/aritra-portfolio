@@ -1,0 +1,19 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import SaveSlot from '../../components/SaveSlot.astro';
+import Panel from '../../components/Panel.astro';
+import ArcTimeline from '../../components/ArcTimeline.astro';
+import { YEARS } from '../../config';
+const work = await getCollection('work');
+---
+<Base title="Year by year">
+  <div class="wrap">
+    <h1 class="display">SELECT SAVE SLOT</h1>
+    <ArcTimeline />
+    <div class="grid">
+      {YEARS.map((y) => <SaveSlot {...y} count={work.filter((w) => w.data.year === y.slug).length} />)}
+      <Panel variant="indigo" label="SLOT 4 · YEAR 4"><p class="muted">Coming 2027–28.</p></Panel>
+    </div>
+  </div>
+</Base>

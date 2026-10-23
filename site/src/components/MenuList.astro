@@ -1,0 +1,9 @@
+---
+import Sprite from './Sprite.astro';
+const { items, large = false } = Astro.props as { items: { label: string; href: string }[]; large?: boolean };
+---
+<ul class:list={['menu', { 'menu--large': large }]}>
+  {items.map((i) => (
+    <li><a href={i.href} class="menu__row"><Sprite name="arrow" u={3} class="menu__cursor" /><span>{i.label}</span></a></li>
+  ))}
+</ul>

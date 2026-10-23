@@ -1,0 +1,4 @@
+---
+const { href, variant = 'primary', ...rest } = Astro.props as { href: string; variant?: 'primary' | 'secondary'; [k: string]: unknown };
+---
+<a href={href} class={`btn btn--${variant}`} {...rest}><slot /></a>

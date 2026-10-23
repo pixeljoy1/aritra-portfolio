@@ -1,0 +1,39 @@
+---
+import { u } from '../config';
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Panel from '../components/Panel.astro';
+import MenuList from '../components/MenuList.astro';
+import LevelCard from '../components/LevelCard.astro';
+import Sprite from '../components/Sprite.astro';
+import BrickFooter from '../components/BrickFooter.astro';
+import { SITE, YEARS } from '../config';
+const featured = (await getCollection('work')).filter((w) => w.data.status === 'featured').sort((a, b) => a.data.order - b.data.order);
+const icons: Record<string, string> = { 'tiger-run': 'tiger' };
+---
+<Base>
+  <div class="wrap">
+    <Panel class="title-panel">
+      <h1 class="display">ARITRA MITRA</h1>
+      <p class="role">{SITE.role}</p>
+      <p class="prog">{SITE.programme}</p>
+    </Panel>
+    <div class="hero-row" aria-hidden="true">
+      <Sprite name="hero" u={4} /><Sprite name="tree" u={5} class="tree" />
+    </div>
+    <MenuList items={[
+      { label: 'PLAY TIGER RUN', href: u('/play/') },
+      { label: 'VIEW RESUME', href: u('/resume/') },
+      { label: 'YEAR BY YEAR WORK', href: u('/years/') },
+    ]} />
+    <h2 class="h2">Featured work</h2>
+    <div class="grid">
+      {featured.map((w, i) => <LevelCard {...w.data} level={i + 1} icon={icons[w.data.slug]} tags={w.data.disciplines} />)}
+    </div>
+    <h2 class="h2">Year by year</h2>
+    <div class="chip-strip">
+      {YEARS.map((y) => <a href={u(`/years/${y.slug}/`)} class="btn btn--secondary">YEAR {y.n} · {y.label}</a>)}
+    </div>
+    <p>Say hello: <a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
+  </div>
+</Base>

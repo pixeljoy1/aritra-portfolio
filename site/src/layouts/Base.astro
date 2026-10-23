@@ -1,0 +1,40 @@
+---
+import { u } from '../config';
+import '../styles/tokens.css';
+import '../styles/base.css';
+import '../styles/components.css';
+import HUD from '../components/HUD.astro';
+import BrickFooter from '../components/BrickFooter.astro';
+import { SITE } from '../config';
+const { title, description = `${SITE.name} — ${SITE.role}. ${SITE.programme}.`, bare = false } = Astro.props as { title?: string; description?: string; bare?: boolean };
+const full = title ? `${title} · ${SITE.name}` : `${SITE.name} — ${SITE.role}`;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{full}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={full} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={u("/og/default.png")} />
+    <link rel="icon" href={u("/favicon.svg")} type="image/svg+xml" />
+    <link rel="preload" href={u("/fonts/press-start-2p-latin-400-normal.woff2")} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={u("/fonts/atkinson-hyperlegible-latin-400-normal.woff2")} as="font" type="font/woff2" crossorigin />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <HUD />
+    <main id="main"><slot /></main>
+    {!bare && (
+      <footer class="footer">
+        <div class="wrap footer__in">
+          <p><a href={`mailto:${SITE.email}`}>{SITE.email}</a> · <a href={SITE.github}>GitHub</a></p>
+          <p class="muted">© {SITE.name}</p>
+        </div>
+        <BrickFooter />
+      </footer>
+    )}
+  </body>
+</html>

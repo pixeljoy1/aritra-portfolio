@@ -1,0 +1,16 @@
+---
+import Base from '../../layouts/Base.astro';
+import Panel from '../../components/Panel.astro';
+import { SITE } from '../../config';
+---
+<Base title="About">
+  <div class="wrap">
+    <h1 class="display">ABOUT</h1>
+    <p class="placeholder">[PLACEHOLDER: 120–180 words about Aritra: who he is, how he works (research → prototype → critique → iterate), what he is looking for. CONFIRM copy with Aritra.]</p>
+    <p>{SITE.programme}.</p>
+    <Panel variant="indigo" label="PLAYER STATS">
+      <p><strong>Areas:</strong> game + environment, UX + systems, motion + lighting</p>
+      <p class="placeholder"><strong>Tools:</strong> [PLACEHOLDER: confirmed tools only]</p>
+    </Panel>
+  </div>
+</Base>

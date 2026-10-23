@@ -1,0 +1,29 @@
+---
+import { u } from '../../config';
+const GAME_URL = 'https://claude.ai/artifact/MTCsVbHae1SPDNdjzp1gVr';
+import Base from '../../layouts/Base.astro';
+import Sprite from '../../components/Sprite.astro';
+import Panel from '../../components/Panel.astro';
+---
+<Base title="Play Tiger Run">
+  <div class="wrap">
+    <p class="label"><a href={u("/")}>← HOME</a></p>
+    <h1 class="display">TIGER RUN</h1>
+    <div class="cartridge cartridge--launch">
+      <!-- claude.ai blocks framing (frame-ancestors 'self'), so the temporary fallback is a launch button. -->
+      <Sprite name="tiger" u={8} />
+      <p class="label blink">PRESS START</p>
+      <a class="btn btn--primary" href={GAME_URL} target="_blank" rel="noopener">▶ PLAY TIGER RUN</a>
+      <p class="muted">Opens in a new tab. Best score is saved on your device.</p>
+    </div>
+    <h2 class="h2">Making of</h2>
+    <p>Tiger Run began as a Grade 10 IGCSE illustration, drawn in Procreate on iPad, about wildlife conservation in India: a tiger running a poacher's gauntlet. It later became a playable endless-runner proof of concept.</p>
+    <ul>
+      <li><strong>Survival:</strong> poachers, snares, traps.</li>
+      <li><strong>Hunting:</strong> prey restores stamina.</li>
+      <li><strong>Distance score:</strong> best score is saved locally.</li>
+      <li><strong>Conservation:</strong> rescue cubs, restore habitat.</li>
+    </ul>
+    <Panel variant="indigo" label="CONTROLS"><p class="placeholder">[PLACEHOLDER: controls, taken from the build]</p></Panel>
+  </div>
+</Base>

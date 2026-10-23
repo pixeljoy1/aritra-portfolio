@@ -1,0 +1,9 @@
+---
+import { spriteRects } from './sprites';
+const { name, u = 3, class: cls = '' } = Astro.props as { name: string; u?: number; class?: string };
+const { w, h, paths } = spriteRects(name);
+---
+<svg class={`sprite ${cls}`} width={w * u} height={h * u} viewBox={`0 0 ${w} ${h}`}
+  shape-rendering="crispEdges" aria-hidden="true" focusable="false">
+  {paths.map((p) => <path fill={p.fill} d={p.d} />)}
+</svg>

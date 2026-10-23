@@ -1,0 +1,14 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE } from '../../config';
+---
+<Base title="Contact">
+  <div class="wrap">
+    <h1 class="display">CONTACT</h1>
+    <ul>
+      <li><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
+      <li><a href={SITE.github}>GitHub</a></li>
+      {SITE.linkedin && <li><a href={SITE.linkedin}>LinkedIn</a></li>}
+    </ul>
+  </div>
+</Base>

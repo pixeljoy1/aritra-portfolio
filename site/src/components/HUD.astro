@@ -1,0 +1,32 @@
+---
+import { u } from '../config';
+import Sprite from './Sprite.astro';
+import MenuList from './MenuList.astro';
+import { NAV, SITE } from '../config';
+---
+<header class="hud">
+  <div class="hud__bar">
+    <a href={u("/")} class="hud__home"><span class="label">PLAYER 1</span> <strong>{SITE.name}</strong></a>
+    <span class="hud__hearts" aria-hidden="true"><Sprite name="heart" u={2} /><Sprite name="heart" u={2} /><Sprite name="heart" u={2} /></span>
+    <nav class="hud__nav" aria-label="Main">
+      {NAV.map((n) => <a href={u(n.href)}>{n.label}</a>)}
+    </nav>
+    <button class="pill hud__menu" type="button" aria-expanded="false" aria-controls="menu-overlay">MENU</button>
+  </div>
+  <div id="menu-overlay" class="overlay" hidden>
+    <button class="pill overlay__close" type="button">CLOSE</button>
+    <MenuList large items={[{ label: 'HOME', href: u('/') }, ...NAV.map((n) => ({ label: n.label.toUpperCase(), href: u(n.href) }))]} />
+  </div>
+</header>
+<script>
+  const btn = document.querySelector<HTMLButtonElement>('.hud__menu')!;
+  const ov = document.getElementById('menu-overlay')!;
+  const set = (open: boolean) => {
+    ov.hidden = !open; btn.setAttribute('aria-expanded', String(open));
+    document.body.style.overflow = open ? 'hidden' : '';
+    (open ? ov.querySelector<HTMLElement>('a') : btn)?.focus();
+  };
+  btn.addEventListener('click', () => set(true));
+  ov.querySelector('.overlay__close')!.addEventListener('click', () => set(false));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !ov.hidden) set(false); });
+</script>

@@ -1,0 +1,39 @@
+---
+import { u } from '../../config';
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Panel from '../../components/Panel.astro';
+import { YEARS } from '../../config';
+export async function getStaticPaths() {
+  const ys = await getCollection('years');
+  return YEARS.map((y, i) => ({
+    params: { year: y.slug },
+    props: { y, prev: YEARS[i - 1], next: YEARS[i + 1], entry: ys.find((e) => e.data.slug === y.slug) },
+  }));
+}
+const { y, prev, next, entry } = Astro.props;
+---
+<Base title={`Year ${y.n} · ${y.label}`}>
+  <div class="wrap">
+    <p class="label"><a href={u("/years/")}>← ALL YEARS</a></p>
+    <h1 class="display">YEAR {y.n} · {y.label}</h1>
+    <p class="lede">{entry?.data.summary ?? '[PLACEHOLDER: year summary]'}</p>
+    {entry?.data.groups.map((g) => (
+      <Panel label={`${g.semester} · ${g.topic}`}>
+        <ul>
+          {g.items.map((it) => (
+            <li>
+              {it.work ? <a href={u(`/work/${it.work}/`)}>{it.title}</a> : it.title}
+              {it.course && <span class="muted"> — {it.course}</span>}
+              {it.note && <span class="placeholder"> {it.note}</span>}
+            </li>
+          ))}
+        </ul>
+      </Panel>
+    ))}
+    <nav class="prevnext" aria-label="Years">
+      {prev ? <a href={u(`/years/${prev.slug}/`)}>← PREVIOUS YEAR</a> : <span></span>}
+      {next ? <a href={u(`/years/${next.slug}/`)}>NEXT YEAR →</a> : <span></span>}
+    </nav>
+  </div>
+</Base>

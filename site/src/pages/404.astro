@@ -1,0 +1,14 @@
+---
+import { u } from '../config';
+import Base from '../layouts/Base.astro';
+import Sprite from '../components/Sprite.astro';
+import Button from '../components/Button.astro';
+---
+<Base title="Game over">
+  <div class="wrap gameover">
+    <h1 class="display">GAME OVER</h1>
+    <p><Sprite name="hero" u={4} /></p>
+    <p class="label blink">CONTINUE?</p>
+    <Button href={u("/")}>▶ HOME</Button>
+  </div>
+</Base>

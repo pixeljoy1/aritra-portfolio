@@ -1,0 +1,43 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import LevelCard from '../../components/LevelCard.astro';
+import Chip from '../../components/Chip.astro';
+const all = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+const icons: Record<string, string> = { 'tiger-run': 'tiger' };
+const discs = [['all', 'ALL'], ['game-environment', 'GAME + ENVIRONMENT'], ['ux-systems', 'UX + SYSTEMS'], ['motion-lighting', 'MOTION + LIGHTING']];
+const years = [['all', 'ALL YEARS'], ['2024-25', 'Y1'], ['2025-26', 'Y2'], ['2026-27', 'Y3']];
+---
+<Base title="Work">
+  <div class="wrap">
+    <h1 class="display">WORK</h1>
+    <div class="chips" role="group" aria-label="Filter by discipline">
+      {discs.map(([v, l], i) => <Chip as="button" group="disc" filter={v} selected={i === 0}>{l}</Chip>)}
+    </div>
+    <div class="chips" role="group" aria-label="Filter by year">
+      {years.map(([v, l], i) => <Chip as="button" group="year" filter={v} selected={i === 0}>{l}</Chip>)}
+    </div>
+    <div class="grid" id="cards">
+      {all.map((w, i) => <LevelCard {...w.data} level={i + 1} icon={icons[w.data.slug]} tags={w.data.disciplines} />)}
+    </div>
+    <p id="empty" class="muted" hidden>Nothing here yet.</p>
+  </div>
+</Base>
+<script>
+  const state = { disc: 'all', year: 'all' };
+  const cards = [...document.querySelectorAll<HTMLElement>('#cards .card')];
+  const apply = () => {
+    let shown = 0;
+    cards.forEach((c) => {
+      const ok = (state.disc === 'all' || c.dataset.disc!.split(' ').includes(state.disc)) && (state.year === 'all' || c.dataset.year === state.year);
+      c.hidden = !ok; if (ok) shown++;
+    });
+    document.getElementById('empty')!.hidden = shown > 0;
+  };
+  document.querySelectorAll<HTMLButtonElement>('button.chip').forEach((b) => b.addEventListener('click', () => {
+    const g = b.dataset.group as 'disc' | 'year';
+    state[g] = b.dataset.filter!;
+    document.querySelectorAll(`button.chip[data-group="${g}"]`).forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+    apply();
+  }));
+</script>

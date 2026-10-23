@@ -1,0 +1,6 @@
+---
+const { selected = false, filter, group, as: Tag = 'span' } = Astro.props as { selected?: boolean; filter?: string; group?: string; as?: string };
+---
+{Tag === 'button'
+  ? <button type="button" class="chip" aria-pressed={selected ? 'true' : 'false'} data-filter={filter} data-group={group}><slot /></button>
+  : <span class="chip"><slot /></span>}
