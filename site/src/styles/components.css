@@ -267,3 +267,11 @@ div.card:hover { transform: none; box-shadow: none; }
 .search input:focus-visible { outline: var(--focus); outline-offset: 2px; }
 .livenote { margin: 0 0 var(--s4); }
 .livenote .h2 { margin-top: var(--s3); }
+
+/* Case-study photos (cropped, faces blurred) */
+.photo { margin: var(--s4) 0; }
+.photo a { display: block; line-height: 0; }
+.photo img { width: 100%; height: auto; border: 2px solid var(--mint); border-radius: var(--radius); display: block; background: #000; }
+.photo figcaption { margin-top: var(--s2); font-size: 14px; color: var(--muted); line-height: 1.4; }
+.photo-row { display: grid; gap: var(--s4); grid-template-columns: 1fr; }
+@media (min-width: 760px) { .photo-row { grid-template-columns: 1fr 1fr; } }

@@ -179,6 +179,33 @@ for slug, rel, ss, y, s, topic, title in VIDEOS:
     subprocess.run(['ffmpeg','-y','-loglevel','error','-ss',str(ss),'-t','6','-i',str(src),'-vf','scale=-2:480,fps=24','-c:v','libx264','-crf','31','-preset','slow','-an','-movflags','+faststart',str(clip)], check=True)
     print(f'{slug}: poster {poster.stat().st_size//1024} KB, clip {clip.stat().st_size//1024} KB')
     artefacts.append({'year': y, 'semester': s, 'topic': topic, 'title': title, 'image': f'/video/{slug}.webp', 'large': f'/video/{slug}.webp', 'video': f'/video/{slug}.mp4', 'pdf': None, 'work': None, 'pages': None})
+# Live-project photos: cropped to the action; every face that is not the subject is pixelated; screens never shown.
+REBIT = ROOT / 'assets' / 'drive' / 'REBIT_UX_LIVEPROJECT_JAN2024'
+REBIT_PHOTOS = [  # key, file, crop (rel x0,y0,x1,y1; square rel box = 4:3 crop), pixelate boxes (rel to the FULL image), alt
+ # Aritra = the person in the hoodie (green hoodie on the participant day, maroon hoodie when facilitating).
+ ('think-aloud', '1736696037772.jpg', (0.12, 0.0, 0.92, 0.8), [(0.55, 0.03, 0.90, 0.42), (0.22, 0.31, 0.42, 0.64), (0.10, 0.0, 0.22, 0.24)], 'Aritra, as a test participant, talking a task through out loud while using a tablet'),
+ ('think-aloud-close', '1736696037823.jpg', (0.05, 0.1, 0.95, 1.0), [(0.40, 0.05, 0.66, 0.34), (0.05, 0.40, 0.37, 0.75), (0.50, 0.0, 0.68, 0.22), (0.70, 0.34, 0.95, 0.90)], 'Close view of Aritra pointing at the tablet while explaining what he sees'),
+ # 'at-the-laptop' (1736696037441.jpg) is parked: whiteboard heading and lanyard print were still readable after blurring. Re-add only after checking the result.
+ ('facilitating', 'IMG_20250115_105406.jpg', (0.0, 0.08, 0.7, 0.78), [(0.27, 0.07, 0.42, 0.21), (0.53, 0.25, 0.72, 0.48), (0.2, 0.64, 0.32, 0.76)], 'Aritra, as facilitator, guiding a participant through the task on a laptop'),
+ ('the-room', '1736785934348.jpg', (0.0, 0.0, 1.0, 1.0), [(0.32, 0.24, 0.46, 0.42), (0.63, 0.25, 0.78, 0.42), (0.78, 0.07, 0.90, 0.22), (0.0, 0.0, 0.31, 0.5)], 'The session space: a moderator and a participant at a table, the rest of the team working nearby'),
+]
+def rebit_photo(f, crop, boxes):
+    from PIL import ImageOps
+    im = ImageOps.exif_transpose(Image.open(REBIT / f)).convert('RGB'); W, H = im.size
+    for (a, b, c, d) in boxes:   # pixelate in place (blocky, on-brand), before cropping
+        box = (round(a * W), round(b * H), round(c * W), round(d * H)); reg = im.crop(box)
+        blk = max(48, min(reg.width, reg.height) // 7)     # block size in full-resolution pixels: coarse enough to destroy small print
+        reg = reg.resize((max(1, reg.width // blk), max(1, reg.height // blk)), Image.BILINEAR).resize(reg.size, Image.NEAREST)
+        im.paste(reg, box[:2])
+    x0, y0, x1, y1 = crop
+    return im.crop((round(x0 * W), round(y0 * H), round(x1 * W), round(y1 * H)))
+lpdir = PUB / 'img' / 'live-project-ux-research'
+lp = {}
+for key, f, crop, boxes, alt in REBIT_PHOTOS:
+    im = rebit_photo(f, crop, boxes)
+    sz = save(im, lpdir / f'ph-{key}.webp', 1100); save(im, lpdir / f'ph-{key}-sm.webp', 480)
+    lp[key] = alt; print(f'live photo {key}: {sz//1024} KB')
+
 # Round-masked photos: stored as square crops, masked with CSS (border-radius 50%).
 PHOTOS = [  # key, file, crop box (square), alt
  ('portrait', 'portrait.jpg', (150, 300, 790, 940), 'Aritra Mitra smiling beside the Jindal School of Art and Architecture sign'),

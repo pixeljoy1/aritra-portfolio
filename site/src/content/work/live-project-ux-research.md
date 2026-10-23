@@ -40,6 +40,11 @@ It was a **mixed-methods, moderated usability study**, run both in person and re
 <figcaption>The shape of every session. The "Me" lines are what I did around it.</figcaption>
 </figure>
 
+<figure class="photo">
+<a href="../../img/live-project-ux-research/ph-the-room.webp" data-lb data-lb-group="live-project" data-lb-src="../../img/live-project-ux-research/ph-the-room.webp" data-lb-alt="The session space: a moderator and a participant at a table, the rest of the team working nearby" data-lb-title="The session space" data-lb-meta="Live UX research project"><img src="../../img/live-project-ux-research/ph-the-room-sm.webp" srcset="../../img/live-project-ux-research/ph-the-room-sm.webp 480w, ../../img/live-project-ux-research/ph-the-room.webp 1100w" sizes="(min-width: 960px) 760px, 92vw" alt="The session space: a moderator and a participant at a table, the rest of the team working nearby" width="1100" height="825" loading="lazy" /></a>
+<figcaption>The room where sessions ran: a moderator and a participant at a table, the team working close by. Faces are blurred.</figcaption>
+</figure>
+
 ## My part
 I covered the whole research-operations side, so the moderators could stay focused on the person in front of them.
 - **Note-taker.** Capturing what people did, in order, and what they said, without interpreting it too early. Good notes are what the analysis stands on.
@@ -49,6 +54,24 @@ I covered the whole research-operations side, so the moderators could stay focus
 - **Processing.** Cleaning the raw notes after each session and tagging each issue to the task where it happened.
 - **Tabulating.** Entering the ease ratings and the ten SUS answers per participant, and keeping the scoring workbook that turned them into scores.
 - **Participant.** Doing the tasks myself showed me what it feels like to be watched, and why moderators must stay neutral.
+
+<div class="photo-row">
+<figure class="photo">
+<a href="../../img/live-project-ux-research/ph-facilitating.webp" data-lb data-lb-group="live-project" data-lb-src="../../img/live-project-ux-research/ph-facilitating.webp" data-lb-alt="Aritra, as facilitator, guiding a participant through the task on a laptop" data-lb-title="Facilitating a session" data-lb-meta="Live UX research project"><img src="../../img/live-project-ux-research/ph-facilitating-sm.webp" srcset="../../img/live-project-ux-research/ph-facilitating-sm.webp 480w, ../../img/live-project-ux-research/ph-facilitating.webp 1100w" sizes="(min-width: 960px) 372px, 92vw" alt="Aritra, as facilitator, guiding a participant through the task on a laptop" width="1100" height="825" loading="lazy" /></a>
+<figcaption><strong>Facilitating.</strong> Guiding a participant through the task, hands on the laptop, a colleague taking notes behind. Faces and the screen are blurred.</figcaption>
+</figure>
+</div>
+
+<div class="photo-row">
+<figure class="photo">
+<a href="../../img/live-project-ux-research/ph-think-aloud.webp" data-lb data-lb-group="live-project" data-lb-src="../../img/live-project-ux-research/ph-think-aloud.webp" data-lb-alt="Aritra, as a test participant, talking a task through out loud while using a tablet" data-lb-title="As a test participant" data-lb-meta="Live UX research project"><img src="../../img/live-project-ux-research/ph-think-aloud-sm.webp" srcset="../../img/live-project-ux-research/ph-think-aloud-sm.webp 480w, ../../img/live-project-ux-research/ph-think-aloud.webp 1100w" sizes="(min-width: 960px) 372px, 92vw" alt="Aritra, as a test participant, talking a task through out loud while using a tablet" width="1100" height="825" loading="lazy" /></a>
+<figcaption><strong>As a participant.</strong> Thinking aloud on a tablet while a colleague listened. Doing it myself showed me how it feels to be watched.</figcaption>
+</figure>
+<figure class="photo">
+<a href="../../img/live-project-ux-research/ph-think-aloud-close.webp" data-lb data-lb-group="live-project" data-lb-src="../../img/live-project-ux-research/ph-think-aloud-close.webp" data-lb-alt="Close view of Aritra pointing at the tablet while explaining what he sees" data-lb-title="Explaining what I see" data-lb-meta="Live UX research project"><img src="../../img/live-project-ux-research/ph-think-aloud-close-sm.webp" srcset="../../img/live-project-ux-research/ph-think-aloud-close-sm.webp 480w, ../../img/live-project-ux-research/ph-think-aloud-close.webp 1100w" sizes="(min-width: 960px) 372px, 92vw" alt="Close view of Aritra pointing at the tablet while explaining what he sees" width="1100" height="825" loading="lazy" /></a>
+<figcaption><strong>Explaining what I see.</strong> Pointing at the exact element that caused a pause. The screen is blurred.</figcaption>
+</figure>
+</div>
 
 <figure class="fig">
 <p class="label label--pink">FIGURE 2 · THE SESSION TRACKER, STRUCTURE ONLY</p>
@@ -117,4 +140,4 @@ Add a short explainer and a visible help route. Make the main action unmistakabl
 - A report people act on is short, specific and honest about what it cannot say.
 
 ## Honesty box
-This page is written from my experience of the project. It does not name the client or the product and shows no figures, participant details or screens. The figures above are diagrams of the method, with made-up example values, and the tracker rows are examples, not records.
+This page is written from my experience of the project. It does not name the client or the product and shows no figures, participant details or screens. In the photos, everyone other than me is blurred, as are screens, whiteboards and badges. The figures above are diagrams of the method, with made-up example values, and the tracker rows are examples, not records.
