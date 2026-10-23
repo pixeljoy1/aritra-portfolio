@@ -64,3 +64,9 @@ All former "[PLACEHOLDER]" / "[CONFIRM]" text on the site was replaced with firs
 - The 8.8 MB .pptx itself is not published (over the 4 MB budget); no PDF export because this Mac has no LibreOffice. Export a PDF from Drive/PowerPoint if a "full deck" link is wanted.
 - Consider adding this report to the résumé (it is the visual origin of the site's style).
 - Origin banner: the report's Introduction slide, cropped to its text-only part (the Carmack/Romero photo and id logo are cut out). Shown on About and first in the report's gallery; all link to `/work/doom-and-quake/`. Source: `assets/photos/intro-slide.webp`, crop in `scripts/stage2_publish.py`.
+
+## Footer level + hidden game (2026-10-23)
+- The footer is now "Level 1": a 192 px canvas where Aritra's sprite autoruns past coins, ? blocks, cacti, pipes with chomping plants, a staircase, a flagpole and a castle, then loops. Clicking it opens a modal with the playable level (`site/src/scripts/level.ts`, one engine for both modes; `site/src/components/BrickFooter.astro`).
+- Rules: collect coins (+200), bump bricks (+50, they break) and ? blocks (coin or the mushroom), the mushroom makes Aritra bigger (+1000) and a hit then only shrinks him, cacti and plants cost a life (3 lives), reach the flag (height bonus) before the 100 s timer ends (+50 per second left), walk into the castle. Controls: arrows/A D, Space/Up/W to jump, Enter restarts, M mutes, Esc closes; on touch screens on-screen buttons appear.
+- Verified in a test build: the autopilot clears the level under the real hazard rules; mushroom, brick bump and shrink-on-hit were checked by script. Not verified: touch controls on a real phone, sound, and play feel; tune MAXV / JUMP_V / TIME_LIMIT at the top of level.ts if it feels off.
+- All art is original pixel art in the site palette (no Nintendo assets). Reduced-motion users get a still footer.
