@@ -135,3 +135,6 @@ button.chip { min-height: 44px; padding: 0 var(--s4); cursor: pointer; }
 .artefact .card__thumb { display: block; }
 .artefact:hover { transform: none; box-shadow: none; }
 .slot__thumbs img { width: 56px; height: 35px; object-fit: cover; border: 2px solid var(--indigo); border-radius: 3px; }
+
+.cartridge--game { aspect-ratio: auto; height: min(78vh, 720px); min-height: 480px; }
+@media (min-width: 960px) { .cartridge--game { height: 640px; } }

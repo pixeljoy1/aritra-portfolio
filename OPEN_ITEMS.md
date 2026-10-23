@@ -1,7 +1,7 @@
 # Open items (CONFIRM)
 
 1. **Domain** and GitHub username/repo → `public/CNAME` (not yet created), `astro.config.mjs` `site`, `src/config.ts`, canonical tags. Blocks the QR.
-2. ~~Contact email~~ (done: aritramitra49@gmail.com). Still open: GitHub URL, LinkedIn → `src/config.ts` (`[EMAIL]`, `[GITHUB_URL]`).
+2. ~~Contact email~~ (done: aritramitra49@gmail.com). Still open: GitHub URL (LinkedIn is set) → `src/config.ts` (`[EMAIL]`, `[GITHUB_URL]`).
 3. **Role line** (draft "Game + Immersive Designer") and About copy → `src/pages/about`.
 4. **Tools list** to publish → case-study frontmatter, About, resume.
 5. **Three best images per featured project** + Spatial Narrative text.
@@ -12,7 +12,7 @@
 10. **Analytics** yes/no.
 
 ## Engineering gaps
-- **Tiger Run build is not in the repo.** The claude.ai artifact couldn't be copied from here. Save it as `games/tiger-run/index.html`, then do spec §9 (self-host Baloo 2, `tigerrun:best` storage key, ← HOME link, OG tags) and serve it under `/play/`. Baloo 2 woff2 files are already in `public/fonts/`.
+- ~~Tiger Run build~~ done: source in `games/tiger-run/index.html`, served (copy) at `/play/game/` and embedded by iframe on `/play/`. Baloo 2 self-hosted, storage key `tigerrun:best`, ← HOME link added. Still to do: share image (OG), `canonical` once the domain exists, test on real iOS Safari and Android. When editing the game, edit `games/tiger-run/index.html` then copy it to `site/public/play/game/index.html`.
 - Sitemap, OG image (`/og/default.png`), `resume/archive/`, `scripts/*.sh` compress scripts, Lighthouse run: not done.
 - `PORTFOLIO_SPEC.md` is a stub; paste the full spec in.
 
@@ -20,7 +20,7 @@
 Lightbox for case-study galleries (`previewer.js` pattern), pinned horizontal Work track on home, word-by-word contact CTA, Three.js 3-beat "approach" scene (needs Aritra's story; heavy for the 4G budget).
 
 ## Decisions (build 2)
-- `/play/` temporarily links to the claude.ai artifact via a launch button (claude.ai blocks iframe embedding). Remove once the domain is live; supply the game HTML to embed it properly under /play/
+- The claude.ai artifact link is no longer used anywhere on the site (spec §1.5).
 - `/resume/` shows a placeholder window; drop the PDF at `public/resume.pdf` and it appears automatically.
 
 ## Deployment
