@@ -8,7 +8,7 @@ Output: site/public/artefacts/<year>/*.pdf|*.webp   (PDF shrunk, preview = page 
         site/src/data/artefacts.json                (read by the year pages)
 Needs : pip install pymupdf pillow.  PPTX files get a preview from their embedded images only;
         for a PDF of a deck, export it from Drive (File > Download > PDF) and drop it beside the .pptx.
-Rules : nothing over 10 MB is published; videos and 3D/source files are ignored (spec section 8).
+Rules : nothing over 4 MB (PDF) / 150 KB (preview) is published; videos and 3D/source files are ignored (spec section 8).
 """
 import io, json, re, sys, zipfile
 from pathlib import Path
@@ -20,14 +20,18 @@ SRC = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'assets' / 'drive'
 OUT = ROOT / 'site' / 'public' / 'artefacts'
 DATA = ROOT / 'site' / 'src' / 'data' / 'artefacts.json'
 YEAR = {1: '2024-25', 2: '2024-25', 3: '2025-26', 4: '2025-26', 5: '2026-27', 6: '2026-27'}
-MAX_PDF = 10 * 1024 * 1024
+MAX_PDF = 4 * 1024 * 1024      # anything bigger stays out of git: preview only
+MAX_IMG = 150 * 1024
 SKIP = re.compile(r'(identity|passport|aadhaar|aadhar|medical|undertaking|marksheet|transcript|invoice|fee)', re.I)
 
 def slugify(s): return re.sub(r'[^a-z0-9]+', '-', s.lower()).strip('-')[:60] or 'file'
-def webp(img: Image.Image, dest: Path, w=1200):
+def webp(img: Image.Image, dest: Path, w=960):
     img = img.convert('RGB')
     if img.width > w: img = img.resize((w, round(img.height * w / img.width)))
-    dest.parent.mkdir(parents=True, exist_ok=True); img.save(dest, 'WEBP', quality=80)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    for q in (78, 68, 58, 48, 38):           # step quality down until the preview fits the budget
+        img.save(dest, 'WEBP', quality=q, method=6)
+        if dest.stat().st_size <= MAX_IMG: break
 
 def pdf_artefact(p: Path, year: str, slug: str):
     doc = fitz.open(p)
@@ -40,7 +44,7 @@ def pdf_artefact(p: Path, year: str, slug: str):
     except Exception: pass
     doc.save(tmp, garbage=4, deflate=True, clean=True)
     if tmp.stat().st_size <= MAX_PDF: pdf = tmp
-    else: tmp.unlink(); print(f'  ! {p.name}: still >10 MB after shrinking, preview only')
+    else: tmp.unlink(); print(f'  ! {p.name}: still over budget after shrinking, preview only')
     return pdf, prev, len(doc)
 
 def pptx_preview(p: Path, year: str, slug: str):
