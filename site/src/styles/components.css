@@ -241,3 +241,20 @@ div.card:hover { transform: none; box-shadow: none; }
 .lv__end[hidden] { display: none; }
 .lv__end .label { margin: 0; }
 .btn--sm { min-height: 40px; padding: 0 var(--s4); font-size: 11px; }
+
+/* Case-study figures (diagrams built from real text) */
+.fig { margin: var(--s5) 0; padding: var(--s4); background: var(--panel-bg); border: 2px solid var(--indigo); border-radius: var(--radius); }
+.fig > .label { margin: 0 0 var(--s3); }
+.fig figcaption { margin-top: var(--s3); font-size: 14px; color: var(--muted); }
+.fig__scroll { overflow-x: auto; }
+.flow { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); grid-template-columns: 1fr; counter-reset: none; }
+@media (min-width: 760px) { .flow { grid-template-columns: repeat(4, 1fr); } .flow--5 { grid-template-columns: repeat(5, 1fr); } }
+.flow li { display: grid; gap: var(--s1); align-content: start; border: 2px solid var(--mint); border-radius: var(--radius); padding: var(--s3); background: #000; font-size: 15px; line-height: 1.4; position: relative; }
+.flow__n { font: 700 11px var(--f-ui); color: var(--pink); letter-spacing: .08em; }
+.flow li strong { font: 700 13px var(--f-ui); text-transform: uppercase; letter-spacing: .06em; color: var(--mint); }
+.flow li em { font-style: normal; font: 11px var(--f-ui); text-transform: uppercase; letter-spacing: .05em; color: var(--indigo-text); margin-top: var(--s1); }
+.sheet { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 520px; }
+.sheet th, .sheet td { border: 1px solid var(--indigo-dark); padding: 6px 8px; text-align: left; white-space: nowrap; }
+.sheet thead th { background: #000; color: var(--mint); font: 700 11px var(--f-ui); text-transform: uppercase; letter-spacing: .05em; }
+.sheet--sus td, .sheet--sus th { text-align: center; } .sheet--sus td:first-child, .sheet--sus th:first-child { text-align: left; }
+.fig__sum { margin: var(--s3) 0 0; font: 700 13px var(--f-ui); color: var(--yellow); letter-spacing: .05em; }
