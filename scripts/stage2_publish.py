@@ -206,6 +206,33 @@ for key, f, crop, boxes, alt in REBIT_PHOTOS:
     sz = save(im, lpdir / f'ph-{key}.webp', 1100); save(im, lpdir / f'ph-{key}-sm.webp', 480)
     lp[key] = alt; print(f'live photo {key}: {sz//1024} KB')
 
+# Small header for the live-project page: the (already anonymised) photos as pixel-art round icons beside a pixel magnifier.
+def live_banner():
+    from PIL import ImageDraw
+    D = lpdir
+    items = [('think-aloud', (0.0, 0.0, 0.545, 0.727)), ('think-aloud-close', (0.0, 0.0, 0.6, 0.8)), ('facilitating', (0.0, 0.0, 0.5, 0.667)), ('the-room', (0.64, 0.0, 1.0, 0.48))]
+    S, R, W, H = 160, 4, 880, 200
+    banner = Image.new('RGB', (W, H), (4, 18, 10)); d = ImageDraw.Draw(banner)
+    mint, mintD = (33, 239, 128), (18, 184, 98)
+    lens = ['...MMMMM....', '..MGGGGGM...', '.MGGGGGGGM..', '.MGGGGGGGM..', '.MGGGGGGGM..', '.MGGGGGGGM..', '..MGGGGGM...', '...MMMMMBB..', '........BBB.', '.........BBB', '..........BB']
+    pal = {'M': mint, 'G': (255, 255, 255), 'B': (88, 94, 255)}
+    u = 10; ox, oy = 26, (H - 11 * u) // 2
+    for yy, row in enumerate(lens):
+        for xx, ch in enumerate(row):
+            if ch in pal: d.rectangle([ox + xx * u, oy + yy * u, ox + xx * u + u - 1, oy + yy * u + u - 1], fill=pal[ch])
+    x = ox + 12 * u + 22
+    for k, (a, b, c, e) in items:
+        im = Image.open(D / f'ph-{k}.webp').convert('RGB'); w, h = im.size
+        im = im.crop((round(a * w), round(b * h), round(c * w), round(e * h))); sd = min(im.size); im = im.crop((0, 0, sd, sd))
+        px = im.resize((S // R, S // R), Image.BILINEAR).quantize(colors=28, method=Image.Quantize.MEDIANCUT).convert('RGB')
+        mask = Image.new('L', (S, S), 0); ImageDraw.Draw(mask).ellipse((0, 0, S - 1, S - 1), fill=255)
+        cy = (H - S) // 2 - 6
+        d.ellipse((x - 2, cy + 9, x + S + 2, cy + S + 11), fill=mintD)
+        banner.paste(px.resize((S, S), Image.NEAREST), (x, cy), mask); d.ellipse((x - 4, cy - 4, x + S + 3, cy + S + 3), outline=mint, width=5)
+        x += S + 18
+    banner.save(D / 'banner.webp', 'WEBP', quality=82, method=6)
+live_banner()
+
 # Round-masked photos: stored as square crops, masked with CSS (border-radius 50%).
 PHOTOS = [  # key, file, crop box (square), alt
  ('portrait', 'portrait.jpg', (150, 300, 790, 940), 'Aritra Mitra smiling beside the Jindal School of Art and Architecture sign'),

@@ -20,7 +20,8 @@ const linkEntries = Object.entries(d.links).filter(([, v]) => v);
       <div><dt>Tools</dt><dd>{d.tools.length ? d.tools.join(', ') : '—'}</dd></div>
       {d.duration && <div><dt>Duration</dt><dd>{d.duration}</dd></div>}
     </dl>
-    {m && <a class="case__hero-link" href={u(m.hero)} data-lb data-lb-group={d.slug} data-lb-src={u(m.hero)} data-lb-alt={m.heroAlt} data-lb-title={m.heroAlt} data-lb-meta={d.title}><img class="case__hero" src={u(m.hero)} alt={m.heroAlt} width="1400" height="788" /></a>}
+    {d.live && <img class="case__banner" src={u(`/img/${d.slug}/banner.webp`)} alt="Pixel-art icons of the research sessions beside a magnifying glass" width="880" height="200" />}
+    {m && !d.live && <a class="case__hero-link" href={u(m.hero)} data-lb data-lb-group={d.slug} data-lb-src={u(m.hero)} data-lb-alt={m.heroAlt} data-lb-title={m.heroAlt} data-lb-meta={d.title}><img class="case__hero" src={u(m.hero)} alt={m.heroAlt} width="1400" height="788" /></a>}
     {d.live && (
       <Panel variant="pink" label="CONFIDENTIAL">
         <p>This was real client work. The client and the product are <strong>not named</strong>, and no figures, participant details or screens are shown. What follows is the method and what I learned.</p>
