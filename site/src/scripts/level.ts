@@ -221,7 +221,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
       scrollT += dt; h.anim = 0;
       if (scrollT >= 1.4) {
         phase = 'clear'; ambientWait = 0; score += Math.max(0, Math.ceil(timeLeft)) * 50;
-        pops.push({ x: h.x - 14, y: h.y - 26, txt: 'INTERNSHIP!', t: -0.9 });
+        pops.push({ x: h.x - 14, y: h.y - 26, txt: 'LEVEL CLEAR!', t: -0.9 });
         for (let i = 0; i < 44; i++) bits.push({ x: h.x + 6, y: h.y, vx: (Math.random() - 0.5) * 170, vy: -40 - Math.random() * 190, c: [COL.yellow, COL.pink, COL.mint, COL.indT][i % 4], t: 0 });
         beep(523, 1046, 0.5, 'square', 0.05); setTimeout(() => beep(784, 1568, 0.5, 'square', 0.05), 220);
         opts.onEnd?.({ won: true, score });
@@ -364,7 +364,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     sh(`COINS ${String(coinN).padStart(2, '0')}`, Math.round(viewW * 0.34), 6, COL.yellow);
     sh(`TIME ${String(Math.max(0, Math.ceil(timeLeft))).padStart(3, '0')}`, Math.round(viewW * 0.58), 6, timeLeft < 20 ? COL.pink : COL.mint);
     for (let i = 0; i < lives; i++) ctx.drawImage(art.heart, viewW - 12 - i * 10, 6, 7, 6);
-    const msg = phase === 'ready' ? ['LEVEL 1', 'GET ARITRA HIS INTERNSHIP', 'REACH THE WIZARD · PRESS ANY KEY'] : phase === 'over' ? ['GAME OVER', 'THE WIZARD IS STILL WAITING', 'PRESS ENTER TO TRY AGAIN'] : null;
+    const msg = phase === 'ready' ? ['LEVEL 1', 'GET ARITRA HIS INTERNSHIP', 'REACH THE WIZARD · PRESS ANY KEY'] : phase === 'over' ? ['GAME OVER', 'NOT YET', 'PRESS ENTER TO TRY AGAIN'] : null;
     if (msg) {
       ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(0, 54, viewW, 84); ctx.textAlign = 'center';
       ctx.font = '12px "Press Start 2P", monospace'; sh(msg[0], viewW / 2, 66, phase === 'over' ? COL.pink : COL.yellow);

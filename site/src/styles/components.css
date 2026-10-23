@@ -233,12 +233,11 @@ div.card:hover { transform: none; box-shadow: none; }
 .lv__btn:active { transform: translateY(4px); box-shadow: none; }
 .lv__btn--jump { flex: 1; max-width: 200px; color: var(--pink); border-color: var(--pink); box-shadow: 0 4px 0 #b1389a; }
 
-.lv__stage { position: relative; }
-.lv__offer { position: absolute; inset: 8px; display: grid; place-content: center; justify-items: center; text-align: center; gap: var(--s2); padding: var(--s4); background: rgba(0, 0, 0, .86); border: 2px solid var(--yellow); border-radius: var(--radius); }
-.lv__offer[hidden] { display: none; }
-.lv__offer-h { font-family: var(--f-display); color: var(--yellow); font-size: clamp(16px, 4vw, 26px); margin: 0; }
-.lv__offer-p { margin: 0; max-width: 44ch; font-size: 16px; }
-.lv__offer p.label { margin: 0; }
-.lv__offer-actions { display: flex; gap: var(--s3); flex-wrap: wrap; justify-content: center; margin: var(--s2) 0 0; }
 
 .livesec { margin-top: var(--s7); }
+
+/* quiet end strip under the canvas (replaces the big overlay) */
+.lv__end { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--s3); padding: var(--s3) 0 0; }
+.lv__end[hidden] { display: none; }
+.lv__end .label { margin: 0; }
+.btn--sm { min-height: 40px; padding: 0 var(--s4); font-size: 11px; }
