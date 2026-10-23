@@ -3,52 +3,61 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import LevelCard from '../../components/LevelCard.astro';
 import Chip from '../../components/Chip.astro';
-const everything = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
-const all = everything.filter((w) => !w.data.live);
-const live = everything.filter((w) => w.data.live);
+const all = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
 const icons: Record<string, string> = { 'tiger-run': 'tiger', 'live-project-ux-research': 'lens' };
-const discs = [['all', 'ALL'], ['game-environment', 'GAME + ENVIRONMENT'], ['ux-systems', 'UX + SYSTEMS'], ['motion-lighting', 'MOTION + LIGHTING']];
+const discs = [['all', 'ALL'], ['game-environment', 'GAME + ENVIRONMENT'], ['ux-systems', 'UX + SYSTEMS'], ['ux-research', 'UX RESEARCH'], ['motion-lighting', 'MOTION + LIGHTING'], ['live', 'LIVE PROJECTS']];
 const years = [['all', 'ALL YEARS'], ['2024-25', 'Y1'], ['2025-26', 'Y2'], ['2026-27', 'Y3']];
 ---
-<Base title="Work">
+<Base title="Work" description="Case studies by Aritra Mitra: games, environments, UX research and live projects. Search and filter by discipline or year.">
   <div class="wrap">
     <h1 class="display">WORK</h1>
+    <form class="search" role="search" onsubmit="return false">
+      <label class="label" for="q">SEARCH THE WORK</label>
+      <input id="q" type="search" placeholder="Try: usability, Maya, lighting, tiger…" autocomplete="off" />
+    </form>
     <div class="chips" role="group" aria-label="Filter by discipline">
       {discs.map(([v, l], i) => <Chip as="button" group="disc" filter={v} selected={i === 0}>{l}</Chip>)}
     </div>
     <div class="chips" role="group" aria-label="Filter by year">
       {years.map(([v, l], i) => <Chip as="button" group="year" filter={v} selected={i === 0}>{l}</Chip>)}
     </div>
+    <section id="liveNote" class="livenote" hidden>
+      <h2 class="h2">Live projects experience</h2>
+      <p class="lede">Real client work I have taken part in. Clients and products are not named and no figures are shown, but the method and what I learned are.</p>
+    </section>
+    <p class="label muted" id="count" aria-live="polite"></p>
     <div class="grid" id="cards">
-      {all.map((w, i) => <LevelCard {...w.data} level={i + 1} icon={icons[w.data.slug]} tags={w.data.disciplines} />)}
+      {all.map((w, i) => <LevelCard {...w.data} level={i + 1} icon={icons[w.data.slug]} />)}
     </div>
-    <p id="empty" class="muted" hidden>Nothing here yet.</p>
-    {live.length > 0 && (
-      <section id="live" class="livesec">
-        <h2 class="h2">Live projects experience</h2>
-        <p class="lede">Real client work I have taken part in. Clients and products are not named and no figures are shown, but the method and what I learned are.</p>
-        <div class="grid">
-          {live.map((w, i) => <LevelCard {...w.data} level={i + 1} tagLabel={`LIVE ${String(i + 1).padStart(2, '0')}`} icon={icons[w.data.slug]} tags={['live project', ...w.data.disciplines]} />)}
-        </div>
-      </section>
-    )}
+    <p id="empty" class="muted" hidden>Nothing matches. Try a different word or clear the filters.</p>
   </div>
 </Base>
 <script>
-  const state = { disc: 'all', year: 'all' };
+  const state = { disc: 'all', year: 'all', q: '' };
   const cards = [...document.querySelectorAll<HTMLElement>('#cards .card')];
+  const q = document.getElementById('q') as HTMLInputElement;
   const apply = () => {
     let shown = 0;
+    const words = state.q.toLowerCase().split(/\s+/).filter(Boolean);
     cards.forEach((c) => {
-      const ok = (state.disc === 'all' || c.dataset.disc!.split(' ').includes(state.disc)) && (state.year === 'all' || c.dataset.year === state.year);
+      const ok = (state.disc === 'all' || c.dataset.disc!.split(' ').includes(state.disc))
+        && (state.year === 'all' || c.dataset.year === state.year)
+        && words.every((w) => c.dataset.search!.includes(w));
       c.hidden = !ok; if (ok) shown++;
     });
     document.getElementById('empty')!.hidden = shown > 0;
+    document.getElementById('liveNote')!.hidden = state.disc !== 'live';
+    document.getElementById('count')!.textContent = `${shown} OF ${cards.length} PROJECTS`;
   };
-  document.querySelectorAll<HTMLButtonElement>('button.chip').forEach((b) => b.addEventListener('click', () => {
-    const g = b.dataset.group as 'disc' | 'year';
-    state[g] = b.dataset.filter!;
-    document.querySelectorAll(`button.chip[data-group="${g}"]`).forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+  const pick = (g: 'disc' | 'year', v: string) => {
+    state[g] = v;
+    document.querySelectorAll<HTMLButtonElement>(`button.chip[data-group="${g}"]`).forEach((o) => o.setAttribute('aria-pressed', String(o.dataset.filter === v)));
     apply();
-  }));
+  };
+  document.querySelectorAll<HTMLButtonElement>('button.chip').forEach((b) => b.addEventListener('click', () => pick(b.dataset.group as 'disc' | 'year', b.dataset.filter!)));
+  q.addEventListener('input', () => { state.q = q.value; apply(); });
+  // deep links: /work/#live, /work/?q=usability
+  const params = new URLSearchParams(location.search);
+  if (params.get('q')) { q.value = params.get('q')!; state.q = q.value; }
+  if (location.hash === '#live') pick('disc', 'live'); else apply();
 </script>

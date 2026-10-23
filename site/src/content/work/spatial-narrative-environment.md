@@ -9,7 +9,7 @@ disciplines: ["game-environment"]
 status: "featured"
 tools: ["Maya", "Marmoset Toolbag"]
 role: "3D environment artist"
-order: 3
+order: 4
 links: {}
 ---
 ## At a glance

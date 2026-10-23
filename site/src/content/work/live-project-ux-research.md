@@ -5,13 +5,13 @@ oneLiner: "A month inside a real usability study of a national public-facing por
 year: "2024-25"
 semesters: ["S2"]
 course: "Live industry project (special invitee)"
-disciplines: ["ux-systems", "research-writing"]
-status: "standard"
+disciplines: ["ux-research", "ux-systems"]
+status: "featured"
 live: true
 tools: ["Moderated usability testing", "Single Ease Question", "System Usability Scale", "Interviews"]
 role: "Special invitee: note-taker, observer and test participant"
 duration: "About one month, January 2025"
-order: 9
+order: 3
 links: {}
 ---
 ## At a glance

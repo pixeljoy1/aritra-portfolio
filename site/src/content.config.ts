@@ -11,7 +11,7 @@ const work = defineCollection({
     year: z.enum(['2024-25', '2025-26', '2026-27']),
     semesters: z.array(z.string()),
     course: z.string(),
-    disciplines: z.array(z.enum(['game-environment', 'ux-systems', 'motion-lighting', 'foundations', 'research-writing'])),
+    disciplines: z.array(z.enum(['game-environment', 'ux-systems', 'ux-research', 'motion-lighting', 'foundations', 'research-writing'])),
     status: z.enum(['featured', 'standard', 'archive']),
     tools: z.array(z.string()).default([]),
     role: z.string(),

@@ -1,2 +1,3 @@
 User-agent: *
 Allow: /
+Sitemap: https://pixeljoy1.github.io/aritra-portfolio/sitemap.xml

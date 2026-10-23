@@ -5,7 +5,7 @@ oneLiner: "Sneaker marketplace + at-home care service, designed from research to
 year: "2026-27"
 semesters: ["S4", "S5"]
 course: "User-Centred Design; Human-AI Design"
-disciplines: ["ux-systems"]
+disciplines: ["ux-research", "ux-systems"]
 status: "featured"
 tools: ["Figma", "Google Stitch"]
 role: "Researcher and designer (solo)"

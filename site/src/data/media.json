@@ -1,4 +1,10 @@
 {
+  "live-project-ux-research": {
+    "hero": "/img/live-project-ux-research/hero.webp",
+    "thumb": "/img/live-project-ux-research/thumb.webp",
+    "heroAlt": "Illustration: a magnifying glass over rows of findings, for the live UX research project (no client material)",
+    "gallery": []
+  },
   "doom-and-quake": {
     "hero": "/img/doom-and-quake/hero.webp",
     "thumb": "/img/doom-and-quake/thumb.webp",

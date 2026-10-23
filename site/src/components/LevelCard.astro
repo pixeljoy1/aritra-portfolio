@@ -1,15 +1,19 @@
 ---
-import { u, workUrl } from '../config';
+import { u } from '../config';
 import Sprite from './Sprite.astro';
 import Chip from './Chip.astro';
 import media from '../data/media.json';
+import { TAG_LABELS, workUrl } from '../config';
 const { tagLabel, slug, title, oneLiner, level, year, semesters, tags = [], hero, heroAlt = '', icon, disciplines = [] } = Astro.props as any;
 const m = (media as any)[slug];
 const thumb = hero ?? m?.thumb;
 const thumbAlt = heroAlt || m?.heroAlt || '';
+const live = (Astro.props as any).live;
+const tokens = [...disciplines, ...(live ? ['live'] : [])];
+const search = [title, oneLiner, (Astro.props as any).course, ((Astro.props as any).tools ?? []).join(' '), ...tokens.map((x: string) => TAG_LABELS[x] ?? x), year, semesters.join(' ')].join(' ').toLowerCase();
 const yr = { '2024-25': 'Y1', '2025-26': 'Y2', '2026-27': 'Y3' }[year as string];
 ---
-<a href={workUrl(slug)} class="card" data-disc={disciplines.join(' ')} data-year={year}>
+<a href={workUrl(slug)} class="card" data-disc={tokens.join(' ')} data-search={search} data-year={year}>
   <div class="card__thumb">
     {thumb ? <img src={u(thumb)} alt={thumbAlt} width="640" height="360" loading="lazy" /> :
       <div class="card__ph">{icon ? <Sprite name={icon} u={6} /> : null}</div>}
@@ -18,7 +22,7 @@ const yr = { '2024-25': 'Y1', '2025-26': 'Y2', '2026-27': 'Y3' }[year as string]
     <p class="label label--pink">{tagLabel ?? `LEVEL ${String(level).padStart(2, '0')}`}</p>
     <h3 class="card__title">{title}</h3>
     <p>{oneLiner}</p>
-    <div class="tags">{tags.map((t: string) => <Chip>{t}</Chip>)}</div>
+    <div class="tags">{tokens.map((t: string) => <Chip>{TAG_LABELS[t] ?? t}</Chip>)}</div>
     <p class="label label--indigo">{yr} · {semesters.join(' ')}</p>
   </div>
 </a>

@@ -31,6 +31,8 @@ SN = 'SEM4/EnvironmentDesign/Spatial Narrative and Environment Design (1).pdf'
 
 # slug -> (hero, [(source, alt)])  source = ('c', project, idx) | ('p', pdf, page)
 SET = {
+ 'live-project-ux-research': [
+   (('x','live-thumb'), 'Illustration: a magnifying glass over rows of findings, for the live UX research project (no client material)')],
  'doom-and-quake': [
    (('x','doomquake-compare'), 'Doom on the left, Quake on the right: flat sprites in a 2.5D corridor against polygon monsters in a true 3D level'),
    (('f','assets/photos/intro-slide.webp',(0,0,2000,552)), 'The report\'s Introduction slide in pixel-arcade style, with arcade-button arrows, a trophy and the opening paragraph on id Software, Doom and Quake'),
@@ -111,6 +113,23 @@ VIDEOS = [  # slug, rel path, start s, year, sem, topic, title
  ('motion-3','SEM4/Motiongraphics/Assignment3_1.mp4',2,'2025-26','S4','Motion Graphics','Motion graphics assignment 3 (clip)'),
  ('use-of-space-pan','SEM5/Filmmaking/Assignment2_AritraMitra_UseofSpace/PanandTilt.mov',3,'2026-27','S5','Filmmaking','Use of Space: pan and tilt (clip)'),
 ]
+def live_thumb():
+    """Original abstract card art: a pixel magnifier over bars of 'findings' (no client screens, no numbers)."""
+    from PIL import ImageDraw
+    W, H = 1280, 720
+    im = Image.new('RGB', (W, H), (4, 18, 10)); d = ImageDraw.Draw(im)
+    lens = ['...MMMMM....', '..MGGGGGM...', '.MGGGGGGGM..', '.MGGGGGGGM..', '.MGGGGGGGM..', '.MGGGGGGGM..', '..MGGGGGM...', '...MMMMMBB..', '........BBB.', '.........BBB', '..........BB']
+    pal = {'M': (33, 239, 128), 'G': (255, 255, 255), 'B': (88, 94, 255)}
+    u = 30; ox, oy = 150, 150
+    for y, row in enumerate(lens):
+        for x, ch in enumerate(row):
+            if ch in pal: d.rectangle([ox + x * u, oy + y * u, ox + (x + 1) * u - 1, oy + (y + 1) * u - 1], fill=pal[ch])
+    cols = [(33, 239, 128), (255, 99, 216), (88, 94, 255), (255, 210, 63)]
+    for i, (w, c) in enumerate([(380, cols[0]), (300, cols[1]), (450, cols[2]), (240, cols[3]), (340, cols[0])]):
+        y = 130 + i * 100
+        d.rectangle([640, y, 640 + w, y + 40], fill=c); d.rectangle([640, y + 40, 1180, y + 44], fill=(46, 51, 184))
+    return im
+
 def compare():
     """Doom | Quake, each centre-cropped to 8:9 so the pair is 16:9 (card thumbnails keep both)."""
     h = 560; w = (h * 8) // 9
@@ -124,7 +143,7 @@ def compare():
     im = Image.new('RGB', (2 * w + 12, h), (33, 239, 128)); im.paste(a, (0, 0)); im.paste(b, (w + 12, 0)); return im
 
 def get(src):
-    if src[0] == 'x': return compare()
+    if src[0] == 'x': return live_thumb() if src[1] == 'live-thumb' else compare()
     if src[0] == 'f':
         im = Image.open(ROOT / src[1]).convert('RGB')
         return im.crop(src[2]) if len(src) > 2 else im

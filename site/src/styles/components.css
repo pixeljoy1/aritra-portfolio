@@ -258,3 +258,12 @@ div.card:hover { transform: none; box-shadow: none; }
 .sheet thead th { background: #000; color: var(--mint); font: 700 11px var(--f-ui); text-transform: uppercase; letter-spacing: .05em; }
 .sheet--sus td, .sheet--sus th { text-align: center; } .sheet--sus td:first-child, .sheet--sus th:first-child { text-align: left; }
 .fig__sum { margin: var(--s3) 0 0; font: 700 13px var(--f-ui); color: var(--yellow); letter-spacing: .05em; }
+
+/* Work search */
+.search { display: grid; gap: var(--s2); margin: 0 0 var(--s4); max-width: 560px; }
+.search .label { margin: 0; color: var(--pink); }
+.search input { min-height: 48px; padding: 0 var(--s4); background: #000; color: var(--white); border: 2px solid var(--mint); border-radius: var(--radius); font: 400 18px var(--f-body); }
+.search input::placeholder { color: var(--muted); }
+.search input:focus-visible { outline: var(--focus); outline-offset: 2px; }
+.livenote { margin: 0 0 var(--s4); }
+.livenote .h2 { margin-top: var(--s3); }

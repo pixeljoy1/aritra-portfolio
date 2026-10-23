@@ -10,7 +10,7 @@ status: "standard"
 tools: ["Figma"]
 role: "UX designer"
 links: { "System design deck, 3 projects (PDF)": "/pdf/system-design-final.pdf" }
-order: 7
+order: 8
 ---
 ## At a glance
 - **Problem:** facial-recognition attendance fails in practice and manual roll calls waste class time.

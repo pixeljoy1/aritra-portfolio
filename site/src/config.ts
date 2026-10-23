@@ -30,3 +30,9 @@ export const u = (path: string) => import.meta.env.BASE_URL.replace(/\/$/, '') +
 
 // Tiger Run's card goes straight to the game page; every other project opens its case study.
 export const workUrl = (slug: string) => u(slug === 'tiger-run' ? '/play/' : `/work/${slug}/`);
+
+// Human labels for tags and filters.
+export const TAG_LABELS: Record<string, string> = {
+  'game-environment': 'GAME + ENVIRONMENT', 'ux-systems': 'UX + SYSTEMS', 'ux-research': 'UX RESEARCH',
+  'motion-lighting': 'MOTION + LIGHTING', foundations: 'FOUNDATIONS', 'research-writing': 'RESEARCH + WRITING', live: 'LIVE PROJECT',
+};

@@ -9,7 +9,7 @@ disciplines: ["motion-lighting"]
 status: "featured"
 tools: ["Unreal Engine", "Photography"]
 role: "Lighting artist"
-order: 4
+order: 5
 ---
 ## Process
 **S3:** a photo study of natural and artificial, interior and exterior light: front lit, side lit, backlit, falloff, LED, signage, stadium lights. Natural light needs patience; artificial light is controllable; direction changes mood.
