@@ -1,47 +1,51 @@
 ---
 import Base from '../../layouts/Base.astro';
-import Panel from '../../components/Panel.astro';
+import InfoCard from '../../components/InfoCard.astro';
 import { SITE, u } from '../../config';
 import media from '../../data/media.json';
-const ph = (media as any).photos.portrait;
-const og = (media as any).origin;
+const m = media as any;
+const ph = m.photos.portrait;
 ---
 <Base title="About">
   <div class="wrap">
     <h1 class="display">ABOUT</h1>
-    <figure class="portrait">
-      <a href={u(ph.src)} data-lb data-lb-group="about" data-lb-round="1" data-lb-src={u(ph.src)} data-lb-alt={ph.alt} data-lb-title="Aritra Mitra at the Jindal School of Art and Architecture" data-lb-meta="About">
-        <img class="round" src={u(ph.sm)} srcset={`${u(ph.sm)} 320w, ${u(ph.src)} 800w`} sizes="(min-width: 640px) 220px, 160px" alt={ph.alt} width="220" height="220" />
-      </a>
-      <figcaption class="label label--indigo">JINDAL SCHOOL OF ART &amp; ARCHITECTURE</figcaption>
-    </figure>
-    <p>I'm Aritra, a third-year BDes student in Immersive Digital Environments at O.P. Jindal Global University, designing games and spaces people can step into.</p>
-    <p>I like to start with a question, then research, prototype, get critiqued and iterate. Tiger Run grew out of a Grade 10 drawing about wildlife conservation. SoleSync began with a trust problem in buying sneakers and ended as a prototype I critiqued three times. My environment and lighting work comes from studying how real light behaves, then rebuilding it in Maya and Unreal Engine.</p>
-    <p>Outside the studio I photograph wildlife as @wildscapeexplorers. I'm looking for an internship in game design, immersive environments or UX, where I can learn fast and contribute to real production work.</p>
-    <p>{SITE.programme}.</p>
-    <Panel variant="indigo" label="PLAYER STATS">
-      <p><strong>Areas:</strong> game + environment, UX + systems, motion + lighting</p>
-      <p><strong>Tools:</strong> Maya · SketchUp · Unreal Engine · Figma · Google Stitch · Procreate · Blender (basic) · AutoCAD (basic)</p>
-    </Panel>
-    <h2 class="h2" id="inspiration">Where the look comes from</h2>
-    <Panel variant="mint" label="THE ORIGIN">
-      <a class="origin origin--flat" href={u('/work/doom-and-quake/')}>
-        <img src={u(og.sm)} alt={og.alt} width="640" height="176" loading="lazy" />
-      </a>
-      <p>I presented my report on Doom and Quake as an arcade title screen, and the pixel-arcade look stuck. It became the identity of this site and of my printed card: black ground, mint frames, pink titles, indigo accents.</p>
-      <p><a href={u('/work/doom-and-quake/')}>Read the whole report →</a></p>
-    </Panel>
-    <h2 class="h2" id="photography">Wildlife photography</h2>
-    <Panel variant="indigo" label="@WILDSCAPEEXPLORERS">
-      <p>Aritra photographs wildlife as @wildscapeexplorers, the same concern for animals and habitat that sits behind Tiger Run.</p>
-      <p><a class="btn btn--primary" href={SITE.instagramFeatured} target="_blank" rel="noopener noreferrer">SEE THE FIRST POST →</a></p>
-      <p><a href={SITE.instagram} target="_blank" rel="noopener noreferrer">Open the full Instagram profile</a></p>
-    </Panel>
-    <h2 class="h2" id="build">How this site was made</h2>
-    <Panel variant="pink" label="BUILD NOTE">
-      <p>This website was <strong>coded with Claude</strong>, an AI assistant from Anthropic. Claude is the enabler: it wrote the code.</p>
-      <p>Everything that makes the site what it is comes from <strong>Aritra Mitra</strong>: the strategy, the information architecture, the arcade design system and its link to his printed card, the choice of work, and the full specification Claude built to.</p>
-      <p class="muted">Research data in SoleSync is simulated for coursework. Images and decks are Aritra's own work from his BDes programme.</p>
-    </Panel>
+    <div class="about__intro">
+      <figure class="portrait">
+        <a href={u(ph.src)} data-lb data-lb-group="about" data-lb-round="1" data-lb-src={u(ph.src)} data-lb-alt={ph.alt} data-lb-title="Aritra Mitra at the Jindal School of Art and Architecture" data-lb-meta="About">
+          <img class="round" src={u(ph.sm)} srcset={`${u(ph.sm)} 320w, ${u(ph.src)} 800w`} sizes="(min-width: 640px) 220px, 160px" alt={ph.alt} width="220" height="220" />
+        </a>
+        <figcaption class="label label--indigo">JINDAL SCHOOL OF ART &amp; ARCHITECTURE</figcaption>
+      </figure>
+      <div>
+        <p>I'm Aritra, a third-year BDes student in Immersive Digital Environments at O.P. Jindal Global University, designing games and spaces people can step into.</p>
+        <p>I like to start with a question, then research, prototype, get critiqued and iterate. Tiger Run grew out of a Grade 10 drawing about wildlife conservation. SoleSync began with a trust problem in buying sneakers and ended as a prototype I critiqued three times. My environment and lighting work comes from studying how real light behaves, then rebuilding it in Maya and Unreal Engine.</p>
+        <p>I'm looking for an internship in game design, immersive environments or UX, where I can learn fast and contribute to real production work.</p>
+      </div>
+    </div>
+
+    <h2 class="h2">More about me</h2>
+    <div class="grid">
+      <InfoCard label="PLAYER STATS" title="Areas + tools" sprite="hero">
+        <p><strong>Areas:</strong> game + environment, UX + systems, motion + lighting.</p>
+        <p><strong>Tools:</strong> Maya · SketchUp · Unreal Engine · Figma · Google Stitch · Procreate · Blender (basic) · AutoCAD (basic)</p>
+      </InfoCard>
+      <InfoCard href={u('/work/doom-and-quake/')} label="THE ORIGIN" title="Where the look comes from" img={u(m['doom-and-quake'].thumb)} imgAlt={m['doom-and-quake'].heroAlt} cta="READ THE WHOLE REPORT →">
+        <p>I presented my Doom and Quake report as an arcade title screen, and the pixel-arcade look stuck. It became the identity of this site and my printed card.</p>
+      </InfoCard>
+      <InfoCard href={SITE.instagramFeatured} external label="WILDLIFE PHOTOGRAPHY" title="@wildscapeexplorers" sprite="tiger" cta="SEE THE FIRST POST →">
+        <p>I photograph wildlife, the same concern for animals and habitat that sits behind Tiger Run.</p>
+      </InfoCard>
+      <InfoCard href={u('/resume/')} label="RÉSUMÉ" title="Preview + download" img={u('/img/resume-preview.webp')} imgAlt="First page of Aritra Mitra's résumé" cta="OPEN THE RÉSUMÉ →">
+        <p>One page: profile, highlights, toolbox and selected projects.</p>
+      </InfoCard>
+      <InfoCard href={u('/contact/')} label="CONTACT" title="Say hello" sprite="star" cta="GET IN TOUCH →">
+        <p>Email, LinkedIn and Instagram. Open to internships in game design, immersive environments and UX.</p>
+      </InfoCard>
+      <InfoCard id="build" variant="pink" label="BUILD NOTE" title="How this site was made" sprite="heart">
+        <p>This website was <strong>coded with Claude</strong>, an AI assistant from Anthropic. Claude is the enabler: it wrote the code.</p>
+        <p>The strategy, information architecture, arcade design system, choice of work and the full specification are <strong>Aritra Mitra's</strong>.</p>
+        <p class="muted">SoleSync research data is simulated for coursework.</p>
+      </InfoCard>
+    </div>
   </div>
 </Base>

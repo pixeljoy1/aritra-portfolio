@@ -1,0 +1,18 @@
+---
+// Same card pattern as the home page's LevelCard: thumbnail, pink label, mint title, body. Linked when `href` is set.
+import Sprite from './Sprite.astro';
+const { href, external = false, label, title, img, imgAlt = '', sprite, variant = 'mint', id, cta } = Astro.props as any;
+const Tag = href ? 'a' : 'div';
+const attrs = href ? { href, ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) } : {};
+---
+<Tag class={`card card--${variant}`} id={id} {...attrs}>
+  <div class="card__thumb">
+    {img ? <img src={img} alt={imgAlt} width="640" height="360" loading="lazy" /> : <div class="card__ph">{sprite && <Sprite name={sprite} u={6} />}</div>}
+  </div>
+  <div class="card__body">
+    <p class="label label--pink">{label}</p>
+    <h3 class="card__title">{title}</h3>
+    <slot />
+    {cta && <p class="label">{cta}</p>}
+  </div>
+</Tag>

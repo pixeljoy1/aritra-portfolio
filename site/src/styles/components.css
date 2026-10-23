@@ -218,3 +218,13 @@ button.chip { min-height: 44px; padding: 0 var(--s4); cursor: pointer; }
 .origin__cap { display: grid; gap: var(--s2); padding: var(--s4); border-top: 2px solid var(--mint); }
 .origin__cap .label { margin: 0; }
 .origin--flat { margin-bottom: var(--s4); }
+
+/* About: intro + card deck (same pattern as home) */
+.about__intro { display: grid; gap: var(--s5); }
+@media (min-width: 760px) { .about__intro { grid-template-columns: 240px 1fr; align-items: start; } .about__intro .portrait { margin: 0; } }
+.card--pink { border-color: var(--pink); }
+.card--pink .card__thumb { border-bottom-color: var(--pink); }
+.card .card__body p { margin: 0 0 var(--s3); font-size: 16px; }
+.card .card__body .label { margin: 0 0 var(--s2); }
+.card__thumb img[src*="resume-preview"] { object-position: top; }
+div.card:hover { transform: none; box-shadow: none; }
