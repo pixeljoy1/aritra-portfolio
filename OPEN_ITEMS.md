@@ -47,3 +47,9 @@ Lightbox for case-study galleries (`previewer.js` pattern), pinned horizontal Wo
 
 ## Skills wording (confirmed by Aritra, 2026-10-23)
 Blender and AutoCAD are **basic understanding only**: always list them as "Blender (basic)" and "AutoCAD (basic)", after the main tools. Updated in the resume PDF (patched in place; the print copy is `toPrint_/Aritra_Mitra_Resume_2026_v2.pdf`), `resume.json`, the House case study and the Year 1 page. Keep this wording in the About tools list and any future copy.
+
+## Drafted copy for Aritra to review (2026-10-23)
+All former "[PLACEHOLDER]" / "[CONFIRM]" text on the site was replaced with first-person drafts written from his résumé, decks, the game's code and the spec. They are plausible, not verified by him. Review and edit in: `About` (bio, tools), the six work files in `site/src/content/work/` (course, role, process, reflections), the three year summaries in `site/src/content/years/`, and `/play/` steps 02 and 06 (the "on paper first" and "what I would change" text). Claims were kept to intentions and facts in the build: no playtest results, metrics or awards were invented.
+- Course titles: Tiger Run = "Personal project" (per résumé); others use the Drive folder / résumé names.
+- GitHub links now point at the site's own repo (`pixeljoy1/aritra-portfolio`), not a personal Aritra account.
+- Still needs the real thing: scans of Prep Sheet #2 and pencils (crop out any candidate/centre numbers).

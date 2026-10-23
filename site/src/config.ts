@@ -3,7 +3,7 @@ export const SITE = {
   name: 'Aritra Mitra',
   domain: '[DOMAIN]',
   email: 'aritramitra49@gmail.com',
-  github: '[GITHUB_URL]',
+  github: 'https://github.com/pixeljoy1/aritra-portfolio',
   instagram: 'https://www.instagram.com/wildscapeexplorers/',
   instagramFeatured: 'https://www.instagram.com/p/C4FfmW4rrDJ/',
   linkedin: 'https://www.linkedin.com/in/aritra-mitra-065788303/',

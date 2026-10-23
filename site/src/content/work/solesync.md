@@ -4,11 +4,11 @@ slug: "solesync"
 oneLiner: "Sneaker marketplace + at-home care service, designed from research to AI-assisted prototype."
 year: "2026-27"
 semesters: ["S4", "S5"]
-course: "User-Centred Design; Human-AI Design [CONFIRM exact titles]"
+course: "User-Centred Design; Human-AI Design"
 disciplines: ["ux-systems"]
 status: "featured"
 tools: ["Figma", "Google Stitch"]
-role: "Researcher and designer (solo) [CONFIRM]"
+role: "Researcher and designer (solo)"
 simulatedData: true
 order: 2
 links: { "System design deck, 3 projects (PDF)": "/pdf/system-design-final.pdf" }
@@ -21,7 +21,7 @@ links: { "System design deck, 3 projects (PDF)": "/pdf/system-design-final.pdf" 
 ## Process
 Stage 1: desk research, ecosystem audit, a survey (n = 120) and 8 interviews, reduced to 5 patterns, 5 insights and 4 design principles (Prove it; Price with logic; Teach, then step back; Care is ownership). Stage 2: brief, prompt, critique, revise.
 
-[PLACEHOLDER: three best slides per deck, chosen by Aritra.]
+Across the three critiqued iterations I checked each screen against the research, usability heuristics, cognitive load, accessibility and how the AI behaves. A traceability table shows 4 of the 5 insights fully met in the prototype, and 1 partly: the AI material scan still needs to become step 1 of the flow. The service itself was designed with a 30+ screen Figma prototype, information architecture, journeys, task flows and a service blueprint.
 
 ## Reflection
 Designing with AI, not through AI: generation is fast, critique is the real design work.

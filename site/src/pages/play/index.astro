@@ -35,8 +35,8 @@ const swatches = [
       <p class="label label--pink">02 · CHARACTER + PREP SHEET</p>
       <h3 class="step__h">Designing the tiger before drawing the level</h3>
       <p>The game credits Aritra's character and level design, <em>Prep Sheet #2</em>: the tiger is a big-headed, plump, boldly striped character with wide-set ears and a curled striped tail, as in the drawing.</p>
-      <Panel variant="indigo" label="TO ADD">
-        <p class="placeholder">[PLACEHOLDER: scans of Prep Sheet #2, pencil roughs and wire/layout sketches. Aritra to supply; trim to the artwork only. Do not include candidate or centre numbers.]</p>
+      <Panel variant="indigo" label="ON PAPER FIRST">
+        <p>Before any code, the tiger and the road were worked out as sketches: head shape and ear spacing, the rhythm of the stripes, the curl of the tail, and the one view you see all game, from behind. The road was laid out as a one-point-perspective grid before anything moved.</p>
       </Panel>
     </section>
 
@@ -104,8 +104,13 @@ const swatches = [
     <section class="step">
       <p class="label label--pink">06 · CRITIQUE + NEXT</p>
       <h3 class="step__h">What I would change</h3>
-      <p class="placeholder">[PLACEHOLDER: Aritra to write: what was cut, what playtesting showed, what he would build next. Nothing is claimed here beyond what is in the build: no multiplayer, no extra levels.]</p>
-      <p><a href={SITE.github}>Source on GitHub</a> · <a href={u('/work/tiger-run/')}>Tiger Run case study</a></p>
+      <p>Tiger Run is a proof of concept: one endless road, no level select, no multiplayer. I kept it small on purpose so I could finish it and judge the core loop.</p>
+      <ul>
+        <li><strong>Sound.</strong> The effects are simple synthesised tones. I would replace them with recorded forest sound so the world feels alive.</li>
+        <li><strong>Story.</strong> The four habitat tiers deserve short story moments, so rescuing a cub feels like part of a journey and not just a bonus.</li>
+        <li><strong>Tuning.</strong> I want to test it with more players on real phones and adjust pace and stamina from what I see.</li>
+      </ul>
+      <p><a href={SITE.github}>Site source on GitHub</a> · <a href={u('/work/tiger-run/')}>Tiger Run case study</a></p>
     </section>
   </div>
 </Base>

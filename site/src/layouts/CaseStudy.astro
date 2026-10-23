@@ -17,7 +17,7 @@ const linkEntries = Object.entries(d.links).filter(([, v]) => v);
     <dl class="meta">
       <div><dt>Course</dt><dd>{d.course}</dd></div>
       <div><dt>Role</dt><dd>{d.role}</dd></div>
-      <div><dt>Tools</dt><dd>{d.tools.length ? d.tools.join(', ') : '[CONFIRM TOOLS]'}</dd></div>
+      <div><dt>Tools</dt><dd>{d.tools.length ? d.tools.join(', ') : '—'}</dd></div>
       {d.duration && <div><dt>Duration</dt><dd>{d.duration}</dd></div>}
     </dl>
     {m && <a class="case__hero-link" href={u(m.hero)} data-lb data-lb-group={d.slug} data-lb-src={u(m.hero)} data-lb-alt={m.heroAlt} data-lb-title={m.heroAlt} data-lb-meta={d.title}><img class="case__hero" src={u(m.hero)} alt={m.heroAlt} width="1400" height="788" /></a>}

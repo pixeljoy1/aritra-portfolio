@@ -20,7 +20,7 @@ const bySem = [...new Set(mine.map((a) => a.semester))].sort();
   <div class="wrap">
     <p class="label"><a href={u("/years/")}>← ALL YEARS</a></p>
     <h1 class="display">YEAR {y.n} · {y.label}</h1>
-    <p class="lede">{entry?.data.summary ?? '[PLACEHOLDER: year summary]'}</p>
+    <p class="lede">{entry?.data.summary ?? ''}</p>
     {entry?.data.groups.map((g) => (
       <Panel label={`${g.semester} · ${g.topic}`}>
         <ul>
