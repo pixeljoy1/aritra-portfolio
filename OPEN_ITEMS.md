@@ -44,3 +44,6 @@ Lightbox for case-study galleries (`previewer.js` pattern), pinned horizontal Wo
 - `/play/` now has a 6-step making-of. Only one concept image exists in the repo: the cropped illustration (the screenshot's prep-sheet strip showed a candidate/centre number and was cropped out; never publish those). **Needed from Aritra:** scans of Prep Sheet #2, pencil roughs and wire/layout sketches, plus the critique/next-steps text (step 06).
 - The construction diagram is original, drawn from the game's own constants (camera 2.5, lanes 1.75, spawn 110, tiger 3.4, trunks 5.5).
 - About page now has "Wildlife photography" (@wildscapeexplorers, featured post C4FfmW4rrDJ) and the "How this site was made" build note (coded with Claude; strategy, design and spec by Aritra). Footer links to both. Instagram links open in a new tab with noopener; no third-party embed (privacy, performance).
+
+## Skills wording (confirmed by Aritra, 2026-10-23)
+Blender and AutoCAD are **basic understanding only**: always list them as "Blender (basic)" and "AutoCAD (basic)", after the main tools. Updated in the resume PDF (patched in place; the print copy is `toPrint_/Aritra_Mitra_Resume_2026_v2.pdf`), `resume.json`, the House case study and the Year 1 page. Keep this wording in the About tools list and any future copy.

@@ -1,13 +1,13 @@
 ---
 title: "House"
 slug: "house"
-oneLiner: "A house modelled in SketchUp and Blender, then rendered and walked through in video."
+oneLiner: "A house modelled in SketchUp (with basic Blender and AutoCAD work), then rendered and walked through in video."
 year: "2024-25"
 semesters: ["S2"]
 course: "Digital Skills 2 [CONFIRM]"
 disciplines: ["foundations"]
 status: "standard"
-tools: ["SketchUp", "Blender", "AutoCAD"]
+tools: ["SketchUp", "Blender (basic)", "AutoCAD (basic)"]
 role: "[CONFIRM role]"
 order: 7
 ---
