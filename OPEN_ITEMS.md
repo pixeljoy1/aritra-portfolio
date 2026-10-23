@@ -26,3 +26,9 @@ Lightbox for case-study galleries (`previewer.js` pattern), pinned horizontal Wo
 ## Deployment
 - Live at https://pixeljoy1.github.io/aritra-portfolio/ (GitHub Pages via Actions, base path `/aritra-portfolio`).
 - **Before printing the QR:** point the custom domain at Pages, add `site/public/CNAME`, and build with `SITE_BASE=/` and `SITE_URL=https://<DOMAIN>` (set as repo variables or edit `astro.config.mjs`). The github.io sub-path URL must not be printed.
+
+## Drive artefacts (year-on-year previews)
+- Pipeline ready: `python3 scripts/process_artefacts.py` reads a local copy of `JSAA_Work` from `assets/drive/` (git-ignored), writes shrunk PDFs + WebP previews to `site/public/artefacts/<year>/` and `site/src/data/artefacts.json`. Year pages and save-slot thumbnails fill in automatically.
+- **Blocked on files:** the Drive connector can only return file contents as text/base64 inside the chat, which doesn't work for multi-MB decks. Download the `JSAA_Work` folder from Drive (SEM1..SEM5) into `assets/drive/`.
+- PPTX previews use embedded images only (no LibreOffice/Ghostscript here). For a real PDF of a deck, export it from Drive (File > Download > PDF) next to the .pptx.
+- Aritra still nominates the best slides per featured project.

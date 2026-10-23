@@ -4,6 +4,7 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Panel from '../../components/Panel.astro';
 import { YEARS } from '../../config';
+import artefacts from '../../data/artefacts.json';
 export async function getStaticPaths() {
   const ys = await getCollection('years');
   return YEARS.map((y, i) => ({
@@ -12,6 +13,8 @@ export async function getStaticPaths() {
   }));
 }
 const { y, prev, next, entry } = Astro.props;
+const mine = (artefacts as any[]).filter((a) => a.year === y.slug);
+const bySem = [...new Set(mine.map((a) => a.semester))].sort();
 ---
 <Base title={`Year ${y.n} · ${y.label}`}>
   <div class="wrap">
@@ -30,6 +33,23 @@ const { y, prev, next, entry } = Astro.props;
           ))}
         </ul>
       </Panel>
+    ))}
+    {bySem.map((sem) => (
+      <section>
+        <h2 class="h2">{sem} · Artefacts</h2>
+        <div class="grid">
+          {mine.filter((a) => a.semester === sem).map((a) => (
+            <div class="card artefact">
+              {a.image ? <a class="card__thumb" href={u(a.pdf ?? a.image)}><img src={u(a.image)} alt={`Preview of ${a.title}`} width="640" height="360" loading="lazy" /></a> : <div class="card__thumb"><div class="card__ph"><span>[NO PREVIEW]</span></div></div>}
+              <div class="card__body">
+                <p class="label label--indigo">{a.topic}</p>
+                <p>{a.title}</p>
+                {a.pdf ? <a class="label" href={u(a.pdf)}>OPEN PDF{a.pages ? ` · ${a.pages} PAGES` : ''} →</a> : <p class="label muted">PDF COMING</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     ))}
     <nav class="prevnext" aria-label="Years">
       {prev ? <a href={u(`/years/${prev.slug}/`)}>← PREVIOUS YEAR</a> : <span></span>}

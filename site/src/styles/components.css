@@ -131,3 +131,7 @@ button.chip { min-height: 44px; padding: 0 var(--s4); cursor: pointer; }
 .level__star { left: 0; bottom: 0; opacity: 0; }
 .footer .bricks { margin-top: 0; }
 @media (prefers-reduced-motion: reduce) { .level__hero { will-change: auto; } }
+
+.artefact .card__thumb { display: block; }
+.artefact:hover { transform: none; box-shadow: none; }
+.slot__thumbs img { width: 56px; height: 35px; object-fit: cover; border: 2px solid var(--indigo); border-radius: 3px; }

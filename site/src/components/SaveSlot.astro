@@ -1,13 +1,17 @@
 ---
 import { u } from '../config';
 import Panel from './Panel.astro';
+import artefacts from '../data/artefacts.json';
 const { n, label, slug, name, semesters, count } = Astro.props as any;
+const imgs = (artefacts as any[]).filter((a) => a.year === slug && a.image).slice(0, 3);
 ---
 <a href={u(`/years/${slug}/`)} class="slot-link">
   <Panel label={`SLOT ${n} · YEAR ${n}`}>
     <h3 class="display slot__year">{label}</h3>
     <p class="slot__name">{name}</p>
     <p class="label label--indigo">{semesters.join(' · ')} · {count} {count === 1 ? 'PROJECT' : 'PROJECTS'}</p>
-    <div class="slot__thumbs" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="slot__thumbs" aria-hidden="true">
+      {[0, 1, 2].map((i) => imgs[i] ? <img src={u(imgs[i].image)} alt="" width="56" height="35" loading="lazy" /> : <span></span>)}
+    </div>
   </Panel>
 </a>
