@@ -35,7 +35,7 @@
 .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--s5); border-radius: var(--radius); font: 700 13px var(--f-ui); text-transform: uppercase; letter-spacing: .07em; text-decoration: none; }
 .btn--primary { background: var(--mint); color: #000; border: 2px solid #000; box-shadow: 0 4px 0 var(--mint-dark); }
 .btn--primary:active { transform: translateY(4px); box-shadow: none; }
-.btn--secondary { border: 2px solid var(--mint); color: var(--mint); }
+.btn--secondary { border: 2px solid var(--mint); color: var(--mint); background: transparent; cursor: pointer; }
 
 /* Chips */
 .tags { display: flex; flex-wrap: wrap; gap: var(--s2); margin-bottom: var(--s3); }
@@ -207,11 +207,18 @@ button.chip { min-height: 44px; padding: 0 var(--s4); cursor: pointer; }
 .card__thumb img[src*="resume-preview"] { object-position: top; }
 div.card:hover { transform: none; box-shadow: none; }
 
-/* Footer = Level 1 */
-.levelbar { position: relative; display: block; width: 100%; padding: 0; border: 0; background: #000; cursor: pointer; line-height: 0; }
-.levelbar canvas { display: block; width: 100%; image-rendering: pixelated; }
-.levelbar:focus-visible { outline: var(--focus); outline-offset: -3px; }
-.levelbar__hint { position: absolute; right: var(--pad); top: 10px; font: 700 10px var(--f-ui); letter-spacing: .08em; color: var(--yellow); background: #000; border: 2px solid var(--yellow); border-radius: 3px; padding: 4px 8px; animation: blink 1.4s steps(2) infinite; }
+/* Footer level: hero runs to the flag */
+.level { position: relative; height: 100px; max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); overflow: hidden; }
+.level__track { position: absolute; left: var(--pad); right: var(--pad); bottom: 0; height: 100%; touch-action: manipulation; }
+.level__track > * { position: absolute; bottom: 0; line-height: 0; }
+.level__hero { left: 0; will-change: transform; }
+.level__hero .f--b, .level__hero.is-b .f--a { display: none; }
+.level__hero.is-b .f--b { display: block; }
+.level__star { left: 0; bottom: 0; opacity: 0; }
+.footer .bricks { margin-top: 0; }
+@media (prefers-reduced-motion: reduce) { .level__hero { will-change: auto; } }
+
+/* Hidden level modal */
 .lv { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .95); display: grid; place-items: center; padding: var(--s3); }
 .lv[hidden] { display: none; }
 .lv__panel { width: min(96vw, 1000px); border: 2px solid var(--mint); border-radius: var(--radius); background: #000; padding: var(--s2); box-shadow: 0 6px 0 var(--mint-dark); }
@@ -225,4 +232,11 @@ div.card:hover { transform: none; box-shadow: none; }
 .lv__btn { min-width: 64px; min-height: 56px; background: #000; color: var(--mint); border: 2px solid var(--mint); border-radius: var(--radius); font: 700 16px var(--f-ui); touch-action: none; user-select: none; box-shadow: 0 4px 0 var(--mint-dark); }
 .lv__btn:active { transform: translateY(4px); box-shadow: none; }
 .lv__btn--jump { flex: 1; max-width: 200px; color: var(--pink); border-color: var(--pink); box-shadow: 0 4px 0 #b1389a; }
-@media (prefers-reduced-motion: reduce) { .levelbar__hint { animation: none; } }
+
+.lv__stage { position: relative; }
+.lv__offer { position: absolute; inset: 8px; display: grid; place-content: center; justify-items: center; text-align: center; gap: var(--s2); padding: var(--s4); background: rgba(0, 0, 0, .86); border: 2px solid var(--yellow); border-radius: var(--radius); }
+.lv__offer[hidden] { display: none; }
+.lv__offer-h { font-family: var(--f-display); color: var(--yellow); font-size: clamp(16px, 4vw, 26px); margin: 0; }
+.lv__offer-p { margin: 0; max-width: 44ch; font-size: 16px; }
+.lv__offer p.label { margin: 0; }
+.lv__offer-actions { display: flex; gap: var(--s3); flex-wrap: wrap; justify-content: center; margin: var(--s2) 0 0; }

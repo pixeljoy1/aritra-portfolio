@@ -6,7 +6,8 @@ import { SPRITES } from '../components/sprites';
 
 const T = 16, ROWS = 12, VIEW_H = ROWS * T, GROUND = 10, COLS = 204;
 const FLAG_X = 186 * T + 7, CASTLE_X = 192 * T, CASTLE_DOOR = CASTLE_X + 24;
-const MAXV = 88, JUMP_V = 255, GRAV = 690, TIME_LIMIT = 100;
+const MAXV = 140, JUMP_V = 300, GRAV = 900, TIME_LIMIT = 120;   // 2 minutes at most
+const WIZ_X = CASTLE_X - 18, STOP_X = WIZ_X - 20;
 const COL = { mint: '#21EF80', mintD: '#12B862', pink: '#FF63D8', ind: '#585EFF', indT: '#7A7FFF', indD: '#2E33B8', yellow: '#FFD23F', white: '#FFFFFF', ink: '#14141F' };
 
 type Mode = 'ambient' | 'play';
@@ -42,6 +43,8 @@ function makeArt() {
   const plantShut = ['...PPPPPPPP...', '..PPWPPPPWPP..', '.PPPPPPPPPPPP.', '.PPPPPPPPPPPP.', '.PPPPPPPPPPPP.', '.PPPWPPPPWPPP.', '.PPPPPPPPPPPP.', '.PPPPPPPPPPPP.', '..PPPPPPPPPP..', '...PPPPPPPP...'];
   const pp = { P: COL.pink, W: COL.white, K: COL.ink };
   return {
+    wizard: bake(['.....VV.....', '....VVVV....', '....VYVV....', '...VVVVVV...', '..VVVVVVVV..', '.VVVVVVVVVV.', '...SSSSSSS..', '...SESSESS..', '..WWWWWWWW..', '..WWWWWWWW..', '...WWWWWW...', '..VVVVVVVV..', '.VVVDVVDVVV.', '.VVVVVVVVVV.', '.VVVDVVDVVV.', '.VVVVVVVVVV.', '.DDDDDDDDDD.', '..BB....BB..'], { V: '#7A3FD1', D: '#4B2394', Y: COL.yellow, S: '#FFB38A', E: COL.ink, W: '#FFFFFF', B: '#8A5A2A' }),
+    scroll: bake(['OCCCCCCCCO', 'OCTTTTTTCO', 'OCCCCCCCCO', 'OCTTTTCCCO', 'OCCCCCCCCO', 'OCCCRRCCCO', 'OCCCRRCCCO', 'OOOOOOOOOO'], { C: '#FFF1DA', O: '#D9B77A', T: '#8A6A3A', R: '#E0507A' }),
     heart: spr('heart'), heroA: spr('heroRunA'), heroB: spr('heroRunB'), heroS: spr('hero'), tree: spr('tree'),
     coin: bake(['..YYYY..', '.YYOOYY.', 'YYYOOYYY', 'YYYOOYYY', 'YYYOOYYY', 'YYYOOYYY', 'YYYOOYYY', 'YYYOOYYY', '.YYOOYY.', '..YYYY..'], { Y: COL.yellow, O: '#E0A820' }),
     mush: bake(['...PPPPPP...', '.PPPPWWPPPP.', 'PPWWPWWPPWWP', 'PPWWPPPPPWWP', 'PPPPPPPPPPPP', '.CCCCCCCCCC.', '..CECCCCEC..', '..CCCCCCCC..', '..CCCCCCCC..', '...CCCCCC...'], { P: COL.pink, W: COL.white, C: '#FFE7C2', E: COL.ink }),
@@ -85,9 +88,9 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
   const art = (ART ??= makeArt());
   const keys: Keys = { left: false, right: false, jump: false };
   let auto = false, s = 1, viewW = 400, world = buildWorld(), raf = 0, last = 0, t = 0, running = false, muted = false;
-  let phase: 'ready' | 'play' | 'dying' | 'slide' | 'walk' | 'clear' | 'over' = ambient ? 'play' : 'ready';
+  let phase: 'ready' | 'play' | 'dying' | 'slide' | 'walk' | 'scroll' | 'clear' | 'over' = ambient ? 'play' : 'ready';
   let h = { x: 40, y: GROUND * T - 20, vx: 0, vy: 0, ground: true, big: false, face: 1, inv: 0, anim: 0 };
-  let score = 0, coinN = 0, lives = 3, timeLeft = TIME_LIMIT, hold = 0, jumpWas = false, flagBonus = 0, deadT = 0, cam = 0, ambientWait = 0;
+  let scrollT = 0, coyote = 0, buf = 0, score = 0, coinN = 0, lives = 3, timeLeft = TIME_LIMIT, hold = 0, jumpWas = false, flagBonus = 0, deadT = 0, cam = 0, ambientWait = 0;
   let mush: { x: number; y: number; vx: number; vy: number }[] = [];
   let bumps: { x: number; y: number; t: number }[] = [];
   let bits: { x: number; y: number; vx: number; vy: number; c: string; t: number }[] = [];
@@ -118,7 +121,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
   const reset = (respawn = false) => {
     world = buildWorld(); mush = []; bumps = []; bits = []; pops = [];
     h = { x: 40, y: GROUND * T - 20, vx: 0, vy: 0, ground: true, big: false, face: 1, inv: 0, anim: 0 };
-    timeLeft = TIME_LIMIT; cam = 0; hold = 0; ambientWait = 0; phase = ambient || respawn ? 'play' : 'ready';
+    timeLeft = TIME_LIMIT; cam = 0; hold = 0; ambientWait = 0; scrollT = 0; coyote = 0; buf = 0; phase = ambient || respawn ? 'play' : 'ready';
   };
   const fullReset = () => { score = 0; coinN = 0; lives = 3; reset(); };
   const add = (n: number, x: number, y: number) => { score += n; pops.push({ x, y, txt: String(n), t: 0 }); };
@@ -131,7 +134,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     } else if (c === 3) {
       world.g[ty][tx] = 7; bumps.push({ x: tx, y: ty, t: 0 }); coinN++; add(200, tx * T, ty * T - 12); beep(988, 1319, 0.16);
     } else if (c === 4) {
-      world.g[ty][tx] = 7; bumps.push({ x: tx, y: ty, t: 0 }); mush.push({ x: tx * T + 2, y: ty * T - 11, vx: 28, vy: 0 }); beep(300, 700, 0.18, 'triangle');
+      world.g[ty][tx] = 7; bumps.push({ x: tx, y: ty, t: 0 }); mush.push({ x: tx * T + 2, y: ty * T - 11, vx: 42, vy: 0 }); beep(300, 700, 0.18, 'triangle');
     } else if (c !== 0) bumps.push({ x: tx, y: ty, t: 0 });
   }
 
@@ -139,16 +142,19 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     const { w, h: hh } = size();
     // horizontal
     const target = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
-    const acc = (h.ground ? 760 : 460) * dt;
+    const turning = target !== 0 && h.vx !== 0 && Math.sign(target) !== Math.sign(h.vx);
+    const acc = (turning ? 4800 : h.ground ? 2800 : 2000) * dt;
     if (target) { h.vx += Math.sign(target * MAXV - h.vx) * Math.min(acc, Math.abs(target * MAXV - h.vx)); h.face = target; }
-    else h.vx -= Math.sign(h.vx) * Math.min(Math.abs(h.vx), 900 * dt);
+    else h.vx -= Math.sign(h.vx) * Math.min(Math.abs(h.vx), (h.ground ? 3200 : 1000) * dt);
     h.x += h.vx * dt;
     let top = Math.floor(h.y / T), bot = Math.floor((h.y + hh - 0.01) / T);
     if (h.vx > 0) { const tx = Math.floor((h.x + w) / T); for (let ty = top; ty <= bot; ty++) if (solid(tx, ty)) { h.x = tx * T - w; h.vx = 0; break; } }
     else if (h.vx < 0) { const tx = Math.floor(h.x / T); for (let ty = top; ty <= bot; ty++) if (solid(tx, ty)) { h.x = (tx + 1) * T; h.vx = 0; break; } }
     // jump (variable height)
-    if (keys.jump && !jumpWas && h.ground) { h.vy = -JUMP_V; h.ground = false; beep(330, 660, 0.14, 'square', 0.03); }
-    if (!keys.jump && h.vy < -90) h.vy = -90;
+    // forgiving jump: a short grace after leaving a ledge and a short buffer before landing
+    coyote = h.ground ? 0.09 : coyote - dt; buf = keys.jump && !jumpWas ? 0.11 : buf - dt;
+    if (buf > 0 && coyote > 0) { h.vy = -JUMP_V; h.ground = false; buf = 0; coyote = 0; beep(330, 660, 0.14, 'square', 0.03); }
+    if (!keys.jump && h.vy < -120) h.vy = -120;
     jumpWas = keys.jump;
     // vertical
     h.vy += GRAV * dt; h.y += h.vy * dt; h.ground = false;
@@ -207,11 +213,17 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
       return;
     }
     if (phase === 'walk') {
-      h.x += 55 * dt; h.anim += dt;
-      if (h.x >= CASTLE_DOOR) {
-        phase = 'clear'; ambientWait = 0; const bonus = Math.max(0, Math.ceil(timeLeft)) * 50; score += bonus;
-        for (let i = 0; i < 40; i++) bits.push({ x: CASTLE_DOOR, y: GROUND * T - 40, vx: (Math.random() - 0.5) * 160, vy: -Math.random() * 190, c: [COL.yellow, COL.pink, COL.mint, COL.indT][i % 4], t: 0 });
-        beep(523, 1046, 0.5, 'square', 0.05);
+      h.x += 70 * dt; h.anim += dt;
+      if (h.x >= STOP_X) { h.x = STOP_X; phase = 'scroll'; scrollT = 0; beep(392, 523, 0.25, 'triangle', 0.04); }
+      return;
+    }
+    if (phase === 'scroll') {
+      scrollT += dt; h.anim = 0;
+      if (scrollT >= 1.4) {
+        phase = 'clear'; ambientWait = 0; score += Math.max(0, Math.ceil(timeLeft)) * 50;
+        pops.push({ x: h.x - 14, y: h.y - 26, txt: 'INTERNSHIP!', t: -0.9 });
+        for (let i = 0; i < 44; i++) bits.push({ x: h.x + 6, y: h.y, vx: (Math.random() - 0.5) * 170, vy: -40 - Math.random() * 190, c: [COL.yellow, COL.pink, COL.mint, COL.indT][i % 4], t: 0 });
+        beep(523, 1046, 0.5, 'square', 0.05); setTimeout(() => beep(784, 1568, 0.5, 'square', 0.05), 220);
         opts.onEnd?.({ won: true, score });
       }
       return;
@@ -244,7 +256,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
       if (m.vy > 0 && (solid(Math.floor((m.x + 2) / T), ty) || solid(Math.floor((m.x + 9) / T), ty))) { m.y = ty * T - 10; m.vy = 0; }
       if (rect(hb, { x: m.x, y: m.y, w: 12, h: 10 })) {
         (m as any).dead = true; add(1000, m.x, m.y - 8); beep(392, 1568, 0.35, 'triangle', 0.05);
-        if (!h.big) { h.big = true; h.y -= 10; }
+        if (!h.big) { h.big = true; h.y -= 10; pops.push({ x: m.x - 8, y: m.y - 20, txt: 'SKILL UP!', t: 0 }); }
       }
     });
     mush = mush.filter((m) => !(m as any).dead && m.y < VIEW_H + 20);
@@ -257,7 +269,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     // block bounce timers, particles, pops
     bumps.forEach((b) => (b.t += dt)); bumps = bumps.filter((b) => b.t < 0.18);
     bits.forEach((b) => { b.vy += GRAV * 0.6 * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.t += dt; }); bits = bits.filter((b) => b.t < 1.6);
-    pops.forEach((p) => { p.t += dt; p.y -= 26 * dt; }); pops = pops.filter((p) => p.t < 0.9);
+    pops.forEach((p) => { p.t += dt; if (p.t > 0) p.y -= 26 * dt; }); pops = pops.filter((p) => p.t < 0.9);
   }
 
   /* ---------- drawing ---------- */
@@ -275,28 +287,26 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
   function draw() {
     const dpr = canvas.width;
     ctx.setTransform(s, 0, 0, s, 0, 0); ctx.imageSmoothingEnabled = false;
-    R(0, 0, viewW, VIEW_H, '#000');
+    R(0, 0, viewW, VIEW_H, '#06071a');
     const camX = Math.round(cam);
-    // parallax: stars, clouds, hills, trees
-    stars.forEach((st) => { const x = ((st.x - camX * 0.08) % (viewW + 40) + (viewW + 40)) % (viewW + 40); const tw = Math.floor(t * 2 + st.p) % 5 === 0; R(x, st.y, tw ? 1 : 2, tw ? 1 : 2, st.p % 2 ? COL.pink : COL.yellow); });
-    for (let i = 0; i < 10; i++) { const x = ((i * 190 - camX * 0.3) % 1900 + 1900) % 1900 - 120; cloud(x, 26 + (i % 3) * 16, 0.22); }
-    ctx.save(); ctx.translate(-Math.round(camX * 0.45), 0);
-    for (let i = 0; i < 14; i++) mound(i * 150 + 60, 120 + (i % 3) * 30, 36 + (i % 3) * 10, '#0d0f3d');
-    ctx.restore();
     ctx.save(); ctx.translate(-camX, 0);
-    // scenery trees (behind everything)
-    for (let i = 0; i < 24; i++) S(art.tree, (6 + i * 8.4) * T + (i % 3) * 5, GROUND * T - 16, 14, 16);
-    // castle
-    const cy = GROUND * T - 64;
-    R(CASTLE_X, cy, 48, 64, COL.ind); for (let y = cy + 8; y < GROUND * T; y += 8) R(CASTLE_X, y, 48, 1, COL.indD);
-    for (let i = 0; i < 4; i++) R(CASTLE_X + i * 12, cy - 8, 8, 8, COL.ind);
-    R(CASTLE_X + 18, GROUND * T - 22, 12, 22, '#000'); R(CASTLE_X + 20, GROUND * T - 26, 8, 4, '#000');
-    R(CASTLE_X + 6, cy + 14, 6, 8, '#000'); R(CASTLE_X + 36, cy + 14, 6, 8, '#000');
-    R(CASTLE_X + 23, cy - 24, 2, 16, COL.white); R(CASTLE_X + 25, cy - 24, 9, 6, COL.pink);
-    if (phase === 'clear') { const bob = Math.sin(t * 5) * 2; S(bakeStar(), CASTLE_DOOR - 8, cy - 22 + bob, 15, 15); }
+    // the wizard's tower
+    const TW = 36, TH = 88, ty0 = GROUND * T - TH, tx0 = CASTLE_X;
+    R(tx0, ty0, TW, TH, COL.ind); for (let y = ty0 + 8; y < GROUND * T; y += 8) R(tx0, y, TW, 1, COL.indD);
+    R(tx0, ty0, 3, TH, '#7A7FFF'); R(tx0 + TW - 3, ty0, 3, TH, COL.indD);
+    R(tx0 - 3, ty0 - 4, TW + 6, 5, COL.indD);
+    for (let r = 0; r < 7; r++) R(tx0 - 3 + r * 2.5, ty0 - 4 - (r + 1) * 5, TW + 6 - r * 5, 5, r % 2 ? '#6a35b8' : '#7A3FD1');
+    R(tx0 + TW / 2 - 1, ty0 - 4 - 42, 2, 8, COL.yellow);
+    R(tx0 + TW / 2 - 7, GROUND * T - 22, 14, 22, '#000'); R(tx0 + TW / 2 - 5, GROUND * T - 25, 10, 4, '#000');
+    [ty0 + 12, ty0 + 38].forEach((wy) => { R(tx0 + TW / 2 - 4, wy, 8, 12, COL.yellow); R(tx0 + TW / 2 - 4, wy + 5, 8, 1, '#E0A820'); });
+    // the wizard (faces the hero) with a glowing staff
+    const wy0 = GROUND * T - 18 + (Math.sin(t * 3) > 0 ? 0 : 1);
+    S(art.wizard, WIZ_X, wy0, 12, 18, true);
+    R(WIZ_X + 13, GROUND * T - 26, 2, 26, '#8A5A2A'); const glow = Math.floor(t * 4) % 2 ? COL.yellow : '#fff6b0'; R(WIZ_X + 12, GROUND * T - 31, 4, 5, glow);
+    if (phase === 'clear') { const bob = Math.sin(t * 5) * 2; S(bakeStar(), WIZ_X - 2, ty0 - 70 + bob, 15, 15); }
     // flagpole
     R(FLAG_X, 3 * T, 2, 7 * T, '#cfcfe8'); R(FLAG_X - 2, 3 * T - 4, 6, 5, COL.yellow);
-    const slide = phase === 'slide' || phase === 'walk' || phase === 'clear';
+    const slide = phase === 'slide' || phase === 'walk' || phase === 'scroll' || phase === 'clear';
     R(FLAG_X + 2, 3 * T + 2 + (slide ? 70 : 0), 12, 8, COL.pink);
     // plants (behind pipe bodies)
     world.pipes.forEach((p) => {
@@ -327,7 +337,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     drawHero();
     bits.forEach((b) => R(b.x, b.y, 3, 3, b.c));
     ctx.font = '6px "Press Start 2P", monospace'; ctx.textBaseline = 'top';
-    pops.forEach((p) => { ctx.fillStyle = COL.white; ctx.fillText(p.txt, Math.round(p.x), Math.round(p.y)); });
+    pops.forEach((p) => { if (p.t < 0) return; ctx.fillStyle = COL.white; ctx.fillText(p.txt, Math.round(p.x), Math.round(p.y)); });
     ctx.restore();
     if (!ambient) hud();
     void dpr;
@@ -335,7 +345,6 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
   let starImg: HTMLCanvasElement | null = null;
   const bakeStar = () => (starImg ??= bake(['.......Y.......', '......YYY......', '......YYY......', '.....YYYYY.....', 'YYYYYYYYYYYYYYY', '.YYYYYYYYYYYYY.', '..YYYYYYYYYYY..', '...YYYYYYYYY...', '..YYYYYYYYYYY..', '..YYYYY.YYYYY..', '.YYYY.....YYYY.', '.YY.........YY.'], { Y: COL.yellow }));
   function drawHero() {
-    if (phase === 'clear' || (phase === 'walk' && h.x >= CASTLE_DOOR - 4)) return;
     if (h.inv > 0 && Math.floor(t * 14) % 2 === 0) return;
     const { w, h: hh } = size();
     const img = h.ground ? (Math.abs(h.vx) > 8 || phase === 'walk' ? (Math.floor(h.anim * 2.4) % 2 ? art.heroB : art.heroA) : art.heroS) : art.heroA;
@@ -344,6 +353,9 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     if (phase === 'dying') { ctx.translate(x + dw / 2, h.y + dh / 2); ctx.rotate(Math.sin(deadT * 10) * 0.4); ctx.translate(-(x + dw / 2), -(h.y + dh / 2)); }
     S(img, x, h.y, dw, dh, h.face < 0);
     ctx.restore();
+    // the internship scroll: flies from the wizard's hand to Aritra, then he holds it up
+    if (phase === 'scroll') { const k = Math.min(1, scrollT / 1.2), e = k * k * (3 - 2 * k); S(art.scroll, WIZ_X - 4 + (h.x + 12 - (WIZ_X - 4)) * e, GROUND * T - 14 + (h.y + 6 - (GROUND * T - 14)) * e - Math.sin(k * Math.PI) * 14, 10, 8); }
+    if (phase === 'clear') S(art.scroll, h.x + 1, h.y - 10 + Math.sin(t * 6) * 1.5, 10, 8);
   }
   function hud() {
     const sh = (txt: string, x: number, y: number, c = COL.white) => { ctx.fillStyle = '#000'; ctx.fillText(txt, x + 1, y + 1); ctx.fillStyle = c; ctx.fillText(txt, x, y); };
@@ -352,7 +364,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     sh(`COINS ${String(coinN).padStart(2, '0')}`, Math.round(viewW * 0.34), 6, COL.yellow);
     sh(`TIME ${String(Math.max(0, Math.ceil(timeLeft))).padStart(3, '0')}`, Math.round(viewW * 0.58), 6, timeLeft < 20 ? COL.pink : COL.mint);
     for (let i = 0; i < lives; i++) ctx.drawImage(art.heart, viewW - 12 - i * 10, 6, 7, 6);
-    const msg = phase === 'ready' ? ['LEVEL 1', 'ARROWS + SPACE · OR TAP', 'PRESS ANY KEY'] : phase === 'over' ? ['GAME OVER', `SCORE ${score}`, 'PRESS ENTER TO TRY AGAIN'] : phase === 'clear' ? ['LEVEL CLEAR!', `SCORE ${score}`, 'PRESS ENTER TO PLAY AGAIN'] : null;
+    const msg = phase === 'ready' ? ['LEVEL 1', 'GET ARITRA HIS INTERNSHIP', 'REACH THE WIZARD · PRESS ANY KEY'] : phase === 'over' ? ['GAME OVER', 'THE WIZARD IS STILL WAITING', 'PRESS ENTER TO TRY AGAIN'] : null;
     if (msg) {
       ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(0, 54, viewW, 84); ctx.textAlign = 'center';
       ctx.font = '12px "Press Start 2P", monospace'; sh(msg[0], viewW / 2, 66, phase === 'over' ? COL.pink : COL.yellow);

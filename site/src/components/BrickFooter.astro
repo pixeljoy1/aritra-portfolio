@@ -1,18 +1,54 @@
 ---
-// The footer is Level 1: an autopilot runs it. Click it (or press Enter on it) to play the level in a modal.
+import Sprite from './Sprite.astro';
 ---
-<button class="levelbar" id="levelOpen" type="button" aria-label="Open the hidden level, a small platform game. Escape closes it.">
-  <canvas id="levelBg" aria-hidden="true"></canvas>
-  <span class="levelbar__hint" aria-hidden="true">? CLICK TO PLAY</span>
-</button>
+<div class="level" aria-hidden="true">
+  <div class="level__track">
+    <span class="level__obs" data-at="0.2"><Sprite name="pipe" u={4} /></span>
+    <span class="level__obs" data-at="0.44"><Sprite name="pipe" u={4} /></span>
+    <span class="level__obs" data-at="0.68"><Sprite name="pipe" u={4} /></span>
+    <span class="level__flag"><Sprite name="flag" u={4} /></span>
+    <span class="level__hero" id="levelHero">
+      <span class="f f--a"><Sprite name="heroRunA" u={3} /></span>
+      <span class="f f--b"><Sprite name="heroRunB" u={3} /></span>
+    </span>
+    <span class="level__star" id="levelStar"><Sprite name="star" u={4} /></span>
+  </div>
+</div>
+<div class="bricks" aria-hidden="true">
+  <svg width="100%" height="24" shape-rendering="crispEdges" preserveAspectRatio="none">
+    <defs>
+      <pattern id="brick" width="12" height="8" patternUnits="userSpaceOnUse" patternTransform="scale(3)">
+        <rect width="12" height="1" fill="#21EF80" />
+        <rect y="1" width="12" height="1" fill="#12B862" />
+        <rect y="2" width="12" height="6" fill="#585EFF" />
+        <rect y="4" width="12" height="1" fill="#2E33B8" />
+        <rect y="7" width="12" height="1" fill="#2E33B8" />
+        <rect x="0" y="2" width="1" height="2" fill="#2E33B8" />
+        <rect x="6" y="2" width="1" height="2" fill="#2E33B8" />
+        <rect x="3" y="5" width="1" height="2" fill="#2E33B8" />
+        <rect x="9" y="5" width="1" height="2" fill="#2E33B8" />
+      </pattern>
+    </defs>
+    <rect width="100%" height="24" fill="url(#brick)" />
+  </svg>
+</div>
 
-<div class="lv" id="lv" role="dialog" aria-modal="true" aria-label="Level 1, hidden mini game" hidden>
+<div class="lv" id="lv" role="dialog" aria-modal="true" aria-label="Level 1, the internship" hidden>
   <div class="lv__panel">
     <div class="lv__top">
-      <p class="label lv__title">LEVEL 1 · COINS, SHROOM, FLAG</p>
+      <p class="label lv__title">LEVEL 1 · THE INTERNSHIP</p>
       <button type="button" class="lb__x" id="lvClose" aria-label="Close level (Escape)">X</button>
     </div>
-    <canvas id="lvCanvas" class="lv__canvas"></canvas>
+    <div class="lv__stage">
+      <canvas id="lvCanvas" class="lv__canvas"></canvas>
+      <div class="lv__offer" id="lvOffer" hidden>
+        <p class="label label--pink">THE WIZARD HANDS OVER A SCROLL</p>
+        <h3 class="lv__offer-h">INTERNSHIP OFFER</h3>
+        <p class="lv__offer-p">Game design · immersive environments · UX. Aritra learns fast and ships real work.</p>
+        <p class="lv__offer-score label" id="lvScore"></p>
+        <p class="lv__offer-actions"><a class="btn btn--primary" id="lvMail" href="#">SAY HELLO →</a> <button type="button" class="btn btn--secondary" id="lvAgain">PLAY AGAIN</button></p>
+      </div>
+    </div>
     <div class="lv__pad" aria-label="Touch controls">
       <button type="button" class="lv__btn" data-k="left" aria-label="Move left">◀</button>
       <button type="button" class="lv__btn" data-k="right" aria-label="Move right">▶</button>
@@ -22,22 +58,70 @@
     <p class="label lv__rotate">ROTATE YOUR PHONE FOR A BIGGER VIEW</p>
   </div>
 </div>
+<script>
+  // Level 1: the hero runs left to right along the brick strip, jumps the pipes, reaches the flag, restarts.
+  const track = document.querySelector<HTMLElement>('.level__track');
+  const hero = document.getElementById('levelHero');
+  const star = document.getElementById('levelStar');
+  const obs = [...document.querySelectorAll<HTMLElement>('.level__obs')];
+  const flag = document.querySelector<HTMLElement>('.level__flag');
+  if (track && hero && star && flag) {
+    const HERO_W = 42, FLAG_W = 48, SPEED = 120, JUMP_T = 0.72, JUMP_H = 62;
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let x = 0, jumpT = -1, hold = 0, last = 0, run = 0, raf = 0, visible = false;
+    const W = () => track.clientWidth;
+    const place = () => {
+      const w = W();
+      obs.forEach((o) => { o.style.left = `${parseFloat(o.dataset.at!) * (w - FLAG_W - 40)}px`; });
+      flag.style.left = `${w - FLAG_W - 8}px`;
+    };
+    const draw = () => {
+      const y = jumpT >= 0 ? Math.sin((jumpT / JUMP_T) * Math.PI) * JUMP_H : 0;
+      hero.style.transform = `translate(${x}px, ${-y}px)`;
+      const f = jumpT >= 0 ? 0 : Math.floor(run / 0.12) % 2;
+      hero.classList.toggle('is-b', f === 1);
+    };
+    const tick = (t: number) => {
+      raf = 0;
+      if (!visible) return;
+      const dt = Math.min(0.05, (t - last) / 1000 || 0); last = t;
+      const end = W() - FLAG_W - HERO_W - 12;
+      if (hold > 0) {
+        hold -= dt;
+        star.style.opacity = '1';
+        star.style.transform = `translate(${end + 6}px, ${-70 - Math.sin(hold * 6) * 6}px)`;
+        if (hold <= 0) { x = 0; star.style.opacity = '0'; }
+      } else {
+        x += SPEED * dt; run += dt;
+        if (jumpT < 0) {
+          const next = obs.find((o) => o.offsetLeft + 40 > x && o.offsetLeft - x < HERO_W + 8 && o.offsetLeft - x > 6);
+          if (next) jumpT = 0;
+        } else {
+          jumpT += dt;
+          if (jumpT >= JUMP_T) jumpT = -1;
+        }
+        if (x >= end) { x = end; jumpT = -1; hold = 1.6; }
+      }
+      draw();
+      raf = requestAnimationFrame(tick);
+    };
+    const start = () => { if (!raf && visible && !still) { last = performance.now(); raf = requestAnimationFrame(tick); } };
+    place();
+    addEventListener('resize', place);
+    if (still) { x = W() - FLAG_W - HERO_W - 12; draw(); star.style.opacity = '1'; star.style.transform = `translate(${x + 6}px, -70px)`; }
+    new IntersectionObserver((es) => { visible = es[0].isIntersecting; start(); }).observe(track);
+    // the easter egg: clicking the footer level opens the hidden game (no visible hint on purpose)
+    track.addEventListener('click', () => document.dispatchEvent(new CustomEvent('open-level')));
+  }
+</script>
 
 <script>
   import { createLevel } from '../scripts/level';
-  const bg = document.getElementById('levelBg') as HTMLCanvasElement;
-  const open = document.getElementById('levelOpen') as HTMLButtonElement;
+  import { SITE } from '../config';
   const lv = document.getElementById('lv')!;
   const lvCanvas = document.getElementById('lvCanvas') as HTMLCanvasElement;
-  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const ambient = createLevel(bg, { mode: 'ambient' });
-  let visible = false, game: ReturnType<typeof createLevel> | null = null;
-
-  const fit = () => ambient.resize(open.clientWidth, window.devicePixelRatio || 1);
-  fit(); new ResizeObserver(fit).observe(open);
-  const runAmbient = () => { if (!calm && visible && lv.hidden && !document.hidden) ambient.start(); else ambient.stop(); };
-  new IntersectionObserver((e) => { visible = e[0].isIntersecting; runAmbient(); }).observe(open);
-  document.addEventListener('visibilitychange', runAmbient);
+  const offer = document.getElementById('lvOffer')!;
+  let game: ReturnType<typeof createLevel> | null = null;
 
   const fitGame = () => { const p = lvCanvas.parentElement!; game?.resize(p.clientWidth - 4, window.devicePixelRatio || 1); };
   const keyMap: Record<string, 'left' | 'right' | 'jump'> = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'jump', w: 'jump', W: 'jump', ' ': 'jump' };
@@ -49,32 +133,36 @@
     if (k || e.key === 'Enter' || e.key === 'm' || e.key === 'M') e.preventDefault();
     game.anyKey();
     if (k) game.press(k, true);
-    else if (e.key === 'Enter') game.restart();
+    else if (e.key === 'Enter') again();
     else if (e.key === 'm' || e.key === 'M') game.toggleMute();
   };
   const up = (e: KeyboardEvent) => { const k = keyMap[e.key]; if (k && game) game.press(k, false); };
+  function again() { offer.hidden = true; game?.fullReset(); game?.anyKey(); }
 
   function openGame() {
-    lv.hidden = false; document.body.style.overflow = 'hidden'; ambient.stop();
-    game ??= createLevel(lvCanvas, { mode: 'play' });
+    lv.hidden = false; document.body.style.overflow = 'hidden'; offer.hidden = true;
+    game ??= createLevel(lvCanvas, { mode: 'play', onEnd: (r) => {
+      if (!r.won) return;
+      document.getElementById('lvScore')!.textContent = `SCORE ${r.score}`;
+      (document.getElementById('lvMail') as HTMLAnchorElement).href = `mailto:${SITE.email}?subject=Internship`;
+      setTimeout(() => { if (!lv.hidden) offer.hidden = false; }, 900);
+    } });
+    if (import.meta.env.DEV) (window as any).__level = { create: () => game };
     game.fullReset(); fitGame(); game.start();
     document.getElementById('lvClose')!.focus();
   }
-  function close() {
-    game?.stop(); lv.hidden = true; document.body.style.overflow = ''; open.focus(); runAmbient();
-  }
-  if (import.meta.env.DEV) (window as any).__level = { create: () => (game ??= createLevel(lvCanvas, { mode: 'play' })) };
-  open.addEventListener('click', openGame);
+  function close() { game?.stop(); lv.hidden = true; offer.hidden = true; document.body.style.overflow = ''; }
+  document.addEventListener('open-level', openGame);
   document.getElementById('lvClose')!.addEventListener('click', close);
+  document.getElementById('lvAgain')!.addEventListener('click', again);
   lv.addEventListener('click', (e) => { if (e.target === lv) close(); });
   document.addEventListener('keydown', down); document.addEventListener('keyup', up);
   addEventListener('resize', () => { if (!lv.hidden) fitGame(); });
-  // touch / pointer controls
   lv.querySelectorAll<HTMLButtonElement>('.lv__btn').forEach((b) => {
     const k = b.dataset.k as 'left' | 'right' | 'jump';
     const on = (e: Event) => { e.preventDefault(); game?.anyKey(); game?.press(k, true); };
     const off = (e: Event) => { e.preventDefault(); game?.press(k, false); };
     b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointerleave', off); b.addEventListener('pointercancel', off);
   });
-  lvCanvas.addEventListener('pointerdown', () => { game?.anyKey(); game?.restart(); });
+  lvCanvas.addEventListener('pointerdown', () => { game?.anyKey(); });
 </script>
