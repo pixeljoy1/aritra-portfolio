@@ -187,3 +187,9 @@ button.chip { min-height: 44px; padding: 0 var(--s4); cursor: pointer; }
 .diagram { margin: var(--s4) 0; max-width: 720px; }
 .diagram__svg { width: 100%; height: auto; border: 2px solid var(--mint); border-radius: var(--radius); display: block; }
 .diagram figcaption { margin-top: var(--s2); }
+
+/* Resume */
+.resume__actions { display: flex; flex-wrap: wrap; gap: var(--s3); margin: var(--s4) 0 var(--s5); }
+.resume__preview { display: block; max-width: 620px; margin-bottom: var(--s6); text-decoration: none; }
+.resume__preview img { width: 100%; height: auto; border: 2px solid var(--mint); border-radius: var(--radius); background: #fff; display: block; }
+.resume__preview .label { display: block; margin-top: var(--s2); }

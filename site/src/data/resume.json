@@ -1,0 +1,28 @@
+{
+  "updated": "October 2026",
+  "profile": "Third-year BDes student designing games and immersive environments. I work from research to prototype to critique, and I build what I design: a playable endless-runner game, a research-led app concept taken through three AI-assisted iterations, and 3D environments modelled, lit and rendered in Maya and Unreal Engine. Looking for an internship in game design, immersive environments or UX where I can learn fast and contribute to real production work.",
+  "highlights": [
+    ["Game design", "Tiger Run, a playable endless runner with survival, hunting, distance-score and conservation loops, built from my own Grade 10 illustration."],
+    ["UX research", "SoleSync: survey and interviews distilled into 5 insights and 4 design principles (coursework research, simulated data)."],
+    ["Environment art", "Modelled, textured and rendered a narrative-driven environment; built a Maya forest scene with fog particles and animation."],
+    ["AI-assisted design", "Wrote a 17-section design brief, ran 3 Google Stitch iterations and critiqued each against research and usability heuristics."],
+    ["Lighting", "Studied natural and artificial light through photography, then recreated a moonlit lake scene in Unreal Engine."],
+    ["Systems thinking", "Attendance Portal: five-layer anti-cheating design with student, faculty and admin journeys."]
+  ],
+  "toolbox": [
+    ["3D and real-time", "Maya · Blender · SketchUp · AutoCAD · Unreal Engine"],
+    ["Design and prototyping", "Figma · Google Stitch · Markdown design briefs · Procreate"],
+    ["Craft", "Node-based texturing · Motion graphics · Particle effects · Photography"],
+    ["Build and AI", "HTML · CSS · JavaScript · Claude · Google Stitch"]
+  ],
+  "projects": [
+    ["2026", "Tiger Run", "Personal project, game design and build", "Endless-runner proof of concept adapted from my Grade 10 wildlife-conservation illustration. Mobile-first controls, stamina and prey mechanics, and rescue-the-cub goals."],
+    ["2026", "SoleSync", "User-Centred Design and Human-AI Design", "Sneaker marketplace with an at-home care service. Research to insights to a Stitch-generated prototype across 3 critiqued iterations; 30+ screen Figma prototype. Survey and interview data simulated for coursework."],
+    ["2026", "Spatial Narrative and Environment Design", "Environment Design", "From concept and narrative through modelling and texturing to final renders of a textured rooftop-dish building on a rocky base."],
+    ["2025–26", "Lighting for Immersive Environments", "Immersive Environments and Advanced Lighting", "Photo study of natural and artificial light (front, side, back, falloff), followed by a moonlit lake-and-cabin scene in Unreal Engine."],
+    ["2025", "Stuff and Space", "3D environment and animation", "Maya forest environment from storyboard and moodboard to final render, with a textured moon asset, whirlpool animation and fog particle effect."]
+  ],
+  "education": "O.P. Jindal Global University: Bachelor of Design, Immersive Digital Environments (IDE), 2024 to 2028 (expected May 2028).",
+  "coursework": "Immersive Environments · Lighting · Environment Design · Material and Texture Design · Motion Graphics · User-Centred Design · Human-AI Design · Creative Programming",
+  "interests": "Digital illustration · Game history and graphics research · Photography. References available on request."
+}

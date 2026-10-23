@@ -1,33 +1,31 @@
 ---
-import { u } from '../../config';
+import { u, SITE } from '../../config';
 import Base from '../../layouts/Base.astro';
-import Button from '../../components/Button.astro';
+import Panel from '../../components/Panel.astro';
+import r from '../../data/resume.json';
 ---
-<Base title="Resume">
+<Base title="Resume" description="Aritra Mitra's résumé: game and immersive designer. Preview and download the PDF.">
   <div class="wrap">
     <h1 class="display">RESUME</h1>
-    <p><Button href={u("/resume.pdf")} download id="dl">DOWNLOAD PDF</Button></p>
-    <p class="muted">Last updated: <span id="updated">[PLACEHOLDER: month year]</span></p>
-    <div class="cartridge resume-frame" id="frame">
-      <div class="card__ph" id="ph" style="height:100%"><span>[RESUME PLACEHOLDER — PDF coming]</span></div>
-    </div>
+    <p class="muted">Last updated: {r.updated}</p>
+    <p class="resume__actions">
+      <a class="btn btn--primary" href={u('/resume.pdf')} download="Aritra_Mitra_Resume_2026.pdf">↓ DOWNLOAD PDF</a>
+      <a class="btn btn--secondary" href={u('/resume.pdf')} target="_blank" rel="noopener">OPEN IN NEW TAB</a>
+    </p>
+    <a class="resume__preview" href={u('/img/resume-preview.webp')} data-lb data-lb-group="resume" data-lb-src={u('/img/resume-preview.webp')}
+      data-lb-alt="Aritra Mitra résumé 2026, one page" data-lb-title="Résumé 2026 (one page)" data-lb-meta="Tap to enlarge">
+      <img src={u('/img/resume-preview.webp')} alt="Preview of Aritra Mitra's one-page résumé" width="1241" height="1754" />
+      <span class="label label--indigo">QUICK PREVIEW · TAP TO ENLARGE</span>
+    </a>
+
+    <h2 class="h2">Read as text</h2>
+    <Panel label="PROFILE"><p>{r.profile}</p></Panel>
+    <Panel label="KEY HIGHLIGHTS"><ul>{r.highlights.map(([k, v]) => <li><strong>{k}.</strong> {v}</li>)}</ul></Panel>
+    <Panel label="TOOLBOX"><ul>{r.toolbox.map(([k, v]) => <li><strong>{k}:</strong> {v}</li>)}</ul></Panel>
+    <Panel label="SELECTED PROJECTS">
+      <ul>{r.projects.map(([y, t, c, d]) => <li><strong>{t}</strong> <span class="muted">({y}) · {c}</span><br />{d}</li>)}</ul>
+    </Panel>
+    <Panel label="EDUCATION"><p>{r.education}</p><p><strong>Coursework:</strong> {r.coursework}</p><p>{r.interests}</p></Panel>
+    <p>Contact: <a href={`mailto:${SITE.email}`}>{SITE.email}</a> · <a href={SITE.linkedin} rel="noopener noreferrer">LinkedIn</a></p>
   </div>
 </Base>
-<script>
-  // Shows the PDF in the window as soon as /resume.pdf exists; otherwise keeps the placeholder.
-  const dl = document.getElementById('dl') as HTMLAnchorElement;
-  const pdfUrl = import.meta.env.BASE_URL.replace(/\/$/, '') + '/resume.pdf';
-  fetch(pdfUrl, { method: 'HEAD' }).then((r) => {
-    const pdf = r.ok && (r.headers.get('content-type') ?? '').includes('pdf');
-    if (pdf) {
-      document.getElementById('ph')!.remove();
-      const f = document.createElement('iframe');
-      f.src = pdfUrl; f.title = 'Resume PDF';
-      document.getElementById('frame')!.append(f);
-    } else {
-      dl.setAttribute('aria-disabled', 'true');
-      dl.addEventListener('click', (e) => e.preventDefault());
-      dl.style.opacity = '.5';
-    }
-  }).catch(() => {});
-</script>

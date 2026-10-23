@@ -5,7 +5,7 @@
 3. **Role line** (draft "Game + Immersive Designer") and About copy → `src/pages/about`.
 4. **Tools list** to publish → case-study frontmatter, About, resume.
 5. **Three best images per featured project** + Spatial Narrative text.
-6. **Resume content** → create `src/content/resume.yaml`, generate `/resume/` and `public/resume.pdf` (not yet built; the download button currently 404s).
+6. ~~Resume content~~ done (2026-10, PDF in `site/public/resume.pdf`, archive copy in `resume/archive/2026-10.pdf`, text in `site/src/data/resume.json`). When the PDF changes: replace the PDF, re-render `site/public/img/resume-preview.webp`, update resume.json. **The PDF prints the github.io portfolio URL; regenerate it once the custom domain is live.** Old line: → create `src/content/resume.yaml`, generate `/resume/` and `public/resume.pdf` (not yet built; the download button currently 404s).
 7. **Course titles and role** per project.
 8. **Figma links**: confirm public before adding to `links`.
 9. Year-1 `Graphics` and `DigitalSkills` contents.
