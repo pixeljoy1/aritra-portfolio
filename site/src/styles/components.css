@@ -210,3 +210,11 @@ button.chip { min-height: 44px; padding: 0 var(--s4); cursor: pointer; }
 .prose th, .prose td { border: 2px solid var(--indigo-dark); padding: var(--s2) var(--s3); text-align: left; vertical-align: top; }
 .prose thead th { color: var(--mint); font-family: var(--f-ui); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; background: var(--panel-bg); }
 @media (max-width: 640px) { .prose table { display: block; overflow-x: auto; } }
+
+/* Origin banner: links home to the Doom and Quake report */
+.origin { display: block; border: 2px solid var(--mint); border-radius: var(--radius); background: #000; text-decoration: none; color: var(--white); overflow: hidden; margin-bottom: var(--s6); }
+.origin:hover, .origin:focus-visible { box-shadow: 4px 4px 0 var(--mint-dark); }
+.origin img { width: 100%; height: auto; display: block; }
+.origin__cap { display: grid; gap: var(--s2); padding: var(--s4); border-top: 2px solid var(--mint); }
+.origin__cap .label { margin: 0; }
+.origin--flat { margin-bottom: var(--s4); }

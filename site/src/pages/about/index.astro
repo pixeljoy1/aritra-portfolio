@@ -4,6 +4,7 @@ import Panel from '../../components/Panel.astro';
 import { SITE, u } from '../../config';
 import media from '../../data/media.json';
 const ph = (media as any).photos.portrait;
+const og = (media as any).origin;
 ---
 <Base title="About">
   <div class="wrap">
@@ -21,6 +22,14 @@ const ph = (media as any).photos.portrait;
     <Panel variant="indigo" label="PLAYER STATS">
       <p><strong>Areas:</strong> game + environment, UX + systems, motion + lighting</p>
       <p><strong>Tools:</strong> Maya · SketchUp · Unreal Engine · Figma · Google Stitch · Procreate · Blender (basic) · AutoCAD (basic)</p>
+    </Panel>
+    <h2 class="h2" id="inspiration">Where the look comes from</h2>
+    <Panel variant="mint" label="THE ORIGIN">
+      <a class="origin origin--flat" href={u('/work/doom-and-quake/')}>
+        <img src={u(og.sm)} alt={og.alt} width="640" height="176" loading="lazy" />
+      </a>
+      <p>I presented my report on Doom and Quake as an arcade title screen, and the pixel-arcade look stuck. It became the identity of this site and of my printed card: black ground, mint frames, pink titles, indigo accents.</p>
+      <p><a href={u('/work/doom-and-quake/')}>Read the whole report →</a></p>
     </Panel>
     <h2 class="h2" id="photography">Wildlife photography</h2>
     <Panel variant="indigo" label="@WILDSCAPEEXPLORERS">

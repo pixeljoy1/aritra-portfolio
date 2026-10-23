@@ -6,14 +6,18 @@
     "gallery": [
       {
         "src": "/img/doom-and-quake/01.webp",
-        "alt": "Doom (1993): a dark, maze-like corridor with sprite enemies"
+        "alt": "The report's Introduction slide in pixel-arcade style, with arcade-button arrows, a trophy and the opening paragraph on id Software, Doom and Quake"
       },
       {
         "src": "/img/doom-and-quake/02.webp",
-        "alt": "Quake (1996): a lit, textured 3D corridor"
+        "alt": "Doom (1993): a dark, maze-like corridor with sprite enemies"
       },
       {
         "src": "/img/doom-and-quake/03.webp",
+        "alt": "Quake (1996): a lit, textured 3D corridor"
+      },
+      {
+        "src": "/img/doom-and-quake/04.webp",
         "alt": "Quake (1996): a polygonal monster seen from below"
       }
     ]
@@ -218,5 +222,10 @@
       "sm": "/img/photos/vr-close-sm.webp",
       "alt": "Close view of the student holding VR controllers in the lab"
     }
+  },
+  "origin": {
+    "src": "/img/origin/intro-banner.webp",
+    "sm": "/img/origin/intro-banner-sm.webp",
+    "alt": "The Doom and Quake report's Introduction slide: a pixel-arcade title with arrows, a trophy and star sprites above the opening paragraph"
   }
 }

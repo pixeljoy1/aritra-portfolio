@@ -8,6 +8,8 @@ import LevelCard from '../components/LevelCard.astro';
 import Sprite from '../components/Sprite.astro';
 import BrickFooter from '../components/BrickFooter.astro';
 import { SITE, YEARS } from '../config';
+import media from '../data/media.json';
+const og = (media as any).origin;
 const featured = (await getCollection('work')).filter((w) => w.data.status === 'featured').sort((a, b) => a.data.order - b.data.order);
 const icons: Record<string, string> = { 'tiger-run': 'tiger' };
 ---
@@ -30,6 +32,15 @@ const icons: Record<string, string> = { 'tiger-run': 'tiger' };
     <div class="grid">
       {featured.map((w, i) => <LevelCard {...w.data} level={i + 1} icon={icons[w.data.slug]} tags={w.data.disciplines} />)}
     </div>
+    <h2 class="h2">Where the look comes from</h2>
+    <a class="origin" href={u('/work/doom-and-quake/')}>
+      <img src={u(og.sm)} srcset={`${u(og.sm)} 640w, ${u(og.src)} 1400w`} sizes="(min-width: 1120px) 1056px, 92vw" alt={og.alt} width="1400" height="386" loading="lazy" />
+      <span class="origin__cap">
+        <span class="label label--pink">THE ORIGIN</span>
+        <span>This site's pixel-arcade identity started in my research report on Doom and Quake, presented as an arcade title screen. The colours, the type and the pixel style here all trace back to it.</span>
+        <span class="label">READ THE WHOLE REPORT →</span>
+      </span>
+    </a>
     <h2 class="h2">Year by year</h2>
     <div class="chip-strip">
       {YEARS.map((y) => <a href={u(`/years/${y.slug}/`)} class="btn btn--secondary">YEAR {y.n} · {y.label}</a>)}

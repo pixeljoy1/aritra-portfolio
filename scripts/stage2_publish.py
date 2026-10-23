@@ -33,6 +33,7 @@ SN = 'SEM4/EnvironmentDesign/Spatial Narrative and Environment Design (1).pdf'
 SET = {
  'doom-and-quake': [
    (('x','doomquake-compare'), 'Doom on the left, Quake on the right: flat sprites in a 2.5D corridor against polygon monsters in a true 3D level'),
+   (('f','assets/photos/intro-slide.webp',(0,0,2000,552)), 'The report\'s Introduction slide in pixel-arcade style, with arcade-button arrows, a trophy and the opening paragraph on id Software, Doom and Quake'),
    (('c','doomquake',4), 'Doom (1993): a dark, maze-like corridor with sprite enemies'),
    (('c','doomquake',9), 'Quake (1996): a lit, textured 3D corridor'),
    (('c','doomquake',8), 'Quake (1996): a polygonal monster seen from below')],
@@ -124,7 +125,9 @@ def compare():
 
 def get(src):
     if src[0] == 'x': return compare()
-    if src[0] == 'f': return Image.open(ROOT / src[1])
+    if src[0] == 'f':
+        im = Image.open(ROOT / src[1]).convert('RGB')
+        return im.crop(src[2]) if len(src) > 2 else im
     return cand(src[1], src[2]) if src[0] == 'c' else pdfpage(src[1], src[2])
 
 media, artefacts = {}, []
@@ -171,6 +174,14 @@ for key, f, box, alt in PHOTOS:
     sz = save(im, pdir / f'{key}.webp', 800); save(im, pdir / f'{key}-sm.webp', 320)
     media['photos'][key] = {'src': f'/img/photos/{key}.webp', 'sm': f'/img/photos/{key}-sm.webp', 'alt': alt}
     print(f'photos/{key}: {sz//1024} KB')
+# Origin banner (home + about): the report's Introduction slide, text-only part (no third-party photos).
+odir = PUB / 'img' / 'origin'
+if odir.exists(): shutil.rmtree(odir)
+ban = get(('f', 'assets/photos/intro-slide.webp', (0, 0, 2000, 552)))
+sz = save(ban, odir / 'intro-banner.webp', 1400); save(ban, odir / 'intro-banner-sm.webp', 640)
+media['origin'] = {'src': '/img/origin/intro-banner.webp', 'sm': '/img/origin/intro-banner-sm.webp',
+  'alt': 'The Doom and Quake report\'s Introduction slide: a pixel-arcade title with arrows, a trophy and star sprites above the opening paragraph'}
+print(f'origin banner: {sz//1024} KB')
 DATA.mkdir(parents=True, exist_ok=True)
 (DATA / 'media.json').write_text(json.dumps(media, indent=2)); (DATA / 'artefacts.json').write_text(json.dumps(artefacts, indent=2))
 print('done:', sum(f.stat().st_size for f in PUB.rglob('*') if f.is_file()) // 1024, 'KB in public/')
