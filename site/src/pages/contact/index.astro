@@ -8,7 +8,8 @@ import { SITE } from '../../config';
     <ul>
       <li><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
       <li><a href={SITE.github}>GitHub</a></li>
-      {SITE.linkedin && <li><a href={SITE.linkedin}>LinkedIn</a></li>}
+      {SITE.linkedin && <li><a href={SITE.linkedin} rel="noopener noreferrer">LinkedIn</a></li>}
+      <li><a href={SITE.instagram} rel="noopener noreferrer">Instagram: @wildscapeexplorers (wildlife photography)</a></li>
     </ul>
   </div>
 </Base>

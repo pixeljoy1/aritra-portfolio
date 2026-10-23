@@ -32,8 +32,8 @@ const full = title ? `${title} · ${SITE.name}` : `${SITE.name} — ${SITE.role}
     {!bare && (
       <footer class="footer">
         <div class="wrap footer__in">
-          <p><a href={`mailto:${SITE.email}`}>{SITE.email}</a> · <a href={SITE.github}>GitHub</a></p>
-          <p class="muted">© {SITE.name}</p>
+          <p><a href={`mailto:${SITE.email}`}>{SITE.email}</a> · <a href={SITE.linkedin}>LinkedIn</a> · <a href={SITE.instagram} rel="noopener noreferrer">Wildlife photography</a></p>
+          <p class="muted">© {SITE.name} · <a href={`${u('/about/')}#build`}>How this site was made</a></p>
         </div>
         <BrickFooter />
       </footer>

@@ -1,4 +1,10 @@
 {
+  "tiger-run": {
+    "hero": "/img/tiger-run/hero.webp",
+    "thumb": "/img/tiger-run/thumb.webp",
+    "heroAlt": "Original Tiger Run concept illustration: a tiger runs a forest road past traps, boar and poachers",
+    "gallery": []
+  },
   "spatial-narrative-environment": {
     "hero": "/img/spatial-narrative-environment/hero.webp",
     "thumb": "/img/spatial-narrative-environment/thumb.webp",

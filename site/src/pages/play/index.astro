@@ -1,24 +1,111 @@
 ---
-import { u } from '../../config';
+import { u, SITE } from '../../config';
 import Base from '../../layouts/Base.astro';
 import Panel from '../../components/Panel.astro';
+import media from '../../data/media.json';
+const m = (media as any)['tiger-run'];
+const swatches = [
+  ['#F5C518', 'HUD pill'], ['#171310', 'Ink outline'], ['#B02A1E', 'HUD text'],
+  ['#F5A03C', 'Tiger'], ['#D8A76A', 'Road'], ['#2F6B5B', 'Canopy'], ['#A6BA3C', 'Verge'], ['#5FBBE8', 'Sky'],
+];
 ---
 <Base title="Play Tiger Run">
   <div class="wrap">
-    <p class="label"><a href={u("/")}>← HOME</a></p>
+    <p class="label"><a href={u('/')}>← HOME</a></p>
     <h1 class="display">TIGER RUN</h1>
     <div class="cartridge cartridge--game">
       <iframe src={u('/play/game/')} title="Tiger Run (game)" allow="fullscreen; autoplay" loading="eager"></iframe>
     </div>
     <p><a class="btn btn--secondary" href={u('/play/game/')}>OPEN FULLSCREEN</a></p>
-    <h2 class="h2">Making of</h2>
-    <p>Tiger Run began as a Grade 10 IGCSE illustration, drawn in Procreate on iPad, about wildlife conservation in India: a tiger running a poacher's gauntlet. It later became a playable endless-runner proof of concept.</p>
-    <ul>
-      <li><strong>Survival:</strong> poachers, snares, traps.</li>
-      <li><strong>Hunting:</strong> prey restores stamina.</li>
-      <li><strong>Distance score:</strong> best score is saved locally.</li>
-      <li><strong>Conservation:</strong> rescue cubs, restore habitat.</li>
-    </ul>
-    <Panel variant="indigo" label="CONTROLS"><p class="placeholder">[PLACEHOLDER: controls, taken from the build]</p></Panel>
+
+    <h2 class="h2">Making of: from drawing to game</h2>
+    <p class="lede">Tiger Run began as one illustration and became a playable endless runner. This is how, step by step.</p>
+
+    <section class="step">
+      <p class="label label--pink">01 · CONCEPT</p>
+      <h3 class="step__h">A Grade 10 illustration about wildlife conservation in India</h3>
+      <p>Drawn in Procreate on iPad for IGCSE art: a tiger runs a forest road lined with jaw traps, boulders, boar and poachers hiding in the grass. The story was already there: a tiger surviving a gauntlet set by people.</p>
+      {m && <a class="step__fig" href={u(m.hero)} data-lb data-lb-group="tiger" data-lb-src={u(m.hero)} data-lb-alt={m.heroAlt} data-lb-title="The original concept illustration" data-lb-meta="Tiger Run · concept">
+        <img src={u(m.thumb)} srcset={`${u(m.thumb)} 640w, ${u(m.hero)} 1400w`} sizes="(min-width: 960px) 720px, 92vw" alt={m.heroAlt} width="640" height="408" loading="lazy" />
+        <figcaption class="label label--indigo">THE ORIGINAL ILLUSTRATION · TAP TO ENLARGE</figcaption>
+      </a>}
+    </section>
+
+    <section class="step">
+      <p class="label label--pink">02 · CHARACTER + PREP SHEET</p>
+      <h3 class="step__h">Designing the tiger before drawing the level</h3>
+      <p>The game credits Aritra's character and level design, <em>Prep Sheet #2</em>: the tiger is a big-headed, plump, boldly striped character with wide-set ears and a curled striped tail, as in the drawing.</p>
+      <Panel variant="indigo" label="TO ADD">
+        <p class="placeholder">[PLACEHOLDER: scans of Prep Sheet #2, pencil roughs and wire/layout sketches. Aritra to supply; trim to the artwork only. Do not include candidate or centre numbers.]</p>
+      </Panel>
+    </section>
+
+    <section class="step">
+      <p class="label label--pink">03 · ART DIRECTION</p>
+      <h3 class="step__h">The HUD is the brand</h3>
+      <p>The illustration's look was kept on purpose: yellow pill HUD with red hand-lettered numbers, ochre road, teal canopy walls, ink outlines. The game uses its own illustrated palette, separate from this site's pixel style, so it reads as the original drawing.</p>
+      <ul class="swatches" aria-label="Palette">
+        {swatches.map(([c, n]) => <li><span class="swatch" style={`background:${c}`}></span><span class="label">{n}</span></li>)}
+      </ul>
+    </section>
+
+    <section class="step">
+      <p class="label label--pink">04 · CONSTRUCTION</p>
+      <h3 class="step__h">Turning a flat drawing into a one-point-perspective road</h3>
+      <p>The drawing has a vanishing point at the horizon, so the game does too. The camera sits 2.5 units above the road; three lanes, 1.75 units wide each, run towards the horizon. Everything spawns far away, 110 units out, and rushes towards the tiger, who stays at 3.4 units from the camera.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 640 380" role="img" aria-labelledby="dgT dgD" class="diagram__svg">
+          <title id="dgT">Construction diagram of the Tiger Run road</title>
+          <desc id="dgD">One-point perspective: a horizon a third of the way down, a vanishing point, a road with three lanes, tree trunks every 5.5 units, and the tiger near the camera.</desc>
+          <rect width="640" height="124" fill="#5FBBE8"/>
+          <rect y="124" width="640" height="256" fill="#A6BA3C"/>
+          <polygon points="0,0 130,0 320,124 0,124" fill="#2F6B5B"/><polygon points="640,0 510,0 320,124 640,124" fill="#2F6B5B"/>
+          <polygon points="320,124 36,380 604,380" fill="#D8A76A"/>
+          <g stroke="#171310" stroke-width="2" fill="none"><line x1="320" y1="124" x2="36" y2="380"/><line x1="320" y1="124" x2="604" y2="380"/></g>
+          <g stroke="#171310" stroke-width="1.5" stroke-dasharray="6 5"><line x1="320" y1="124" x2="226" y2="380"/><line x1="320" y1="124" x2="414" y2="380"/></g>
+          <g stroke="#8A7A6A" stroke-width="3" stroke-linecap="round">
+            <line x1="258" y1="150" x2="258" y2="128"/><line x1="382" y1="150" x2="382" y2="128"/>
+            <line x1="214" y1="188" x2="214" y2="150"/><line x1="426" y1="188" x2="426" y2="150"/>
+            <line x1="150" y1="250" x2="150" y2="190"/><line x1="490" y1="250" x2="490" y2="190"/>
+            <line x1="58" y1="360" x2="58" y2="262"/><line x1="582" y1="360" x2="582" y2="262"/>
+          </g>
+          <ellipse cx="320" cy="322" rx="38" ry="30" fill="#F5A03C" stroke="#171310" stroke-width="3"/>
+          <path d="M306 306v14M320 303v18M334 306v14" stroke="#171310" stroke-width="3" stroke-linecap="round"/>
+          <line x1="0" y1="124" x2="640" y2="124" stroke="#FF63D8" stroke-width="2"/>
+          <circle cx="320" cy="124" r="5" fill="#FF63D8"/>
+          <g font-family="Silkscreen, monospace" font-size="11" fill="#fff" stroke="#000" stroke-width="3" paint-order="stroke">
+            <text x="12" y="116">HORIZON · 1/3 DOWN</text>
+            <text x="328" y="110">VANISHING POINT · SPAWN AT 110</text>
+            <text x="440" y="300">3 LANES</text><text x="440" y="314">1.75 WIDE</text>
+            <text x="350" y="346">TIGER · 3.4 FROM CAMERA</text>
+            <text x="12" y="372">TRUNKS EVERY 5.5 · FADE INTO HAZE</text>
+          </g>
+        </svg>
+        <figcaption class="label label--indigo">DIAGRAM DRAWN FROM THE GAME'S OWN GEOMETRY</figcaption>
+      </figure>
+      <p>Two choices keep the drawing's feel: outlines are re-wobbled and redrawn about eight times a second so the world looks hand-inked and "boils" like animation, and a paper grain sits over everything. Distant objects fade towards a pale haze, which is what sells depth.</p>
+    </section>
+
+    <section class="step">
+      <p class="label label--pink">05 · SYSTEMS</p>
+      <h3 class="step__h">Four loops that push against each other</h3>
+      <ul>
+        <li><strong>Survival.</strong> Jump over jaw traps and fallen logs, slide under the poacher's snare cable, steer around boulders and poachers. Five hearts.</li>
+        <li><strong>Hunting.</strong> Stamina drains as you run. Boar restore the most; chital restore less but score more.</li>
+        <li><strong>Distance.</strong> Speed rises with distance, not time, through five named paces: Easy, Steady, Hard, Brutal, Relentless. Rows of obstacles also tighten.</li>
+        <li><strong>Conservation.</strong> Every cub you rescue is +100. Every three cubs restore the habitat one tier (Sal forest, Teak and bamboo, Monsoon canopy, Core corridor) and raise the score multiplier.</li>
+      </ul>
+      <Panel variant="indigo" label="CONTROLS">
+        <p><strong>Keyboard:</strong> ← → or A D to change lane, ↑ W or Space to jump, ↓ or S to slide, P or Esc to pause, M to mute.</p>
+        <p><strong>Phone:</strong> tap the left or right half of the screen, or swipe left, right, up (jump) and down (slide). One thumb is enough.</p>
+      </Panel>
+    </section>
+
+    <section class="step">
+      <p class="label label--pink">06 · CRITIQUE + NEXT</p>
+      <h3 class="step__h">What I would change</h3>
+      <p class="placeholder">[PLACEHOLDER: Aritra to write: what was cut, what playtesting showed, what he would build next. Nothing is claimed here beyond what is in the build: no multiplayer, no extra levels.]</p>
+      <p><a href={SITE.github}>Source on GitHub</a> · <a href={u('/work/tiger-run/')}>Tiger Run case study</a></p>
+    </section>
   </div>
 </Base>

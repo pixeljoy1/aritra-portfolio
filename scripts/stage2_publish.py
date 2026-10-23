@@ -31,6 +31,8 @@ SN = 'SEM4/EnvironmentDesign/Spatial Narrative and Environment Design (1).pdf'
 
 # slug -> (hero, [(source, alt)])  source = ('c', project, idx) | ('p', pdf, page)
 SET = {
+ 'tiger-run': [
+   (('f','assets/tiger/concept-illustration.png'), 'Original Tiger Run concept illustration: a tiger runs a forest road past traps, boar and poachers')],
  'spatial-narrative-environment': [
    (('c','spatial',12), 'Final render of the textured rooftop-dish building on a rocky base'),
    (('p',SN,2), 'Concept and narrative board with references and texture swatches'),
@@ -103,6 +105,7 @@ VIDEOS = [  # slug, rel path, start s, year, sem, topic, title
  ('use-of-space-pan','SEM5/Filmmaking/Assignment2_AritraMitra_UseofSpace/PanandTilt.mov',3,'2026-27','S5','Filmmaking','Use of Space: pan and tilt (clip)'),
 ]
 def get(src):
+    if src[0] == 'f': return Image.open(ROOT / src[1])
     return cand(src[1], src[2]) if src[0] == 'c' else pdfpage(src[1], src[2])
 
 media, artefacts = {}, []

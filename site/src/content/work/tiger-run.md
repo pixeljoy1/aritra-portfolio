@@ -16,7 +16,7 @@ links: {}
 ## At a glance
 - **Problem:** [PLACEHOLDER]
 - **What I did:** turned a Procreate illustration into a mobile-friendly canvas game.
-- **What happened:** playable at the play page.
+- **What happened:** playable on the [play page](../../play/), with the full making-of: concept, art direction, perspective construction and systems.
 
 ## Process
 [PLACEHOLDER: from illustration to game; HUD as brand; one-thumb play; what was cut.]

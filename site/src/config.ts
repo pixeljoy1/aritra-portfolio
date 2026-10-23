@@ -4,6 +4,8 @@ export const SITE = {
   domain: '[DOMAIN]',
   email: 'aritramitra49@gmail.com',
   github: '[GITHUB_URL]',
+  instagram: 'https://www.instagram.com/wildscapeexplorers/',
+  instagramFeatured: 'https://www.instagram.com/p/C4FfmW4rrDJ/',
   linkedin: 'https://www.linkedin.com/in/aritra-mitra-065788303/',
   role: 'Game + Immersive Designer',
   programme: 'BDes Immersive Digital Environments · O.P. Jindal Global University · Class of 2028',

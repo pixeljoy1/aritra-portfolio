@@ -39,3 +39,8 @@ Lightbox for case-study galleries (`previewer.js` pattern), pinned horizontal Wo
 - Two shrunk PDFs published (`scripts/shrink_pdfs.py`): Spatial Narrative (1.9 MB, 12 pp) and SystemDesign_Final (1.1 MB, 17 pp, covers Mobile Work Station, Attendance Portal, SoleSync). Text kept.
 - Image choices were made by eye from contact sheets: Aritra should confirm the picks and alt text; run stage 2 again after editing the `SET`/`ART` lists.
 - New case studies need Aritra's copy: `house`, `stuff-and-space`, `attendance-portal` (placeholders), plus SoleSync/Spatial one-liners.
+
+## Tiger Run making-of (build 4)
+- `/play/` now has a 6-step making-of. Only one concept image exists in the repo: the cropped illustration (the screenshot's prep-sheet strip showed a candidate/centre number and was cropped out; never publish those). **Needed from Aritra:** scans of Prep Sheet #2, pencil roughs and wire/layout sketches, plus the critique/next-steps text (step 06).
+- The construction diagram is original, drawn from the game's own constants (camera 2.5, lanes 1.75, spawn 110, tiger 3.4, trunks 5.5).
+- About page now has "Wildlife photography" (@wildscapeexplorers, featured post C4FfmW4rrDJ) and the "How this site was made" build note (coded with Claude; strategy, design and spec by Aritra). Footer links to both. Instagram links open in a new tab with noopener; no third-party embed (privacy, performance).
