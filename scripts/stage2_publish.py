@@ -206,32 +206,23 @@ for key, f, crop, boxes, alt in REBIT_PHOTOS:
     sz = save(im, lpdir / f'ph-{key}.webp', 1100); save(im, lpdir / f'ph-{key}-sm.webp', 480)
     lp[key] = alt; print(f'live photo {key}: {sz//1024} KB')
 
-# Small header for the live-project page: the (already anonymised) photos as pixel-art round icons beside a pixel magnifier.
-def live_banner():
+# Short, wide header for the live-project page: the same magnifier-over-findings art as the card, cropped to a low band.
+def live_wide():
     from PIL import ImageDraw
-    D = lpdir
-    items = [('think-aloud', (0.0, 0.0, 0.545, 0.727)), ('think-aloud-close', (0.0, 0.0, 0.6, 0.8)), ('facilitating', (0.0, 0.0, 0.5, 0.667)), ('the-room', (0.64, 0.0, 1.0, 0.48))]
-    S, R, W, H = 160, 4, 880, 200
-    banner = Image.new('RGB', (W, H), (4, 18, 10)); d = ImageDraw.Draw(banner)
-    mint, mintD = (33, 239, 128), (18, 184, 98)
+    W, H = 1400, 260
+    im = Image.new('RGB', (W, H), (4, 18, 10)); d = ImageDraw.Draw(im)
     lens = ['...MMMMM....', '..MGGGGGM...', '.MGGGGGGGM..', '.MGGGGGGGM..', '.MGGGGGGGM..', '.MGGGGGGGM..', '..MGGGGGM...', '...MMMMMBB..', '........BBB.', '.........BBB', '..........BB']
-    pal = {'M': mint, 'G': (255, 255, 255), 'B': (88, 94, 255)}
-    u = 10; ox, oy = 26, (H - 11 * u) // 2
-    for yy, row in enumerate(lens):
-        for xx, ch in enumerate(row):
-            if ch in pal: d.rectangle([ox + xx * u, oy + yy * u, ox + xx * u + u - 1, oy + yy * u + u - 1], fill=pal[ch])
-    x = ox + 12 * u + 22
-    for k, (a, b, c, e) in items:
-        im = Image.open(D / f'ph-{k}.webp').convert('RGB'); w, h = im.size
-        im = im.crop((round(a * w), round(b * h), round(c * w), round(e * h))); sd = min(im.size); im = im.crop((0, 0, sd, sd))
-        px = im.resize((S // R, S // R), Image.BILINEAR).quantize(colors=28, method=Image.Quantize.MEDIANCUT).convert('RGB')
-        mask = Image.new('L', (S, S), 0); ImageDraw.Draw(mask).ellipse((0, 0, S - 1, S - 1), fill=255)
-        cy = (H - S) // 2 - 6
-        d.ellipse((x - 2, cy + 9, x + S + 2, cy + S + 11), fill=mintD)
-        banner.paste(px.resize((S, S), Image.NEAREST), (x, cy), mask); d.ellipse((x - 4, cy - 4, x + S + 3, cy + S + 3), outline=mint, width=5)
-        x += S + 18
-    banner.save(D / 'banner.webp', 'WEBP', quality=82, method=6)
-live_banner()
+    pal = {'M': (33, 239, 128), 'G': (255, 255, 255), 'B': (88, 94, 255)}
+    u = 18; ox, oy = 150, (H - 11 * u) // 2
+    for y, row in enumerate(lens):
+        for x, ch in enumerate(row):
+            if ch in pal: d.rectangle([ox + x * u, oy + y * u, ox + (x + 1) * u - 1, oy + (y + 1) * u - 1], fill=pal[ch])
+    cols = [(33, 239, 128), (255, 99, 216), (88, 94, 255), (255, 210, 63), (33, 239, 128)]
+    for i, (w, c) in enumerate([(520, cols[0]), (400, cols[1]), (620, cols[2]), (320, cols[3]), (470, cols[4])]):
+        y = 34 + i * 44
+        d.rectangle([560, y, 560 + w, y + 24], fill=c); d.rectangle([560, y + 24, 1300, y + 27], fill=(46, 51, 184))
+    im.save(lpdir / 'wide.webp', 'WEBP', quality=84, method=6)
+live_wide()
 
 # Round-masked photos: stored as square crops, masked with CSS (border-radius 50%).
 PHOTOS = [  # key, file, crop box (square), alt

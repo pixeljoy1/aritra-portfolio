@@ -276,4 +276,5 @@ div.card:hover { transform: none; box-shadow: none; }
 .photo-row { display: grid; gap: var(--s4); grid-template-columns: 1fr; }
 @media (min-width: 760px) { .photo-row { grid-template-columns: 1fr 1fr; } }
 
-.case__banner { display: block; width: 100%; max-width: 440px; height: auto; margin: 0 0 var(--s5); image-rendering: pixelated; border: 2px solid var(--indigo-dark); border-radius: var(--radius); }
+
+.case__wide { display: block; width: 100%; height: auto; margin: 0 0 var(--s5); border: 2px solid var(--mint); border-radius: var(--radius); }
