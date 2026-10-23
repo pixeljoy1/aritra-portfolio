@@ -31,6 +31,11 @@ SN = 'SEM4/EnvironmentDesign/Spatial Narrative and Environment Design (1).pdf'
 
 # slug -> (hero, [(source, alt)])  source = ('c', project, idx) | ('p', pdf, page)
 SET = {
+ 'doom-and-quake': [
+   (('x','doomquake-compare'), 'Doom on the left, Quake on the right: flat sprites in a 2.5D corridor against polygon monsters in a true 3D level'),
+   (('c','doomquake',4), 'Doom (1993): a dark, maze-like corridor with sprite enemies'),
+   (('c','doomquake',9), 'Quake (1996): a lit, textured 3D corridor'),
+   (('c','doomquake',8), 'Quake (1996): a polygonal monster seen from below')],
  'tiger-run': [
    (('f','assets/tiger/concept-illustration.png'), 'Original Tiger Run concept illustration: a tiger runs a forest road past traps, boar and poachers')],
  'spatial-narrative-environment': [
@@ -88,6 +93,7 @@ ART = [
  ('2024-25','S2','Built Environments','Campus architecture study',('c','y1',66),None),
  ('2025-26','S3','Lighting for Immersive Environments','Lighting progression',('c','lighting',28),'lighting-progression'),
  ('2025-26','S3','Stuff and Space','Forest environment in Maya',('c','stuff',6),'stuff-and-space'),
+ ('2025-26','S3','Immersive Environments','Impact of Doom and Quake on PC gaming graphics',('x','doomquake-compare'),'doom-and-quake'),
  ('2025-26','S3','Immersive Technologies','Sofa modelling in Maya',('c','doomquake',10),None),
  ('2025-26','S4','Environment Design','Spatial Narrative and Environment Design',('c','spatial',12),'spatial-narrative-environment'),
  ('2025-26','S4','User-Centred Design','SoleSync UCD analysis',('c','solesync',2),'solesync'),
@@ -104,7 +110,20 @@ VIDEOS = [  # slug, rel path, start s, year, sem, topic, title
  ('motion-3','SEM4/Motiongraphics/Assignment3_1.mp4',2,'2025-26','S4','Motion Graphics','Motion graphics assignment 3 (clip)'),
  ('use-of-space-pan','SEM5/Filmmaking/Assignment2_AritraMitra_UseofSpace/PanandTilt.mov',3,'2026-27','S5','Filmmaking','Use of Space: pan and tilt (clip)'),
 ]
+def compare():
+    """Doom | Quake, each centre-cropped to 8:9 so the pair is 16:9 (card thumbnails keep both)."""
+    h = 560; w = (h * 8) // 9
+    def crop(im):
+        im = im.convert('RGB'); r = w / h; cw = round(im.height * r)
+        if cw > im.width: cw = im.width; ch = round(cw / r)
+        else: ch = im.height
+        x = (im.width - cw) // 2; y = (im.height - ch) // 2
+        return im.crop((x, y, x + cw, y + ch)).resize((w, h), Image.LANCZOS)
+    a, b = crop(cand('doomquake', 6)), crop(cand('doomquake', 7))
+    im = Image.new('RGB', (2 * w + 12, h), (33, 239, 128)); im.paste(a, (0, 0)); im.paste(b, (w + 12, 0)); return im
+
 def get(src):
+    if src[0] == 'x': return compare()
     if src[0] == 'f': return Image.open(ROOT / src[1])
     return cand(src[1], src[2]) if src[0] == 'c' else pdfpage(src[1], src[2])
 

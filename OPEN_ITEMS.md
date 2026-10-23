@@ -58,3 +58,8 @@ All former "[PLACEHOLDER]" / "[CONFIRM]" text on the site was replaced with firs
 - About: round portrait at the Jindal School of Art & Architecture sign (`assets/photos/portrait.jpg`, cropped so the sign reads).
 - Year 1 "Starting point · May 2024": two VR-lab photos (`vr-lab-*.jpg`). The May 2024 date comes from the photos' camera metadata. **Confirm** the date, that the person in the headset is OK to show (if it is a classmate, get consent), and the caption wording.
 - Masking is CSS (square WebP crops, `border-radius: 50%`); crops are defined in `scripts/stage2_publish.py` (PHOTOS).
+
+## Doom and Quake report (2026-10-23)
+- Promoted to a featured case study (`/work/doom-and-quake/`, 5th on the home page) from `SEM3/ImmersiveTechnologies/Immersive Environments Presentation.pptx`; text summarised from its slides 1-8, images pulled from the deck (centre-cropped Doom | Quake pair + three screenshots). Screenshots are © id Software and shown small with a credit line; the Carmack/Romero photo and id logo were left out.
+- The 8.8 MB .pptx itself is not published (over the 4 MB budget); no PDF export because this Mac has no LibreOffice. Export a PDF from Drive/PowerPoint if a "full deck" link is wanted.
+- Consider adding this report to the résumé (it is the visual origin of the site's style).

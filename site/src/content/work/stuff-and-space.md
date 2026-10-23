@@ -9,7 +9,7 @@ disciplines: ["game-environment"]
 status: "standard"
 tools: ["Maya", "SketchUp"]
 role: "3D environment artist and animator"
-order: 5
+order: 6
 ---
 ## At a glance
 - **What I did:** built a forest clearing with a whirlpool in Maya, a cratered moon asset, and fog particles, planned with a moodboard and storyboard.

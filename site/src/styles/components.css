@@ -204,3 +204,9 @@ button.chip { min-height: 44px; padding: 0 var(--s4); cursor: pointer; }
 .roundrow .round { width: 140px; height: 140px; }
 .lb__stage--round { border-radius: 50%; border-width: 3px; }
 .lb__stage--round img { width: min(86vw, calc(100dvh - 240px), 640px); height: min(86vw, calc(100dvh - 240px), 640px); max-width: none; max-height: none; object-fit: cover; }
+
+/* tables inside case studies */
+.prose table { border-collapse: collapse; width: 100%; margin: var(--s4) 0; font-size: 16px; }
+.prose th, .prose td { border: 2px solid var(--indigo-dark); padding: var(--s2) var(--s3); text-align: left; vertical-align: top; }
+.prose thead th { color: var(--mint); font-family: var(--f-ui); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; background: var(--panel-bg); }
+@media (max-width: 640px) { .prose table { display: block; overflow-x: auto; } }
