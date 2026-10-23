@@ -120,8 +120,9 @@ for slug, items in SET.items():
 tdir = PUB / 'img' / 'year'
 if tdir.exists(): shutil.rmtree(tdir)
 for i, (y, s, topic, title, src, work) in enumerate(ART):
-    f = f'{y}-{s}-{i:02d}.webp'; save(get(src), tdir / f, 640)
-    artefacts.append({'year': y, 'semester': s, 'topic': topic, 'title': title, 'image': f'/img/year/{f}', 'pdf': None, 'work': work, 'pages': None})
+    f = f'{y}-{s}-{i:02d}.webp'; im = get(src); save(im, tdir / f, 640)
+    fl = f.replace('.webp', '-lg.webp'); save(im, tdir / fl, 1200)          # large version for the modal
+    artefacts.append({'year': y, 'semester': s, 'topic': topic, 'title': title, 'image': f'/img/year/{f}', 'large': f'/img/year/{fl}', 'pdf': None, 'work': work, 'pages': None})
 vdir = PUB / 'video'
 if vdir.exists(): shutil.rmtree(vdir)
 vdir.mkdir(parents=True)
@@ -133,7 +134,7 @@ for slug, rel, ss, y, s, topic, title in VIDEOS:
     clip = vdir / f'{slug}.mp4'
     subprocess.run(['ffmpeg','-y','-loglevel','error','-ss',str(ss),'-t','6','-i',str(src),'-vf','scale=-2:480,fps=24','-c:v','libx264','-crf','31','-preset','slow','-an','-movflags','+faststart',str(clip)], check=True)
     print(f'{slug}: poster {poster.stat().st_size//1024} KB, clip {clip.stat().st_size//1024} KB')
-    artefacts.append({'year': y, 'semester': s, 'topic': topic, 'title': title, 'image': f'/video/{slug}.webp', 'video': f'/video/{slug}.mp4', 'pdf': None, 'work': None, 'pages': None})
+    artefacts.append({'year': y, 'semester': s, 'topic': topic, 'title': title, 'image': f'/video/{slug}.webp', 'large': f'/video/{slug}.webp', 'video': f'/video/{slug}.mp4', 'pdf': None, 'work': None, 'pages': None})
 DATA.mkdir(parents=True, exist_ok=True)
 (DATA / 'media.json').write_text(json.dumps(media, indent=2)); (DATA / 'artefacts.json').write_text(json.dumps(artefacts, indent=2))
 print('done:', sum(f.stat().st_size for f in PUB.rglob('*') if f.is_file()) // 1024, 'KB in public/')

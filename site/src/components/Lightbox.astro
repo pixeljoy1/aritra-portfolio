@@ -1,0 +1,85 @@
+---
+// One shared modal for every preview on the site. Trigger: any <a data-lb data-lb-group="..."> (see years and case pages).
+---
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Preview" hidden>
+  <div class="lb__top">
+    <p class="label lb__count" id="lbCount" aria-live="polite"></p>
+    <button type="button" class="lb__x" id="lbClose" aria-label="Close preview (Escape)">X</button>
+  </div>
+  <button type="button" class="lb__nav lb__nav--prev" id="lbPrev" aria-label="Previous (Left arrow)">◀</button>
+  <figure class="lb__fig">
+    <div class="lb__stage" id="lbStage"></div>
+    <figcaption class="lb__cap">
+      <p class="label label--indigo" id="lbMeta"></p>
+      <p class="lb__title" id="lbTitle"></p>
+      <a class="label" id="lbLink" hidden></a>
+    </figcaption>
+  </figure>
+  <button type="button" class="lb__nav lb__nav--next" id="lbNext" aria-label="Next (Right arrow)">▶</button>
+</div>
+<script>
+  const root = document.getElementById('lb')!;
+  const stage = document.getElementById('lbStage')!;
+  const $ = (id: string) => document.getElementById(id)!;
+  const count = $('lbCount'), meta = $('lbMeta'), title = $('lbTitle'), link = $('lbLink') as HTMLAnchorElement;
+  let items: HTMLAnchorElement[] = [], i = 0, opener: HTMLElement | null = null;
+
+  const show = (n: number) => {
+    i = (n + items.length) % items.length;            // wraps, carousel style
+    const el = items[i], d = el.dataset;
+    stage.replaceChildren();
+    if (d.lbVideo) {
+      const v = document.createElement('video');
+      v.src = d.lbVideo; v.poster = d.lbSrc ?? ''; v.controls = true; v.autoplay = true; v.loop = true; v.muted = true; v.playsInline = true;
+      v.setAttribute('aria-label', d.lbAlt ?? d.lbTitle ?? '');
+      stage.append(v);
+    } else {
+      const im = document.createElement('img');
+      im.src = d.lbSrc ?? el.href; im.alt = d.lbAlt ?? d.lbTitle ?? ''; stage.append(im);
+    }
+    count.textContent = `${String(i + 1).padStart(2, '0')} / ${String(items.length).padStart(2, '0')}`;
+    meta.textContent = d.lbMeta ?? ''; title.textContent = d.lbTitle ?? '';
+    link.hidden = !d.lbLink; if (d.lbLink) { link.href = d.lbLink; link.textContent = 'OPEN CASE STUDY →'; }
+    const multi = items.length > 1;
+    $('lbPrev').hidden = $('lbNext').hidden = !multi;
+    [1, -1].forEach((k) => { const nb = items[(i + k + items.length) % items.length]; if (nb && !nb.dataset.lbVideo) new Image().src = nb.dataset.lbSrc ?? nb.href; });
+  };
+  const open = (el: HTMLAnchorElement) => {
+    const g = el.dataset.lbGroup;
+    items = [...document.querySelectorAll<HTMLAnchorElement>(`a[data-lb][data-lb-group="${g}"]`)];
+    opener = el; root.hidden = false; document.body.style.overflow = 'hidden';
+    show(items.indexOf(el)); $('lbClose').focus();
+  };
+  const close = () => {
+    if (root.hidden) return;
+    root.hidden = true; stage.replaceChildren(); document.body.style.overflow = ''; opener?.focus();
+  };
+
+  document.addEventListener('click', (e) => {
+    const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[data-lb]');
+    if (a && !e.metaKey && !e.ctrlKey) { e.preventDefault(); open(a); }
+  });
+  $('lbClose').addEventListener('click', close);
+  $('lbPrev').addEventListener('click', () => show(i - 1));
+  $('lbNext').addEventListener('click', () => show(i + 1));
+  root.addEventListener('click', (e) => { if (e.target === root || (e.target as HTMLElement).classList.contains('lb__fig')) close(); });
+  document.addEventListener('keydown', (e) => {
+    if (root.hidden) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); show(i + 1); }
+    else if (e.key === 'Tab') {                          // keep focus inside the modal
+      const f = [...root.querySelectorAll<HTMLElement>('button:not([hidden]), a:not([hidden])')];
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+  // swipe left / right on touch screens
+  let sx = 0, sy = 0;
+  root.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  root.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) show(i + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+</script>

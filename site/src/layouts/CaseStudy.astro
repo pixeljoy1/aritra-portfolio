@@ -20,7 +20,7 @@ const linkEntries = Object.entries(d.links).filter(([, v]) => v);
       <div><dt>Tools</dt><dd>{d.tools.length ? d.tools.join(', ') : '[CONFIRM TOOLS]'}</dd></div>
       {d.duration && <div><dt>Duration</dt><dd>{d.duration}</dd></div>}
     </dl>
-    {m && <img class="case__hero" src={u(m.hero)} alt={m.heroAlt} width="1400" height="788" />}
+    {m && <a class="case__hero-link" href={u(m.hero)} data-lb data-lb-group={d.slug} data-lb-src={u(m.hero)} data-lb-alt={m.heroAlt} data-lb-title={m.heroAlt} data-lb-meta={d.title}><img class="case__hero" src={u(m.hero)} alt={m.heroAlt} width="1400" height="788" /></a>}
     {d.simulatedData && (
       <Panel variant="pink" label="DATA NOTE">
         <p>Survey and interview data in this project were <strong>simulated for coursework</strong>. Market figures come from published sources.</p>
@@ -29,7 +29,7 @@ const linkEntries = Object.entries(d.links).filter(([, v]) => v);
     <div class="prose"><slot /></div>
     {m?.gallery?.length > 0 && (
       <section><h2 class="h2">Gallery</h2>
-        <div class="gallery">{m.gallery.map((g: any) => <a href={u(g.src)} class="gallery__item"><img src={u(g.src)} alt={g.alt} width="1100" height="620" loading="lazy" /></a>)}</div>
+        <div class="gallery">{m.gallery.map((g: any) => <a href={u(g.src)} class="gallery__item" data-lb data-lb-group={d.slug} data-lb-src={u(g.src)} data-lb-alt={g.alt} data-lb-title={g.alt} data-lb-meta={d.title}><img src={u(g.src)} alt={g.alt} width="1100" height="620" loading="lazy" /></a>)}</div>
       </section>
     )}
     {linkEntries.length > 0 && (

@@ -40,9 +40,12 @@ const bySem = [...new Set(mine.map((a) => a.semester))].sort();
         <div class="grid">
           {mine.filter((a) => a.semester === sem).map((a) => (
             <div class="card artefact">
-              {a.video
-                ? <video class="card__thumb" controls preload="none" playsinline poster={u(a.image)} src={u(a.video)} aria-label={a.title}></video>
-                : <a class="card__thumb" href={u(a.work ? `/work/${a.work}/` : a.image)}><img src={u(a.image)} alt={`Preview of ${a.title}`} width="640" height="360" loading="lazy" /></a>}
+              <a class="card__thumb" href={u(a.large ?? a.image)} data-lb data-lb-group={y.slug}
+                data-lb-src={u(a.large ?? a.image)} data-lb-video={a.video ? u(a.video) : ''} data-lb-alt={`Preview of ${a.title}`}
+                data-lb-title={a.title} data-lb-meta={`${a.semester} · ${a.topic}`} data-lb-link={a.work ? u(`/work/${a.work}/`) : ''}>
+                <img src={u(a.image)} alt={`Preview of ${a.title}`} width="640" height="360" loading="lazy" />
+                {a.video && <span class="play-badge">▶ PLAY</span>}
+              </a>
               <div class="card__body">
                 <p class="label label--indigo">{a.topic}</p>
                 <p>{a.work ? <a href={u(`/work/${a.work}/`)}>{a.title}</a> : a.title}</p>
