@@ -187,7 +187,7 @@ REBIT_PHOTOS = [  # key, file, crop (rel x0,y0,x1,y1; square rel box = 4:3 crop)
  ('think-aloud-close', '1736696037823.jpg', (0.05, 0.1, 0.95, 1.0), [(0.40, 0.05, 0.66, 0.34), (0.05, 0.40, 0.37, 0.75), (0.50, 0.0, 0.68, 0.22), (0.70, 0.34, 0.95, 0.90)], 'Close view of Aritra pointing at the tablet while explaining what he sees'),
  # 'at-the-laptop' (1736696037441.jpg) is parked: whiteboard heading and lanyard print were still readable after blurring. Re-add only after checking the result.
  ('facilitating', 'IMG_20250115_105406.jpg', (0.0, 0.08, 0.7, 0.78), [(0.27, 0.07, 0.42, 0.21), (0.53, 0.25, 0.72, 0.48), (0.2, 0.64, 0.32, 0.76)], 'Aritra, as facilitator, guiding a participant through the task on a laptop'),
- ('the-room', '1736785934348.jpg', (0.0, 0.0, 1.0, 1.0), [(0.32, 0.24, 0.46, 0.42), (0.63, 0.25, 0.78, 0.42), (0.78, 0.07, 0.90, 0.22), (0.0, 0.0, 0.31, 0.5)], 'The session space: a moderator and a participant at a table, the rest of the team working nearby'),
+ ('the-room', '1736785934348.jpg', (0.0, 0.0, 1.0, 1.0), [(0.32, 0.24, 0.46, 0.42), (0.63, 0.25, 0.78, 0.42), (0.0, 0.0, 0.31, 0.5)], 'The session space: a moderator and a participant at a table, with Aritra working nearby'),
 ]
 def rebit_photo(f, crop, boxes):
     from PIL import ImageOps

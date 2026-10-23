@@ -41,8 +41,8 @@ It was a **mixed-methods, moderated usability study**, run both in person and re
 </figure>
 
 <figure class="photo">
-<a href="../../img/live-project-ux-research/ph-the-room.webp" data-lb data-lb-group="live-project" data-lb-src="../../img/live-project-ux-research/ph-the-room.webp" data-lb-alt="The session space: a moderator and a participant at a table, the rest of the team working nearby" data-lb-title="The session space" data-lb-meta="Live UX research project"><img src="../../img/live-project-ux-research/ph-the-room-sm.webp" srcset="../../img/live-project-ux-research/ph-the-room-sm.webp 480w, ../../img/live-project-ux-research/ph-the-room.webp 1100w" sizes="(min-width: 960px) 760px, 92vw" alt="The session space: a moderator and a participant at a table, the rest of the team working nearby" width="1100" height="825" loading="lazy" /></a>
-<figcaption>The room where sessions ran: a moderator and a participant at a table, the team working close by. Faces are blurred.</figcaption>
+<a href="../../img/live-project-ux-research/ph-the-room.webp" data-lb data-lb-group="live-project" data-lb-src="../../img/live-project-ux-research/ph-the-room.webp" data-lb-alt="The session space: a moderator and a participant at a table, with Aritra working nearby" data-lb-title="The session space" data-lb-meta="Live UX research project"><img src="../../img/live-project-ux-research/ph-the-room-sm.webp" srcset="../../img/live-project-ux-research/ph-the-room-sm.webp 480w, ../../img/live-project-ux-research/ph-the-room.webp 1100w" sizes="(min-width: 960px) 760px, 92vw" alt="The session space: a moderator and a participant at a table, with Aritra working nearby" width="1100" height="825" loading="lazy" /></a>
+<figcaption>The room where sessions ran: a moderator and a participant at a table, and me working close by, ready to take notes. Other people's faces are blurred.</figcaption>
 </figure>
 
 ## My part
