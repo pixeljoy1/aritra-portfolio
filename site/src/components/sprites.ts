@@ -39,6 +39,19 @@ export const SPRITES: Record<string, { pal: Record<string, string>; rows: string
   },
 };
 
+const heroTop = SPRITES.hero.rows.slice(0, 16);
+// Run cycle: same body, different legs (stride / together). Used by the footer level.
+SPRITES.heroRunA = { pal: SPRITES.hero.pal, rows: [...heroTop, '..PPP....PPP..', '.PPP......PPP.', 'OOOO......OOOO', 'OOOO......OOOO'] };
+SPRITES.heroRunB = { pal: SPRITES.hero.pal, rows: [...heroTop, '....PPPPPP....', '....PPPPPP....', '....OOOOOO....', '....OOOOOO....'] };
+SPRITES.pipe = {
+  pal: { G: '#21EF80', D: '#12B862', K: '#04120A' },
+  rows: ['GGGGGGGGGG', 'GDDDDDDDDG', 'KGGGGGGGGK', 'KGDDGGGGDK', 'KGGGGGGGGK', 'KGDDGGGGDK'],
+};
+SPRITES.flag = {
+  pal: { Y: '#FFD23F', I: '#585EFF', R: '#FF63D8' },
+  rows: ['.YY.........', '..I.........', '..IRRRRR....', '..IRRRRRRR..', '..IRRRRR....', ...Array(12).fill('..I.........')],
+};
+
 export function spriteRects(name: string) {
   const s = SPRITES[name];
   const paths: Record<string, string> = {};

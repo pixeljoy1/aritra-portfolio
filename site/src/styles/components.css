@@ -120,3 +120,14 @@ button.chip { min-height: 44px; padding: 0 var(--s4); cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; } }
 .cartridge--launch { display: grid; place-content: center; justify-items: center; gap: var(--s4); text-align: center; padding: var(--s5); }
 .cartridge--launch p { margin: 0; }
+
+/* Footer level: hero runs to the flag */
+.level { position: relative; height: 100px; max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); overflow: hidden; }
+.level__track { position: absolute; left: var(--pad); right: var(--pad); bottom: 0; height: 100%; touch-action: manipulation; }
+.level__track > * { position: absolute; bottom: 0; line-height: 0; }
+.level__hero { left: 0; will-change: transform; }
+.level__hero .f--b, .level__hero.is-b .f--a { display: none; }
+.level__hero.is-b .f--b { display: block; }
+.level__star { left: 0; bottom: 0; opacity: 0; }
+.footer .bricks { margin-top: 0; }
+@media (prefers-reduced-motion: reduce) { .level__hero { will-change: auto; } }
