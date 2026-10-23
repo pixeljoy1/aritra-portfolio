@@ -278,3 +278,7 @@ div.card:hover { transform: none; box-shadow: none; }
 
 
 .case__wide { display: block; width: 100%; height: auto; margin: 0 0 var(--s5); border: 2px solid var(--mint); border-radius: var(--radius); }
+
+/* Tiger Run frame: fixed height, never forced wider than the screen (an aspect-ratio plus a min-height would widen the box on phones) */
+.cartridge--game { aspect-ratio: auto; min-height: 0; width: 100%; height: clamp(480px, calc(100dvh - 150px), 780px); }
+@media (min-width: 960px) { .cartridge--game { height: 640px; } }

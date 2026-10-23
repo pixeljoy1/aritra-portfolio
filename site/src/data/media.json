@@ -107,35 +107,39 @@
   "solesync": {
     "hero": "/img/solesync/hero.webp",
     "thumb": "/img/solesync/thumb.webp",
-    "heroAlt": "SoleSync app screens: shop, product page and care flow",
+    "heroAlt": "SoleSync Stage 2 prototype: shop and product screens, generated from the design brief",
     "gallery": [
       {
         "src": "/img/solesync/01.webp",
-        "alt": "SoleSync splash screen"
+        "alt": "Stage 2, iteration 1: first generated screens"
       },
       {
         "src": "/img/solesync/02.webp",
-        "alt": "Stage 2 iteration: screens critiqued against research"
+        "alt": "Stage 2, iteration 2: screens after critique against the research"
       },
       {
         "src": "/img/solesync/03.webp",
-        "alt": "Stage 2 iteration: revised screens"
+        "alt": "Stage 2, iteration 3: revised screens"
       },
       {
         "src": "/img/solesync/04.webp",
-        "alt": "Concept slide: SoleSync as a sneaker marketplace and care service"
+        "alt": "The SoleSync UI: home, product, wishlist and care tracking screens"
       },
       {
         "src": "/img/solesync/05.webp",
-        "alt": "Research and design process diagram"
+        "alt": "USP screens: care service and verified shop"
       },
       {
         "src": "/img/solesync/06.webp",
-        "alt": "USP slide with app screens"
+        "alt": "Research and design process diagram"
       },
       {
         "src": "/img/solesync/07.webp",
-        "alt": "UI design: product, wishlist and care tracking screens"
+        "alt": "Concept slide: SoleSync as a sneaker marketplace and care service"
+      },
+      {
+        "src": "/img/solesync/08.webp",
+        "alt": "SoleSync splash screen"
       }
     ]
   },

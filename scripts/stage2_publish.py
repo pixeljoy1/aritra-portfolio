@@ -3,7 +3,7 @@
 Inputs : assets/work/<project>/cands (from stage 1) and a few source PDFs/videos in assets/drive.
 Outputs: site/public/img/<slug>/*.webp, site/public/video/*.mp4 (6 s clips), site/src/data/media.json, artefacts.json.
 The site never references assets/ (git-ignored)."""
-import io, json, subprocess, shutil
+import io, json, subprocess, shutil, sys, zipfile
 from pathlib import Path
 import fitz
 from PIL import Image
@@ -13,13 +13,14 @@ W = ROOT / 'assets' / 'work'; D = ROOT / 'assets' / 'drive' / 'JSAA_Work'
 PUB = ROOT / 'site' / 'public'; DATA = ROOT / 'site' / 'src' / 'data'
 MAX = 140 * 1024
 
-def save(im, dest, w):
+def save(im, dest, w, hq=False):
     im = im.convert('RGB')
     if im.width > w: im = im.resize((w, round(im.height * w / im.width)), Image.LANCZOS)
     dest.parent.mkdir(parents=True, exist_ok=True)
-    for q in (80, 72, 64, 56, 48, 40, 32):
+    # hq = legible UI screenshots: keep native resolution and high quality (up to ~560 KB)
+    for q in ((92, 88, 84, 80, 76, 72, 68) if hq else (80, 72, 64, 56, 48, 40, 32)):
         im.save(dest, 'WEBP', quality=q, method=6)
-        if dest.stat().st_size <= MAX: break
+        if dest.stat().st_size <= (560 * 1024 if hq else MAX): break
     return dest.stat().st_size
 
 def cand(proj, i): return Image.open(W / proj / 'cands' / f'{i:03d}.jpg')
@@ -60,14 +61,15 @@ SET = {
    (('c','lighting',28), 'Unreal Engine recreation of a real room with ceiling spotlights'),
    (('c','lighting',29), 'Same room in daylight')],
  'solesync': [
-   (('c','solesync',2), 'SoleSync app screens: shop, product page and care flow'),
-   (('c','solesync',0), 'SoleSync splash screen'),
-   (('c','solesync',3), 'Stage 2 iteration: screens critiqued against research'),
-   (('c','solesync',4), 'Stage 2 iteration: revised screens'),
-   (('p',SD,13), 'Concept slide: SoleSync as a sneaker marketplace and care service'),
-   (('p',SD,14), 'Research and design process diagram'),
-   (('p',SD,15), 'USP slide with app screens'),
-   (('p',SD,16), 'UI design: product, wishlist and care tracking screens')],
+   (('mx','SEM5/HumanAiDesign/SoleSync_Stage2_AritraMitra.pptx','image8.png'), 'SoleSync Stage 2 prototype: shop and product screens, generated from the design brief', 'hq'),
+   (('mx','SEM5/HumanAiDesign/SoleSync_Stage2_AritraMitra.pptx','image7.png'), 'Stage 2, iteration 1: first generated screens', 'hq'),
+   (('mx','SEM5/HumanAiDesign/SoleSync_Stage2_AritraMitra.pptx','image9.png'), 'Stage 2, iteration 2: screens after critique against the research', 'hq'),
+   (('mx','SEM5/HumanAiDesign/SoleSync_Stage2_AritraMitra.pptx','image10.png'), 'Stage 2, iteration 3: revised screens', 'hq'),
+   (('pimg','SEM4/UserCenteredDesign/SystemDesign_Final.pdf',16,[134,135,136,137]), 'The SoleSync UI: home, product, wishlist and care tracking screens', 'hq'),
+   (('pimg','SEM4/UserCenteredDesign/SystemDesign_Final.pdf',15,[127,128]), 'USP screens: care service and verified shop', 'hq'),
+   (('pimg','SEM4/UserCenteredDesign/SystemDesign_Final.pdf',14,[122]), 'Research and design process diagram', 'hq'),
+   (('pp','SEM4/UserCenteredDesign/SystemDesign_Final.pdf',13,2.0), 'Concept slide: SoleSync as a sneaker marketplace and care service', 'hq'),
+   (('mx','SEM4/UserCenteredDesign/SoleSync_UCD_Analysis.pptx','image1.png'), 'SoleSync splash screen', 'hq')],
  'stuff-and-space': [
    (('c','stuff',6), 'Maya forest environment with a whirlpool'),
    (('c','stuff',2), 'Moodboard of dark, misty, lamp-lit scenes'),
@@ -142,7 +144,24 @@ def compare():
     a, b = crop(cand('doomquake', 6)), crop(cand('doomquake', 7))
     im = Image.new('RGB', (2 * w + 12, h), (33, 239, 128)); im.paste(a, (0, 0)); im.paste(b, (w + 12, 0)); return im
 
+def pimg(rel, page, xrefs):
+    d = fitz.open(D / rel); ims = []
+    for x in xrefs:
+        pix = fitz.Pixmap(d, x)
+        if pix.n - pix.alpha >= 4: pix = fitz.Pixmap(fitz.csRGB, pix)
+        ims.append(Image.frombytes('RGBA' if pix.alpha else 'RGB', (pix.width, pix.height), pix.samples).convert('RGB'))
+    if len(ims) == 1: return ims[0]
+    h = max(i.height for i in ims); ims = [i.resize((round(i.width * h / i.height), h), Image.LANCZOS) for i in ims]
+    out = Image.new('RGB', (sum(i.width for i in ims) + 16 * (len(ims) - 1), h), (4, 18, 10)); x0 = 0
+    for i in ims: out.paste(i, (x0, 0)); x0 += i.width + 16
+    return out
+
 def get(src):
+    if src[0] == 'mx': return Image.open(io.BytesIO(zipfile.ZipFile(D / src[1]).read('ppt/media/' + src[2])))
+    if src[0] == 'pimg': return pimg(src[1], src[2], src[3])
+    if src[0] == 'pp':
+        d = fitz.open(D / src[1]); pix = d[src[2] - 1].get_pixmap(matrix=fitz.Matrix(src[3], src[3]))
+        return Image.open(io.BytesIO(pix.tobytes('png')))
     if src[0] == 'x': return live_thumb() if src[1] == 'live-thumb' else compare()
     if src[0] == 'f':
         im = Image.open(ROOT / src[1]).convert('RGB')
@@ -152,11 +171,12 @@ def get(src):
 media, artefacts = {}, []
 for slug, items in SET.items():
     out = PUB / 'img' / slug
-    if out.exists(): shutil.rmtree(out)
+    if out.exists() and slug != 'live-project-ux-research': shutil.rmtree(out)   # the live project also holds the separately exported photos
     gal = []
-    for n, (src, alt) in enumerate(items):
+    for n, item in enumerate(items):
+        src, alt = item[0], item[1]; hq = len(item) > 2
         im = get(src); name = 'hero' if n == 0 else f'{n:02d}'
-        sz = save(im, out / f'{name}.webp', 1400 if n == 0 else 1100)
+        sz = save(im, out / f'{name}.webp', (1800 if hq else 1400) if n == 0 else (2200 if hq else 1100), hq)
         if n == 0: save(im, out / 'thumb.webp', 640)
         gal.append({'src': f'/img/{slug}/{name}.webp', 'alt': alt})
         print(f'{slug}/{name}: {sz//1024} KB')
@@ -179,50 +199,51 @@ for slug, rel, ss, y, s, topic, title in VIDEOS:
     subprocess.run(['ffmpeg','-y','-loglevel','error','-ss',str(ss),'-t','6','-i',str(src),'-vf','scale=-2:480,fps=24','-c:v','libx264','-crf','31','-preset','slow','-an','-movflags','+faststart',str(clip)], check=True)
     print(f'{slug}: poster {poster.stat().st_size//1024} KB, clip {clip.stat().st_size//1024} KB')
     artefacts.append({'year': y, 'semester': s, 'topic': topic, 'title': title, 'image': f'/video/{slug}.webp', 'large': f'/video/{slug}.webp', 'video': f'/video/{slug}.mp4', 'pdf': None, 'work': None, 'pages': None})
-# Live-project photos: cropped to the action; every face that is not the subject is pixelated; screens never shown.
-REBIT = ROOT / 'assets' / 'drive' / 'REBIT_UX_LIVEPROJECT_JAN2024'
-REBIT_PHOTOS = [  # key, file, crop (rel x0,y0,x1,y1; square rel box = 4:3 crop), pixelate boxes (rel to the FULL image), alt
- # Aritra = the person in the hoodie (green hoodie on the participant day, maroon hoodie when facilitating).
- ('think-aloud', '1736696037772.jpg', (0.12, 0.0, 0.92, 0.8), [(0.55, 0.03, 0.90, 0.42), (0.22, 0.31, 0.42, 0.64), (0.10, 0.0, 0.22, 0.24)], 'Aritra, as a test participant, talking a task through out loud while using a tablet'),
- ('think-aloud-close', '1736696037823.jpg', (0.05, 0.1, 0.95, 1.0), [(0.40, 0.05, 0.66, 0.34), (0.05, 0.40, 0.37, 0.75), (0.50, 0.0, 0.68, 0.22), (0.70, 0.34, 0.95, 0.90)], 'Close view of Aritra pointing at the tablet while explaining what he sees'),
- # 'at-the-laptop' (1736696037441.jpg) is parked: whiteboard heading and lanyard print were still readable after blurring. Re-add only after checking the result.
- ('facilitating', 'IMG_20250115_105406.jpg', (0.0, 0.08, 0.7, 0.78), [(0.27, 0.07, 0.42, 0.21), (0.53, 0.25, 0.72, 0.48), (0.2, 0.64, 0.32, 0.76)], 'Aritra, as facilitator, guiding a participant through the task on a laptop'),
- ('the-room', '1736785934348.jpg', (0.0, 0.0, 1.0, 1.0), [(0.32, 0.24, 0.46, 0.42), (0.63, 0.25, 0.78, 0.42), (0.0, 0.0, 0.31, 0.5)], 'The session space: a moderator and a participant at a table, with Aritra working nearby'),
-]
-def rebit_photo(f, crop, boxes):
-    from PIL import ImageOps
-    im = ImageOps.exif_transpose(Image.open(REBIT / f)).convert('RGB'); W, H = im.size
-    for (a, b, c, d) in boxes:   # pixelate in place (blocky, on-brand), before cropping
-        box = (round(a * W), round(b * H), round(c * W), round(d * H)); reg = im.crop(box)
-        blk = max(48, min(reg.width, reg.height) // 7)     # block size in full-resolution pixels: coarse enough to destroy small print
-        reg = reg.resize((max(1, reg.width // blk), max(1, reg.height // blk)), Image.BILINEAR).resize(reg.size, Image.NEAREST)
-        im.paste(reg, box[:2])
-    x0, y0, x1, y1 = crop
-    return im.crop((round(x0 * W), round(y0 * H), round(x1 * W), round(y1 * H)))
-lpdir = PUB / 'img' / 'live-project-ux-research'
-lp = {}
-for key, f, crop, boxes, alt in REBIT_PHOTOS:
-    im = rebit_photo(f, crop, boxes)
-    sz = save(im, lpdir / f'ph-{key}.webp', 1100); save(im, lpdir / f'ph-{key}-sm.webp', 480)
-    lp[key] = alt; print(f'live photo {key}: {sz//1024} KB')
+if '--photos' in sys.argv:   # only when explicitly asked: this reads the confidential REBIT originals
+    # Live-project photos: cropped to the action; every face that is not the subject is pixelated; screens never shown.
+    REBIT = ROOT / 'assets' / 'drive' / 'REBIT_UX_LIVEPROJECT_JAN2024'
+    REBIT_PHOTOS = [  # key, file, crop (rel x0,y0,x1,y1; square rel box = 4:3 crop), pixelate boxes (rel to the FULL image), alt
+     # Aritra = the person in the hoodie (green hoodie on the participant day, maroon hoodie when facilitating).
+     ('think-aloud', '1736696037772.jpg', (0.12, 0.0, 0.92, 0.8), [(0.55, 0.03, 0.90, 0.42), (0.22, 0.31, 0.42, 0.64), (0.10, 0.0, 0.22, 0.24)], 'Aritra, as a test participant, talking a task through out loud while using a tablet'),
+     ('think-aloud-close', '1736696037823.jpg', (0.05, 0.1, 0.95, 1.0), [(0.40, 0.05, 0.66, 0.34), (0.05, 0.40, 0.37, 0.75), (0.50, 0.0, 0.68, 0.22), (0.70, 0.34, 0.95, 0.90)], 'Close view of Aritra pointing at the tablet while explaining what he sees'),
+     # 'at-the-laptop' (1736696037441.jpg) is parked: whiteboard heading and lanyard print were still readable after blurring. Re-add only after checking the result.
+     ('facilitating', 'IMG_20250115_105406.jpg', (0.0, 0.08, 0.7, 0.78), [(0.27, 0.07, 0.42, 0.21), (0.53, 0.25, 0.72, 0.48), (0.2, 0.64, 0.32, 0.76)], 'Aritra, as facilitator, guiding a participant through the task on a laptop'),
+     ('the-room', '1736785934348.jpg', (0.0, 0.0, 1.0, 1.0), [(0.32, 0.24, 0.46, 0.42), (0.63, 0.25, 0.78, 0.42), (0.0, 0.0, 0.31, 0.5)], 'The session space: a moderator and a participant at a table, with Aritra working nearby'),
+    ]
+    def rebit_photo(f, crop, boxes):
+        from PIL import ImageOps
+        im = ImageOps.exif_transpose(Image.open(REBIT / f)).convert('RGB'); W, H = im.size
+        for (a, b, c, d) in boxes:   # pixelate in place (blocky, on-brand), before cropping
+            box = (round(a * W), round(b * H), round(c * W), round(d * H)); reg = im.crop(box)
+            blk = max(48, min(reg.width, reg.height) // 7)     # block size in full-resolution pixels: coarse enough to destroy small print
+            reg = reg.resize((max(1, reg.width // blk), max(1, reg.height // blk)), Image.BILINEAR).resize(reg.size, Image.NEAREST)
+            im.paste(reg, box[:2])
+        x0, y0, x1, y1 = crop
+        return im.crop((round(x0 * W), round(y0 * H), round(x1 * W), round(y1 * H)))
+    lpdir = PUB / 'img' / 'live-project-ux-research'
+    lp = {}
+    for key, f, crop, boxes, alt in REBIT_PHOTOS:
+        im = rebit_photo(f, crop, boxes)
+        sz = save(im, lpdir / f'ph-{key}.webp', 1100); save(im, lpdir / f'ph-{key}-sm.webp', 480)
+        lp[key] = alt; print(f'live photo {key}: {sz//1024} KB')
 
-# Short, wide header for the live-project page: the same magnifier-over-findings art as the card, cropped to a low band.
-def live_wide():
-    from PIL import ImageDraw
-    W, H = 1400, 260
-    im = Image.new('RGB', (W, H), (4, 18, 10)); d = ImageDraw.Draw(im)
-    lens = ['...MMMMM....', '..MGGGGGM...', '.MGGGGGGGM..', '.MGGGGGGGM..', '.MGGGGGGGM..', '.MGGGGGGGM..', '..MGGGGGM...', '...MMMMMBB..', '........BBB.', '.........BBB', '..........BB']
-    pal = {'M': (33, 239, 128), 'G': (255, 255, 255), 'B': (88, 94, 255)}
-    u = 18; ox, oy = 150, (H - 11 * u) // 2
-    for y, row in enumerate(lens):
-        for x, ch in enumerate(row):
-            if ch in pal: d.rectangle([ox + x * u, oy + y * u, ox + (x + 1) * u - 1, oy + (y + 1) * u - 1], fill=pal[ch])
-    cols = [(33, 239, 128), (255, 99, 216), (88, 94, 255), (255, 210, 63), (33, 239, 128)]
-    for i, (w, c) in enumerate([(520, cols[0]), (400, cols[1]), (620, cols[2]), (320, cols[3]), (470, cols[4])]):
-        y = 34 + i * 44
-        d.rectangle([560, y, 560 + w, y + 24], fill=c); d.rectangle([560, y + 24, 1300, y + 27], fill=(46, 51, 184))
-    im.save(lpdir / 'wide.webp', 'WEBP', quality=84, method=6)
-live_wide()
+    # Short, wide header for the live-project page: the same magnifier-over-findings art as the card, cropped to a low band.
+    def live_wide():
+        from PIL import ImageDraw
+        W, H = 1400, 260
+        im = Image.new('RGB', (W, H), (4, 18, 10)); d = ImageDraw.Draw(im)
+        lens = ['...MMMMM....', '..MGGGGGM...', '.MGGGGGGGM..', '.MGGGGGGGM..', '.MGGGGGGGM..', '.MGGGGGGGM..', '..MGGGGGM...', '...MMMMMBB..', '........BBB.', '.........BBB', '..........BB']
+        pal = {'M': (33, 239, 128), 'G': (255, 255, 255), 'B': (88, 94, 255)}
+        u = 18; ox, oy = 150, (H - 11 * u) // 2
+        for y, row in enumerate(lens):
+            for x, ch in enumerate(row):
+                if ch in pal: d.rectangle([ox + x * u, oy + y * u, ox + (x + 1) * u - 1, oy + (y + 1) * u - 1], fill=pal[ch])
+        cols = [(33, 239, 128), (255, 99, 216), (88, 94, 255), (255, 210, 63), (33, 239, 128)]
+        for i, (w, c) in enumerate([(520, cols[0]), (400, cols[1]), (620, cols[2]), (320, cols[3]), (470, cols[4])]):
+            y = 34 + i * 44
+            d.rectangle([560, y, 560 + w, y + 24], fill=c); d.rectangle([560, y + 24, 1300, y + 27], fill=(46, 51, 184))
+        im.save(lpdir / 'wide.webp', 'WEBP', quality=84, method=6)
+    live_wide()
 
 # Round-masked photos: stored as square crops, masked with CSS (border-radius 50%).
 PHOTOS = [  # key, file, crop box (square), alt
