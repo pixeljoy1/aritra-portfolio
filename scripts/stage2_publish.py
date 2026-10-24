@@ -207,7 +207,8 @@ if '--photos' in sys.argv:   # only when explicitly asked: this reads the confid
      ('think-aloud', '1736696037772.jpg', (0.12, 0.0, 0.92, 0.8), [(0.55, 0.03, 0.90, 0.42), (0.22, 0.31, 0.42, 0.64), (0.10, 0.0, 0.22, 0.24)], 'Aritra, as a test participant, talking a task through out loud while using a tablet'),
      ('think-aloud-close', '1736696037823.jpg', (0.05, 0.1, 0.95, 1.0), [(0.40, 0.05, 0.66, 0.34), (0.05, 0.40, 0.37, 0.75), (0.50, 0.0, 0.68, 0.22), (0.70, 0.34, 0.95, 0.90)], 'Close view of Aritra pointing at the tablet while explaining what he sees'),
      # 'at-the-laptop' (1736696037441.jpg) is parked: whiteboard heading and lanyard print were still readable after blurring. Re-add only after checking the result.
-     ('facilitating', 'IMG_20250115_105406.jpg', (0.0, 0.08, 0.7, 0.78), [(0.27, 0.07, 0.42, 0.21), (0.53, 0.25, 0.72, 0.48), (0.2, 0.64, 0.32, 0.76)], 'Aritra, as facilitator, guiding a participant through the task on a laptop'),
+     # Aritra is the note-taker at the back (beside the phone on a tripod): his face stays clear. The colleague in the foreground (maroon hoodie), the laptop screen and his ID card are blurred.
+     ('facilitating', 'IMG_20250115_105406.jpg', (0.0, 0.08, 0.7, 0.78), [(0.10, 0.095, 0.27, 0.335), (0.53, 0.25, 0.72, 0.48), (0.2, 0.64, 0.32, 0.76)], 'Aritra taking handwritten notes beside a phone on a tripod that records the session, while a colleague guides a participant at a laptop'),
      ('the-room', '1736785934348.jpg', (0.0, 0.0, 1.0, 1.0), [(0.32, 0.24, 0.46, 0.42), (0.63, 0.25, 0.78, 0.42), (0.0, 0.0, 0.31, 0.5)], 'The session space: a moderator and a participant at a table, with Aritra working nearby'),
     ]
     def rebit_photo(f, crop, boxes):

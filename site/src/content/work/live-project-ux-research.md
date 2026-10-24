@@ -56,10 +56,12 @@ I covered the whole research-operations side, so the moderators could stay focus
 - **Participant.** Doing the tasks myself showed me what it feels like to be watched, and why moderators must stay neutral.
 
 <div class="photo-row">
+<!-- PARKED until re-exported with the colleague blurred: facilitating photo
 <figure class="photo">
-<a href="../../img/live-project-ux-research/ph-facilitating.webp" data-lb data-lb-group="live-project" data-lb-src="../../img/live-project-ux-research/ph-facilitating.webp" data-lb-alt="Aritra, as facilitator, guiding a participant through the task on a laptop" data-lb-title="Facilitating a session" data-lb-meta="Live UX research project"><img src="../../img/live-project-ux-research/ph-facilitating-sm.webp" srcset="../../img/live-project-ux-research/ph-facilitating-sm.webp 480w, ../../img/live-project-ux-research/ph-facilitating.webp 1100w" sizes="(min-width: 960px) 372px, 92vw" alt="Aritra, as facilitator, guiding a participant through the task on a laptop" width="1100" height="825" loading="lazy" /></a>
-<figcaption><strong>Facilitating.</strong> Guiding a participant through the task, hands on the laptop, a colleague taking notes behind. Faces and the screen are blurred.</figcaption>
+<a href="../../img/live-project-ux-research/ph-facilitating.webp" data-lb data-lb-group="live-project" data-lb-src="../../img/live-project-ux-research/ph-facilitating.webp" data-lb-alt="Aritra taking handwritten notes beside a phone on a tripod that records the session, while a colleague guides a participant at a laptop" data-lb-title="Note-taking and recording a session" data-lb-meta="Live UX research project"><img src="../../img/live-project-ux-research/ph-facilitating-sm.webp" srcset="../../img/live-project-ux-research/ph-facilitating-sm.webp 480w, ../../img/live-project-ux-research/ph-facilitating.webp 1100w" sizes="(min-width: 960px) 372px, 92vw" alt="Aritra taking handwritten notes beside a phone on a tripod that records the session, while a colleague guides a participant at a laptop" width="1100" height="825" loading="lazy" /></a>
+<figcaption><strong>Note-taking and recording.</strong> Writing notes by hand beside a phone on a tripod while a colleague guides a participant at the laptop. Other people's faces and the screen are blurred.</figcaption>
 </figure>
+-->
 </div>
 
 <div class="photo-row">
