@@ -13,14 +13,14 @@ W = ROOT / 'assets' / 'work'; D = ROOT / 'assets' / 'drive' / 'JSAA_Work'
 PUB = ROOT / 'site' / 'public'; DATA = ROOT / 'site' / 'src' / 'data'
 MAX = 140 * 1024
 
-def save(im, dest, w, hq=False):
+def save(im, dest, w, hq=False, budget_kb=None):
     im = im.convert('RGB')
     if im.width > w: im = im.resize((w, round(im.height * w / im.width)), Image.LANCZOS)
     dest.parent.mkdir(parents=True, exist_ok=True)
     # hq = legible UI screenshots: keep native resolution and high quality (up to ~560 KB)
     for q in ((92, 88, 84, 80, 76, 72, 68) if hq else (80, 72, 64, 56, 48, 40, 32)):
         im.save(dest, 'WEBP', quality=q, method=6)
-        if dest.stat().st_size <= (560 * 1024 if hq else MAX): break
+        if dest.stat().st_size <= ((budget_kb * 1024) if budget_kb else (560 * 1024 if hq else MAX)): break
     return dest.stat().st_size
 
 def cand(proj, i): return Image.open(W / proj / 'cands' / f'{i:03d}.jpg')
@@ -101,12 +101,12 @@ ART = [
  ('2025-26','S3','Immersive Environments','Impact of Doom and Quake on PC gaming graphics',('x','doomquake-compare'),'doom-and-quake'),
  ('2025-26','S3','Immersive Technologies','Sofa modelling in Maya',('c','doomquake',10),None),
  ('2025-26','S4','Environment Design','Spatial Narrative and Environment Design',('c','spatial',12),'spatial-narrative-environment'),
- ('2025-26','S4','User-Centred Design','SoleSync UCD analysis',('c','solesync',2),'solesync'),
+ ('2025-26','S4','User-Centred Design','SoleSync UCD analysis',('mx','SEM5/HumanAiDesign/SoleSync_Stage2_AritraMitra.pptx','image8.png'),'solesync'),
  ('2025-26','S4','User-Centred Design','Attendance Portal',('c','attendance',0),'attendance-portal'),
  ('2025-26','S4','User-Centred Design','Integrated mobile creative station',('c','attendance',6),None),
  ('2025-26','S4','Material and Texture Design','Procedural wood and pattern textures',('c','material',0),None),
  ('2025-26','S4','Surface Design','Surface textures on cubes',('c','material',23),None),
- ('2026-27','S5','Human-AI Design','SoleSync Stage 2: AI-assisted prototype',('c','solesync',3),'solesync'),
+ ('2026-27','S5','Human-AI Design','SoleSync Stage 2: AI-assisted prototype',('mx','SEM5/HumanAiDesign/SoleSync_Stage2_AritraMitra.pptx','image9.png'),'solesync'),
  ('2026-27','S5','Advanced Lighting','Unreal Engine lighting studies',('c','lighting',3),'lighting-progression'),
 ]
 VIDEOS = [  # slug, rel path, start s, year, sem, topic, title
@@ -185,7 +185,7 @@ tdir = PUB / 'img' / 'year'
 if tdir.exists(): shutil.rmtree(tdir)
 for i, (y, s, topic, title, src, work) in enumerate(ART):
     f = f'{y}-{s}-{i:02d}.webp'; im = get(src); save(im, tdir / f, 640)
-    fl = f.replace('.webp', '-lg.webp'); save(im, tdir / fl, 1200)          # large version for the modal
+    fl = f.replace('.webp', '-lg.webp'); save(im, tdir / fl, 1600, hq=True, budget_kb=320)   # large version for the modal: sharp, only loaded when opened
     artefacts.append({'year': y, 'semester': s, 'topic': topic, 'title': title, 'image': f'/img/year/{f}', 'large': f'/img/year/{fl}', 'pdf': None, 'work': work, 'pages': None})
 vdir = PUB / 'video'
 if vdir.exists(): shutil.rmtree(vdir)
