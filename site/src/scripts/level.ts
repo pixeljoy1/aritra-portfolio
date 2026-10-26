@@ -6,8 +6,8 @@ import { SPRITES } from '../components/sprites';
 
 const T = 16, ROWS = 12, VIEW_H = ROWS * T, GROUND = 10, COLS = 204;
 const FLAG_X = 186 * T + 7, CASTLE_X = 192 * T, CASTLE_DOOR = CASTLE_X + 24;
-const PLANT_H = 26;   // head 14 + stem 12: taller than a jump over the pipe can clear, so wait for it to sink
-const MAXV = 140, JUMP_V = 300, GRAV = 900, TIME_LIMIT = 120;   // 2 minutes at most
+const PLANT_H = 30;   // head 14 + stem 16: only a perfectly timed full jump clears a plant that is out
+const MAXV = 140, JUMP_V = 365, GRAV = 900, TIME_LIMIT = 120;   // jump ~74 px (lands on the brick rows); 2 minutes at most
 const WIZ_X = CASTLE_X - 18, STOP_X = WIZ_X - 20;
 const COL = { mint: '#21EF80', mintD: '#12B862', pink: '#FF63D8', ind: '#585EFF', indT: '#7A7FFF', indD: '#2E33B8', yellow: '#FFD23F', white: '#FFFFFF', ink: '#14141F' };
 
@@ -41,10 +41,11 @@ function makeArt() {
   const cactusTop = ['....GGGG....', '....GGDG....', '.GG.GGGG.GG.', '.GG.GGDG.GG.', '.GGGGGGGGGG.', '.GGGGGDGGGG.'];
   const trunk = Array.from({ length: 12 }, (_, i) => (i % 2 ? '....GGDG....' : '....GGGG....'));
   // chomping pipe plant: red head with white spots, white lips and teeth (16 x 14)
-  const plantHead = ['....RRRRRRRR....', '..RRWRRRRRRWRR..', '.RRRRRRWRRRRRRR.', 'RRWRRRRRRRRRWRRR', 'RRRRRRRRRRRRRRRR'];
-  const plantTail = ['RRRRRRRRRRRRRRRR', '.RRRWRRRRRRWRRR.', '..RRRRRRRRRRRR..', '....RRRRRRRR....'];
-  const plantOpen = [...plantHead, 'WWWWWWWWWWWWWWWW', 'WKWKWKWKWKWKWKWK', 'KKKKKKKKKKKKKKKK', 'WKWKWKWKWKWKWKWK', 'WWWWWWWWWWWWWWWW', ...plantTail];
-  const plantShut = [...plantHead, 'RRRRRRRRRRRRRRRR', 'WWWWWWWWWWWWWWWW', 'WKWKWKWKWKWKWKWK', 'WWWWWWWWWWWWWWWW', 'RRRRRRRRRRRRRRRR', ...plantTail];
+  // pipe plant head, classic style: round red head with white spots; the jaws open upward in a V edged with white lips
+  const plantOpen = ['RR............RR', 'RRR..........RRR', 'RWRW........WRWR', 'RRRRW......WRRRR', '.RRRRW....WRRRR.', '.RWRRWW..WWRRWR.', '..RRRRWKKWRRRR..',
+    '..RRRRRWWRRRRR..', '..RRWRRRRRRWRR..', '...RRRRRRRRRR...', '...RRRWRRWRRR...', '....RRRRRRRR....', '.....RRRRRR.....', '......RRRR......'];
+  const plantShut = ['......RRRR......', '....RRRWWRRR....', '...RWRRWWRRWR...', '..RRRRRWWRRRRR..', '.RRWRRRWWRRRWRR.', '.RRRRRRWWRRRRRR.', 'RRRRWRRWWRRWRRRR',
+    'RRRRRRRWWRRRRRRR', '.RRWRRRRRRRRWRR.', '.RRRRRRRRRRRRRR.', '..RRRRWRRWRRRR..', '...RRRRRRRRRR...', '....RRRRRRRR....', '......RRRR......'];
   // the bouncing duck: green shell, white rim and flapping wing, yellow head, orange beak and feet (14 x 10, two wing frames)
   const duckBody = ['..SSSSSS.YYYOO', '.SSDSSDSSYY...', 'SSSSSSSSSSY...', 'SDSSDSSDSS....', 'WWWWWWWWWW....', '.FF....FF.....'];
   const duckA = ['....WW........', '...WWWW...YY..', '..WWWWW..YYYY.', '...WWW...YYEYO', ...duckBody];
@@ -82,13 +83,15 @@ function buildWorld() {
   const pipes: Pipe[] = [46, 66, 100, 131, 156].map((x, i) => ({ x, h: 2, phase: i * 1.1, ext: 0 }));
   pipes.forEach((p) => { for (let y = GROUND - p.h; y < GROUND; y++) { set(p.x, y, 6); set(p.x + 1, y, 6); } });
   for (let i = 0; i < 4; i++) for (let y = GROUND - 1 - i; y < GROUND; y++) set(172 + i, y, 5);   // stairs
-  const cacti = [34, 40, 56, 57, 90, 108, 118, 119, 124, 150, 164].map((x) => ({ x: x * T + 2, y: GROUND * T - 18, w: 12, h: 18 }));
+  const cacti = [34, 40, 56, 57, 93, 108, 118, 119, 124, 150, 164].map((x) => ({ x: x * T + 2, y: GROUND * T - 18, w: 12, h: 18 }));
   const coins: { x: number; y: number; got: boolean }[] = [];
   const row = (x0: number, n: number, y: number) => { for (let i = 0; i < n; i++) coins.push({ x: (x0 + i) * T + 4, y: y * T + 3, got: false }); };
   row(12, 5, 8); row(37, 3, 6); row(70, 4, 5); row(80, 7, 4); row(96, 5, 7); row(112, 5, 6); row(128, 6, 5); row(141, 7, 5); row(160, 4, 6);
   for (let i = 0; i < 5; i++) coins.push({ x: (64 + i) * T + 2, y: (8 - Math.sin((i / 4) * Math.PI) * 3) * T, got: false });
   const ducks = [78].map((c) => ({ x: c * T, y: GROUND * T - 20, vx: -34, vy: 0, home: c * T, hop: 0.3, dead: false }));
-  return { g, pipes, cacti, coins, ducks };
+  // easter-egg bricks: look ordinary, but keep paying out (more each time) when bumped again and again
+  const multi: Record<string, number> = { '21,7': 0, '84,6': 0, '145,7': 0 };
+  return { g, pipes, cacti, coins, ducks, multi };
 }
 
 /* ---------- engine ---------- */
@@ -105,6 +108,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
   let bumps: { x: number; y: number; t: number }[] = [];
   let bits: { x: number; y: number; vx: number; vy: number; c: string; t: number }[] = [];
   let pops: { x: number; y: number; txt: string; t: number }[] = [];
+  let cpops: { x: number; y: number; vy: number; t: number }[] = [];
   const stars = Array.from({ length: 90 }, (_, i) => ({ x: (i * 97) % 1600, y: (i * 53) % 130, p: i % 5 }));
   const size = () => (h.big ? { w: 13, h: 30 } : { w: 10, h: 20 });
 
@@ -129,7 +133,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
   };
   let lastDeath = '';
   const reset = (respawn = false) => {
-    world = buildWorld(); mush = []; bumps = []; bits = []; pops = [];
+    world = buildWorld(); mush = []; bumps = []; bits = []; pops = []; cpops = [];
     h = { x: 40, y: GROUND * T - 20, vx: 0, vy: 0, ground: true, big: false, face: 1, inv: 0, anim: 0 };
     timeLeft = TIME_LIMIT; cam = 0; hold = 0; ambientWait = 0; scrollT = 0; flagT = 0; coyote = 0; buf = 0; phase = ambient || respawn ? 'play' : 'ready';
   };
@@ -137,7 +141,14 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
   const add = (n: number, x: number, y: number) => { score += n; pops.push({ x, y, txt: String(n), t: 0 }); };
 
   function bump(tx: number, ty: number) {
-    const c = world.g[ty][tx];
+    const c = world.g[ty][tx], key = `${tx},${ty}`;
+    if (c === 2 && key in world.multi) {
+      const n = ++world.multi[key]; coinN++; bumps.push({ x: tx, y: ty, t: 0 });
+      add(100 * n, tx * T, ty * T - 12); cpops.push({ x: tx * T + 4, y: ty * T - 10, vy: -230, t: 0 });
+      beep(660 + n * 70, 1100 + n * 90, 0.12);
+      if (n >= 10) { world.g[ty][tx] = 7; delete world.multi[key]; }
+      return;
+    }
     if (c === 2) {
       world.g[ty][tx] = 0; add(50, tx * T, ty * T - 4); beep(150, 60, 0.12, 'sawtooth');
       for (let i = 0; i < 4; i++) bits.push({ x: tx * T + 4 + (i % 2) * 6, y: ty * T + 4 + (i >> 1) * 6, vx: (i % 2 ? 1 : -1) * (30 + i * 8), vy: -140 - i * 12, c: COL.indT, t: 0 });
@@ -297,6 +308,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     bumps.forEach((b) => (b.t += dt)); bumps = bumps.filter((b) => b.t < 0.18);
     bits.forEach((b) => { b.vy += GRAV * 0.6 * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.t += dt; }); bits = bits.filter((b) => b.t < 1.6);
     pops.forEach((p) => { p.t += dt; if (p.t > 0) p.y -= 26 * dt; }); pops = pops.filter((p) => p.t < 0.9);
+    cpops.forEach((q) => { q.t += dt; q.vy += 900 * dt; q.y += q.vy * dt; }); cpops = cpops.filter((q) => q.t < 0.5);
   }
 
   /* ---------- drawing ---------- */
@@ -339,7 +351,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     world.pipes.forEach((p) => {
       if (p.ext > 0) {
         const open = Math.floor(t * 4) % 2 === 0; const top = (GROUND - p.h) * T - p.ext;
-        R(p.x * T + 15, top + 13, 2, p.ext, COL.mint); R(p.x * T + 9, top + 18, 6, 3, COL.mint); R(p.x * T + 17, top + 21, 6, 3, COL.mint);
+        R(p.x * T + 15, top + 13, 2, p.ext, COL.mint); R(p.x * T + 9, top + 19, 6, 3, COL.mint); R(p.x * T + 17, top + 23, 6, 3, COL.mint);
         ctx.save(); ctx.beginPath(); ctx.rect(p.x * T, 0, 32, (GROUND - p.h) * T); ctx.clip();
         S(open ? art.plantOpen : art.plantShut, p.x * T + 8, top, 16, 14); ctx.restore();
       }
@@ -365,6 +377,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     drawHero();
     bits.forEach((b) => R(b.x, b.y, 3, 3, b.c));
     ctx.font = '6px "Press Start 2P", monospace'; ctx.textBaseline = 'top';
+    cpops.forEach((q) => { const sw = Math.abs(Math.cos(q.t * 18)); S(art.coin, q.x + (8 - 8 * sw) / 2, q.y, Math.max(2, 8 * sw), 10); });
     pops.forEach((p) => { if (p.t < 0) return; ctx.fillStyle = COL.white; ctx.fillText(p.txt, Math.round(p.x), Math.round(p.y)); });
     ctx.restore();
     if (!ambient) hud();
