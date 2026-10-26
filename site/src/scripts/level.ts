@@ -6,6 +6,7 @@ import { SPRITES } from '../components/sprites';
 
 const T = 16, ROWS = 12, VIEW_H = ROWS * T, GROUND = 10, COLS = 204;
 const FLAG_X = 186 * T + 7, CASTLE_X = 192 * T, CASTLE_DOOR = CASTLE_X + 24;
+const PLANT_H = 26;   // head 14 + stem 12: taller than a jump over the pipe can clear, so wait for it to sink
 const MAXV = 140, JUMP_V = 300, GRAV = 900, TIME_LIMIT = 120;   // 2 minutes at most
 const WIZ_X = CASTLE_X - 18, STOP_X = WIZ_X - 20;
 const COL = { mint: '#21EF80', mintD: '#12B862', pink: '#FF63D8', ind: '#585EFF', indT: '#7A7FFF', indD: '#2E33B8', yellow: '#FFD23F', white: '#FFFFFF', ink: '#14141F' };
@@ -39,9 +40,17 @@ function makeArt() {
   const crop = (rows: string[], pal: Record<string, string>) => bake(rows, pal);
   const cactusTop = ['....GGGG....', '....GGDG....', '.GG.GGGG.GG.', '.GG.GGDG.GG.', '.GGGGGGGGGG.', '.GGGGGDGGGG.'];
   const trunk = Array.from({ length: 12 }, (_, i) => (i % 2 ? '....GGDG....' : '....GGGG....'));
-  const plantOpen = ['...PPPPPPPP...', '..PPWPPPPWPP..', '.PPPPPPPPPPPP.', '.PPPPPPPPPPPP.', '.KKKKKKKKKKKK.', 'KWKWKWKWKWKWKW', '.KKKKKKKKKKKK.', '.PPPPPPPPPPPP.', '..PPPPPPPPPP..', '...PPPPPPPP...'];
-  const plantShut = ['...PPPPPPPP...', '..PPWPPPPWPP..', '.PPPPPPPPPPPP.', '.PPPPPPPPPPPP.', '.PPPPPPPPPPPP.', '.PPPWPPPPWPPP.', '.PPPPPPPPPPPP.', '.PPPPPPPPPPPP.', '..PPPPPPPPPP..', '...PPPPPPPP...'];
-  const pp = { P: COL.pink, W: COL.white, K: COL.ink };
+  // chomping pipe plant: red head with white spots, white lips and teeth (16 x 14)
+  const plantHead = ['....RRRRRRRR....', '..RRWRRRRRRWRR..', '.RRRRRRWRRRRRRR.', 'RRWRRRRRRRRRWRRR', 'RRRRRRRRRRRRRRRR'];
+  const plantTail = ['RRRRRRRRRRRRRRRR', '.RRRWRRRRRRWRRR.', '..RRRRRRRRRRRR..', '....RRRRRRRR....'];
+  const plantOpen = [...plantHead, 'WWWWWWWWWWWWWWWW', 'WKWKWKWKWKWKWKWK', 'KKKKKKKKKKKKKKKK', 'WKWKWKWKWKWKWKWK', 'WWWWWWWWWWWWWWWW', ...plantTail];
+  const plantShut = [...plantHead, 'RRRRRRRRRRRRRRRR', 'WWWWWWWWWWWWWWWW', 'WKWKWKWKWKWKWKWK', 'WWWWWWWWWWWWWWWW', 'RRRRRRRRRRRRRRRR', ...plantTail];
+  // the bouncing duck: green shell, white rim and flapping wing, yellow head, orange beak and feet (14 x 10, two wing frames)
+  const duckBody = ['..SSSSSS.YYYOO', '.SSDSSDSSYY...', 'SSSSSSSSSSY...', 'SDSSDSSDSS....', 'WWWWWWWWWW....', '.FF....FF.....'];
+  const duckA = ['....WW........', '...WWWW...YY..', '..WWWWW..YYYY.', '...WWW...YYEYO', ...duckBody];
+  const duckB = ['..............', '..........YY..', '.........YYYY.', '.WWWW....YYEYO', 'WWWSSSSS.YYYOO', ...duckBody.slice(1)];
+  const dk = { S: COL.mint, D: COL.mintD, W: COL.white, Y: COL.yellow, O: '#FF9F1C', F: '#FF9F1C', E: COL.ink };
+  const pp = { R: '#E0303A', W: COL.white, K: COL.ink };
   return {
     wizard: bake(['.....VV.....', '....VVVV....', '....VYVV....', '...VVVVVV...', '..VVVVVVVV..', '.VVVVVVVVVV.', '...SSSSSSS..', '...SESSESS..', '..WWWWWWWW..', '..WWWWWWWW..', '...WWWWWW...', '..VVVVVVVV..', '.VVVDVVDVVV.', '.VVVVVVVVVV.', '.VVVDVVDVVV.', '.VVVVVVVVVV.', '.DDDDDDDDDD.', '..BB....BB..'], { V: '#7A3FD1', D: '#4B2394', Y: COL.yellow, S: '#FFB38A', E: COL.ink, W: '#FFFFFF', B: '#8A5A2A' }),
     scroll: bake(['OCCCCCCCCO', 'OCTTTTTTCO', 'OCCCCCCCCO', 'OCTTTTCCCO', 'OCCCCCCCCO', 'OCCCRRCCCO', 'OCCCRRCCCO', 'OOOOOOOOOO'], { C: '#FFF1DA', O: '#D9B77A', T: '#8A6A3A', R: '#E0507A' }),
@@ -49,7 +58,7 @@ function makeArt() {
     coin: bake(['..YYYY..', '.YYOOYY.', 'YYYOOYYY', 'YYYOOYYY', 'YYYOOYYY', 'YYYOOYYY', 'YYYOOYYY', 'YYYOOYYY', '.YYOOYY.', '..YYYY..'], { Y: COL.yellow, O: '#E0A820' }),
     mush: bake(['...PPPPPP...', '.PPPPWWPPPP.', 'PPWWPWWPPWWP', 'PPWWPPPPPWWP', 'PPPPPPPPPPPP', '.CCCCCCCCCC.', '..CECCCCEC..', '..CCCCCCCC..', '..CCCCCCCC..', '...CCCCCC...'], { P: COL.pink, W: COL.white, C: '#FFE7C2', E: COL.ink }),
     cactus: crop([...cactusTop, ...trunk], { G: '#3DDC7A', D: COL.mintD }),
-    plantOpen: bake(plantOpen, pp), plantShut: bake(plantShut, pp),
+    plantOpen: bake(plantOpen, pp), plantShut: bake(plantShut, pp), duckA: bake(duckA, dk), duckB: bake(duckB, dk),
     gTop: tile((g) => { g.fillStyle = COL.mint; g.fillRect(0, 0, T, 3); g.fillStyle = COL.mintD; g.fillRect(0, 3, T, 2); brickRows(g, 5, COL.ind, COL.indD, false); }),
     gBot: tile((g) => brickRows(g, 0, COL.ind, COL.indD, true)),
     brick: tile((g) => { g.fillStyle = '#1b1d5c'; g.fillRect(0, 0, T, T); brickRows(g, 0, COL.indT, COL.ink, false); g.fillStyle = '#A9ADFF'; g.fillRect(0, 0, T, 1); }),
@@ -78,7 +87,8 @@ function buildWorld() {
   const row = (x0: number, n: number, y: number) => { for (let i = 0; i < n; i++) coins.push({ x: (x0 + i) * T + 4, y: y * T + 3, got: false }); };
   row(12, 5, 8); row(37, 3, 6); row(70, 4, 5); row(80, 7, 4); row(96, 5, 7); row(112, 5, 6); row(128, 6, 5); row(141, 7, 5); row(160, 4, 6);
   for (let i = 0; i < 5; i++) coins.push({ x: (64 + i) * T + 2, y: (8 - Math.sin((i / 4) * Math.PI) * 3) * T, got: false });
-  return { g, pipes, cacti, coins };
+  const ducks = [78].map((c) => ({ x: c * T, y: GROUND * T - 20, vx: -34, vy: 0, home: c * T, hop: 0.3, dead: false }));
+  return { g, pipes, cacti, coins, ducks };
 }
 
 /* ---------- engine ---------- */
@@ -181,7 +191,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     if (phase === 'dying' || ambient) { if (ambient) reset(); return; }
     lastDeath = `${why} x=${Math.round(h.x)} y=${Math.round(h.y)}`; phase = 'dying'; deadT = 0; h.vy = -200; h.vx = 0; beep(440, 90, 0.6, 'triangle', 0.05);
   }
-  function plantRect(p: Pipe) { return { x: p.x * T + 9, y: (GROUND - p.h) * T - p.ext + 2, w: 14, h: Math.max(0, p.ext - 2) }; }
+  function plantRect(p: Pipe) { return { x: p.x * T + 9, y: (GROUND - p.h) * T - p.ext + 2, w: 14, h: Math.max(0, Math.min(p.ext, 14) - 2) }; }   // the head bites, the stem does not
 
   function ai() {
     keys.right = true; keys.left = false;
@@ -190,8 +200,12 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     const wall = solid(ax, Math.floor(feet / T)) || solid(ax, Math.floor((feet - 14) / T));
     const cact = world.cacti.some((c) => c.x > h.x + w && c.x - (h.x + w) < 22 && c.y + c.h > h.y);
     const pipe = world.pipes.some((p) => p.x * T > h.x + w && p.x * T - (h.x + w) < 20);
+    // cross only when the plant is down with time to spare (its cycle is 4.2 s; it is fully hidden from 3.8 s to 1.4 s)
+    const plantUp = world.pipes.some((p) => { const c = p.phase % 4.2; return p.x * T > h.x + w && p.x * T - (h.x + w) < 56 && (p.ext > 0 || (c > 0.5 && c < 3.8)); });
+    const duck = world.ducks.some((dd) => !dd.dead && dd.x > h.x + w - 4 && dd.x - (h.x + w) < 34);
+    if (plantUp && h.ground) { keys.right = false; keys.jump = false; return; }   // wait for the plant to sink
     const under = h.ground && [20, 21, 22, 23, 24, 142, 143, 144, 145, 146].some((c) => Math.abs(h.x + w / 2 - (c * T + 8)) < 2.5) && Math.random() < 0.5;
-    keys.jump = h.ground ? wall || cact || pipe || under : keys.jump && h.vy < 0;   // hold while rising = full-height jump
+    keys.jump = h.ground ? wall || cact || pipe || duck || under : keys.jump && h.vy < 0;   // hold while rising = full-height jump
   }
 
   function update(dt: number) {
@@ -243,10 +257,22 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     world.pipes.forEach((p) => {
       const near = Math.abs(h.x + w / 2 - (p.x * T + 16)) < 28;
       p.phase += dt; const c = p.phase % 4.2;
-      const want = c < 1.4 ? 0 : c < 1.8 ? (c - 1.4) / 0.4 : c < 3.0 ? 1 : c < 3.4 ? 1 - (c - 3) / 0.4 : 0;
-      // plants sink when you get close, and never rise while you are near (fair play)
-      p.ext = near ? Math.max(0, p.ext - 90 * dt) : Math.min(want * 14, p.ext + 60 * dt);
+      const want = c < 1.4 ? 0 : c < 1.9 ? (c - 1.4) / 0.5 : c < 3.3 ? 1 : c < 3.8 ? 1 - (c - 3.3) / 0.5 : 0;
+      // like the original: a plant that is already out stays out for its whole bite; it only refuses to come out while you stand beside the pipe
+      const target = near && p.ext <= 0 ? 0 : want * PLANT_H;
+      p.ext += Math.max(-70 * dt, Math.min(70 * dt, target - p.ext));
       if (p.ext > 6 && rect(hb, plantRect(p))) hurt('plant');
+    });
+    world.ducks.forEach((dd) => {
+      if (dd.dead) return;
+      dd.vy += GRAV * dt; dd.x += dd.vx * dt; dd.y += dd.vy * dt;
+      if (Math.abs(dd.x - dd.home) > 3 * T || solid(Math.floor((dd.x + (dd.vx > 0 ? 28 : 0)) / T), Math.floor((dd.y + 8) / T))) { dd.vx = -dd.vx; dd.x += dd.vx * dt * 2; }
+      const gy = Math.floor((dd.y + 20) / T);
+      if (dd.vy > 0 && solid(Math.floor((dd.x + 14) / T), gy)) { dd.y = gy * T - 20; dd.vy = 0; dd.hop -= dt; if (dd.hop <= 0) { dd.vy = -220; dd.hop = 0.45; } }
+      if (rect(hb, { x: dd.x + 2, y: dd.y + 2, w: 24, h: 18 })) {
+        if (h.vy > 40 && h.y + hh - 8 < dd.y + 6) { dd.dead = true; h.vy = -200; add(100, dd.x, dd.y - 8); beep(520, 180, 0.12, 'square', 0.04); }   // stomp
+        else hurt('duck');
+      }
     });
     // mushrooms
     mush.forEach((m) => {
@@ -313,9 +339,9 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     world.pipes.forEach((p) => {
       if (p.ext > 0) {
         const open = Math.floor(t * 4) % 2 === 0; const top = (GROUND - p.h) * T - p.ext;
-        R(p.x * T + 15, top + 10, 2, p.ext, COL.mintD);
+        R(p.x * T + 15, top + 13, 2, p.ext, COL.mint); R(p.x * T + 9, top + 18, 6, 3, COL.mint); R(p.x * T + 17, top + 21, 6, 3, COL.mint);
         ctx.save(); ctx.beginPath(); ctx.rect(p.x * T, 0, 32, (GROUND - p.h) * T); ctx.clip();
-        S(open ? art.plantOpen : art.plantShut, p.x * T + 9, top, 14, 10); ctx.restore();
+        S(open ? art.plantOpen : art.plantShut, p.x * T + 8, top, 16, 14); ctx.restore();
       }
     });
     // tiles in view
@@ -333,6 +359,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     const cw = Math.abs(Math.cos(t * 5));
     world.coins.forEach((c) => { if (!c.got && c.x > camX - 20 && c.x < camX + viewW + 20) S(art.coin, c.x + (8 - 8 * cw) / 2, c.y, Math.max(2, 8 * cw), 10); });
     world.cacti.forEach((c) => S(art.cactus, c.x, c.y, 12, 18));
+    world.ducks.forEach((dd) => { if (!dd.dead) S(Math.floor(t * 6) % 2 ? art.duckA : art.duckB, dd.x, dd.y, 28, 20, dd.vx > 0); });
     mush.forEach((m) => S(art.mush, m.x, m.y, 12, 10));
     // hero
     drawHero();
@@ -408,7 +435,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     step(sec: number) { for (let i = 0; i < Math.round(sec * 60); i++) { update(1 / 60); const tg = Math.min(CASTLE_X + 64 - viewW, Math.max(0, h.x - viewW * 0.38)); cam += (tg - cam) * 0.13; } },
     tp(x: number) { h.x = x; h.y = GROUND * T - size().h; h.vx = 0; cam = Math.max(0, x - viewW * 0.38); },
     setAuto(v: boolean) { auto = v; if (v && phase === 'ready') phase = 'play'; },
-    debug() { return { phase, x: Math.round(h.x), y: Math.round(h.y), big: h.big, score, coins: coinN, lives, time: Math.round(timeLeft), lastDeath, mush: mush.length }; },
+    debug() { return { phase, x: Math.round(h.x), y: Math.round(h.y), big: h.big, score, coins: coinN, lives, time: Math.round(timeLeft), lastDeath, mush: mush.length, ducks: world.ducks.filter((q) => !q.dead).length, plants: world.pipes.map((q) => Math.round(q.ext)) }; },
     anyKey() { if (!ambient && phase === 'ready') phase = 'play'; },
     toggleMute() { muted = !muted; return muted; },
     get phase() { return phase; },
