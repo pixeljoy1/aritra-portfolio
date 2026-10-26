@@ -1,8 +1,9 @@
-@font-face { font-family: 'Press Start 2P'; src: url('/fonts/press-start-2p-latin-400-normal.woff2') format('woff2'); font-display: swap; }
-@font-face { font-family: 'Silkscreen'; font-weight: 400; src: url('/fonts/silkscreen-latin-400-normal.woff2') format('woff2'); font-display: swap; }
-@font-face { font-family: 'Silkscreen'; font-weight: 700; src: url('/fonts/silkscreen-latin-700-normal.woff2') format('woff2'); font-display: swap; }
-@font-face { font-family: 'Atkinson Hyperlegible'; font-weight: 400; src: url('/fonts/atkinson-hyperlegible-latin-400-normal.woff2') format('woff2'); font-display: swap; }
-@font-face { font-family: 'Atkinson Hyperlegible'; font-weight: 700; src: url('/fonts/atkinson-hyperlegible-latin-700-normal.woff2') format('woff2'); font-display: swap; }
+/* All five faces are preloaded in Base.astro and use font-display: block, so text never paints in a fallback font first and then jumps (they are local and ~70 KB together). */
+@font-face { font-family: 'Press Start 2P'; src: url('/fonts/press-start-2p-latin-400-normal.woff2') format('woff2'); font-display: block; }
+@font-face { font-family: 'Silkscreen'; font-weight: 400; src: url('/fonts/silkscreen-latin-400-normal.woff2') format('woff2'); font-display: block; }
+@font-face { font-family: 'Silkscreen'; font-weight: 700; src: url('/fonts/silkscreen-latin-700-normal.woff2') format('woff2'); font-display: block; }
+@font-face { font-family: 'Atkinson Hyperlegible'; font-weight: 400; src: url('/fonts/atkinson-hyperlegible-latin-400-normal.woff2') format('woff2'); font-display: block; }
+@font-face { font-family: 'Atkinson Hyperlegible'; font-weight: 700; src: url('/fonts/atkinson-hyperlegible-latin-700-normal.woff2') format('woff2'); font-display: block; }
 
 :root {
   --black: #000000; --panel-bg: #04120A;
