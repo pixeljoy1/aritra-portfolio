@@ -60,6 +60,7 @@ function makeArt() {
     mush: bake(['...PPPPPP...', '.PPPPWWPPPP.', 'PPWWPWWPPWWP', 'PPWWPPPPPWWP', 'PPPPPPPPPPPP', '.CCCCCCCCCC.', '..CECCCCEC..', '..CCCCCCCC..', '..CCCCCCCC..', '...CCCCCC...'], { P: COL.pink, W: COL.white, C: '#FFE7C2', E: COL.ink }),
     cactus: crop([...cactusTop, ...trunk], { G: '#3DDC7A', D: COL.mintD }),
     plantOpen: bake(plantOpen, pp), plantShut: bake(plantShut, pp), duckA: bake(duckA, dk), duckB: bake(duckB, dk),
+    shell: bake(['....SSSSSS....', '..SSDSSDSSSS..', '.SSSSSSSSSSSS.', 'SDSSDSSDSSDSSS', 'SSSSSSSSSSSSSS', 'WWWWWWWWWWWWWW', '.WWWWWWWWWWWW.'], dk),
     gTop: tile((g) => { g.fillStyle = COL.mint; g.fillRect(0, 0, T, 3); g.fillStyle = COL.mintD; g.fillRect(0, 3, T, 2); brickRows(g, 5, COL.ind, COL.indD, false); }),
     gBot: tile((g) => brickRows(g, 0, COL.ind, COL.indD, true)),
     brick: tile((g) => { g.fillStyle = '#1b1d5c'; g.fillRect(0, 0, T, T); brickRows(g, 0, COL.indT, COL.ink, false); g.fillStyle = '#A9ADFF'; g.fillRect(0, 0, T, 1); }),
@@ -88,7 +89,7 @@ function buildWorld() {
   const row = (x0: number, n: number, y: number) => { for (let i = 0; i < n; i++) coins.push({ x: (x0 + i) * T + 4, y: y * T + 3, got: false }); };
   row(12, 5, 8); row(37, 3, 6); row(70, 4, 5); row(80, 7, 4); row(96, 5, 7); row(112, 5, 6); row(128, 6, 5); row(141, 7, 5); row(160, 4, 6);
   for (let i = 0; i < 5; i++) coins.push({ x: (64 + i) * T + 2, y: (8 - Math.sin((i / 4) * Math.PI) * 3) * T, got: false });
-  const ducks = [78].map((c) => ({ x: c * T, y: GROUND * T - 20, vx: -34, vy: 0, home: c * T, hop: 0.3, dead: false }));
+  const ducks = [78].map((c) => ({ x: c * T, y: GROUND * T - 20, vx: -34, vy: 0, home: c * T, hop: 0.3, dead: false, shell: false, safe: 0 }));
   // easter-egg bricks: look ordinary, but keep paying out (more each time) when bumped again and again
   const multi: Record<string, number> = { '21,7': 0, '84,6': 0, '145,7': 0 };
   return { g, pipes, cacti, coins, ducks, multi };
@@ -276,13 +277,21 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     });
     world.ducks.forEach((dd) => {
       if (dd.dead) return;
+      dd.safe = Math.max(0, dd.safe - dt);
       dd.vy += GRAV * dt; dd.x += dd.vx * dt; dd.y += dd.vy * dt;
-      if (Math.abs(dd.x - dd.home) > 3 * T || solid(Math.floor((dd.x + (dd.vx > 0 ? 28 : 0)) / T), Math.floor((dd.y + 8) / T))) { dd.vx = -dd.vx; dd.x += dd.vx * dt * 2; }
+      if (Math.abs(dd.x - dd.home) > 4 * T || solid(Math.floor((dd.x + (dd.vx > 0 ? 28 : 0)) / T), Math.floor((dd.y + 8) / T))) { dd.vx = -dd.vx; dd.x += dd.vx * dt * 2; }
       const gy = Math.floor((dd.y + 20) / T);
-      if (dd.vy > 0 && solid(Math.floor((dd.x + 14) / T), gy)) { dd.y = gy * T - 20; dd.vy = 0; dd.hop -= dt; if (dd.hop <= 0) { dd.vy = -220; dd.hop = 0.45; } }
-      if (rect(hb, { x: dd.x + 2, y: dd.y + 2, w: 24, h: 18 })) {
-        if (h.vy > 40 && h.y + hh - 8 < dd.y + 6) { dd.dead = true; h.vy = -200; add(100, dd.x, dd.y - 8); beep(520, 180, 0.12, 'square', 0.04); }   // stomp
-        else hurt('duck');
+      if (dd.vy > 0 && solid(Math.floor((dd.x + 14) / T), gy)) {
+        dd.y = gy * T - 20; dd.vy = 0; dd.hop -= dt;
+        if (dd.hop <= 0) { dd.vy = dd.shell ? -150 : -220; dd.hop = dd.shell ? 0.3 : 0.45; }   // the shell keeps bouncing, lower and faster
+      }
+      const box = dd.shell ? { x: dd.x + 2, y: dd.y + 7, w: 24, h: 13 } : { x: dd.x + 2, y: dd.y + 2, w: 24, h: 18 };
+      if (rect(hb, box)) {
+        if (h.vy > 40 && h.y + hh - 8 < box.y + 4) {   // stomp from above
+          h.vy = -200; beep(520, 180, 0.12, 'square', 0.04);
+          if (!dd.shell) { dd.shell = true; dd.safe = 0.35; dd.vx = Math.sign(dd.vx || 1) * 60; add(100, dd.x, dd.y - 8); }   // 1st: into the shell
+          else if (dd.safe <= 0) { dd.dead = true; add(200, dd.x, dd.y - 8); bits.push(...[0, 1, 2, 3].map((i) => ({ x: dd.x + 6 + i * 4, y: dd.y + 10, vx: (i - 1.5) * 40, vy: -160, c: COL.mint, t: 0 }))); }   // 2nd: gone
+        } else if (dd.safe <= 0) hurt('duck');
       }
     });
     // mushrooms
@@ -371,7 +380,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     const cw = Math.abs(Math.cos(t * 5));
     world.coins.forEach((c) => { if (!c.got && c.x > camX - 20 && c.x < camX + viewW + 20) S(art.coin, c.x + (8 - 8 * cw) / 2, c.y, Math.max(2, 8 * cw), 10); });
     world.cacti.forEach((c) => S(art.cactus, c.x, c.y, 12, 18));
-    world.ducks.forEach((dd) => { if (!dd.dead) S(Math.floor(t * 6) % 2 ? art.duckA : art.duckB, dd.x, dd.y, 28, 20, dd.vx > 0); });
+    world.ducks.forEach((dd) => { if (dd.dead) return; if (dd.shell) S(art.shell, dd.x, dd.y + 6, 28, 14, Math.floor(t * 10) % 2 === 0); else S(Math.floor(t * 6) % 2 ? art.duckA : art.duckB, dd.x, dd.y, 28, 20, dd.vx > 0); });
     mush.forEach((m) => S(art.mush, m.x, m.y, 12, 10));
     // hero
     drawHero();
@@ -448,7 +457,7 @@ export function createLevel(canvas: HTMLCanvasElement, opts: { mode: Mode; onEnd
     step(sec: number) { for (let i = 0; i < Math.round(sec * 60); i++) { update(1 / 60); const tg = Math.min(CASTLE_X + 64 - viewW, Math.max(0, h.x - viewW * 0.38)); cam += (tg - cam) * 0.13; } },
     tp(x: number) { h.x = x; h.y = GROUND * T - size().h; h.vx = 0; cam = Math.max(0, x - viewW * 0.38); },
     setAuto(v: boolean) { auto = v; if (v && phase === 'ready') phase = 'play'; },
-    debug() { return { phase, x: Math.round(h.x), y: Math.round(h.y), big: h.big, score, coins: coinN, lives, time: Math.round(timeLeft), lastDeath, mush: mush.length, ducks: world.ducks.filter((q) => !q.dead).length, plants: world.pipes.map((q) => Math.round(q.ext)) }; },
+    debug() { return { phase, x: Math.round(h.x), y: Math.round(h.y), big: h.big, score, coins: coinN, lives, time: Math.round(timeLeft), lastDeath, mush: mush.length, ducks: world.ducks.filter((q) => !q.dead).length, shells: world.ducks.filter((q) => q.shell && !q.dead).length, plants: world.pipes.map((q) => Math.round(q.ext)) }; },
     anyKey() { if (!ambient && phase === 'ready') phase = 'play'; },
     toggleMute() { muted = !muted; return muted; },
     get phase() { return phase; },
