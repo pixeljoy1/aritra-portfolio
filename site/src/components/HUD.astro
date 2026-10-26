@@ -8,6 +8,7 @@ import { NAV, SITE } from '../config';
   <div class="hud__bar">
     <a href={u("/")} class="hud__home"><span class="label">PLAYER 1</span> <strong>{SITE.name}</strong></a>
     <span class="hud__hearts" aria-hidden="true"><Sprite name="heart" u={2} /><Sprite name="heart" u={2} /><Sprite name="heart" u={2} /></span>
+    <span class="hud__hi" id="hudHi" hidden>HI-SCORE <b></b></span>
     <nav class="hud__nav" aria-label="Main">
       {NAV.map((n) => <a href={u(n.href)}>{n.label}</a>)}
     </nav>
@@ -19,6 +20,12 @@ import { NAV, SITE } from '../config';
   </div>
 </header>
 <script>
+  // HI-SCORE, as on the title screen of the Doom/Quake deck: your own best Tiger Run score in this browser
+  try {
+    const best = parseInt(localStorage.getItem('tigerrun:best') || localStorage.getItem('tigerrun.best') || '0', 10);
+    const hi = document.getElementById('hudHi');
+    if (hi && best > 0) { hi.querySelector('b')!.textContent = String(best).padStart(6, '0'); hi.hidden = false; }
+  } catch { /* storage blocked: leave it hidden */ }
   const btn = document.querySelector<HTMLButtonElement>('.hud__menu')!;
   const ov = document.getElementById('menu-overlay')!;
   const set = (open: boolean) => {
