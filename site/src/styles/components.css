@@ -134,7 +134,7 @@ button.chip { min-height: 44px; padding: 0 var(--s4); cursor: pointer; }
 .lb__nav { width: 48px; height: 64px; justify-self: center; background: var(--black); color: var(--mint); border: 2px solid var(--mint); border-radius: var(--radius); font: 700 16px var(--f-ui); cursor: pointer; }
 .lb__nav[hidden] { display: none; }
 .lb__nav:hover { background: var(--mint); color: #000; }
-.lb__fig { margin: 0; min-width: 0; display: grid; justify-items: center; gap: var(--s3); max-height: calc(100dvh - 90px); }
+.lb__fig { grid-column: 2; margin: 0; min-width: 0; display: grid; justify-items: center; gap: var(--s3); max-height: calc(100dvh - 90px); }
 .lb__stage { border: 2px solid var(--mint); border-radius: var(--radius); background: #000; overflow: hidden; line-height: 0; }
 .lb__stage img, .lb__stage video { max-width: 100%; max-height: calc(100dvh - 220px); width: auto; height: auto; display: block; }
 .lb__cap { text-align: center; padding: 0 var(--s2); }
