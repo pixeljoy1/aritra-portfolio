@@ -237,7 +237,9 @@ div.card:hover { transform: none; box-shadow: none; }
 .livesec { margin-top: var(--s7); }
 
 /* quiet end strip under the canvas (replaces the big overlay) */
-.lv__end { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--s3); padding: var(--s3) 0 0; }
+.lv__stage { position: relative; }
+/* the end strip floats over the bottom of the game, so the window never changes height */
+.lv__end { position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--s2) var(--s3); padding: var(--s2) var(--s3); background: rgba(0, 0, 0, .85); border: 2px solid var(--mint); border-radius: var(--radius); }
 .lv__end[hidden] { display: none; }
 .lv__end .label { margin: 0; }
 .btn--sm { min-height: 40px; padding: 0 var(--s4); font-size: 11px; }
