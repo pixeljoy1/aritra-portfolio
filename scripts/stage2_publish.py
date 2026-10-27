@@ -176,7 +176,10 @@ for slug, items in SET.items():
     for n, item in enumerate(items):
         src, alt = item[0], item[1]; hq = len(item) > 2
         im = get(src); name = 'hero' if n == 0 else f'{n:02d}'
-        sz = save(im, out / f'{name}.webp', (1800 if hq else 1400) if n == 0 else (2200 if hq else 1100), hq)
+        if hq and im.width < 1900:   # UI screens: source is small; 2x upscale + light sharpen so text stays crisp on retina screens
+            from PIL import ImageFilter
+            im = im.convert('RGB').resize((im.width * 2, im.height * 2), Image.LANCZOS).filter(ImageFilter.UnsharpMask(radius=1.6, percent=70, threshold=2))
+        sz = save(im, out / f'{name}.webp', (2400 if hq else 1400) if n == 0 else (2400 if hq else 1100), hq, budget_kb=480 if hq else None)
         if n == 0: save(im, out / 'thumb.webp', 640)
         gal.append({'src': f'/img/{slug}/{name}.webp', 'alt': alt})
         print(f'{slug}/{name}: {sz//1024} KB')
