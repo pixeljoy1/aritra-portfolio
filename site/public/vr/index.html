@@ -6,61 +6,211 @@
   <title>Aritra: VR Showcase</title>
   <!-- Pinned A-Frame release. WebXR needs HTTPS; GitHub Pages provides it. -->
   <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+  <style>
+    /* Status line for the flat (non-VR) view. Handy on the Quest, which has no console. */
+    #status { position: fixed; left: 12px; top: 12px; z-index: 10; padding: 6px 10px;
+              font: 13px/1.3 system-ui, sans-serif; color: #fff; background: rgba(0,0,0,.6);
+              border-radius: 6px; pointer-events: none; }
+    #status.done { opacity: 0; transition: opacity 1.5s 2s; }
+    #status.error { background: #a01818; }
+  </style>
 </head>
 <body>
-  <a-scene background="color: #0b0b1a" renderer="colorManagement: true">
+  <div id="status">Loading house model…</div>
+
+  <a-scene background="color: #bfe3f2" renderer="colorManagement: true"
+           fog="type: linear; color: #bfe3f2; near: 30; far: 80">
 
     <!-- Lighting -->
-    <a-entity light="type: ambient; intensity: 0.7"></a-entity>
-    <a-entity light="type: directional; intensity: 0.9" position="2 4 2"></a-entity>
+    <a-entity light="type: ambient; intensity: 0.85"></a-entity>
+    <a-entity light="type: directional; intensity: 0.8" position="4 10 6"></a-entity>
 
-    <!-- Floor -->
-    <a-plane rotation="-90 0 0" width="10" height="10" color="#1d1d3a"></a-plane>
-
-    <!-- Placeholder shown until tiger.glb loads -->
-    <a-entity id="placeholder" position="0 0 -2">
-      <a-cylinder radius="0.4" height="0.2" position="0 0.1 0" color="#555"></a-cylinder>
-      <a-cone radius-bottom="0.3" radius-top="0" height="0.6" position="0 0.5 0" color="#ff8a00"></a-cone>
+    <!-- Everything the teleport ray can hit lives under #world.
+         The ground plane is walkable; so are the WALK_* meshes inside house.glb
+         (floor, steps, paving). Walls, furniture and roof block the ray. -->
+    <a-entity id="world">
+      <a-plane class="walkable" rotation="-90 0 0" width="90" height="90" color="#5d8a3f"></a-plane>
+      <a-entity id="house" gltf-model="url(house.glb)"></a-entity>
     </a-entity>
 
-    <!-- Title text -->
-    <a-text value="HELLO WORLD" align="center" color="#ffd84d"
-            position="0 2.2 -2" width="4"></a-text>
+    <!-- Entrance gate sign and a how-to board (the gate is at z = 12, you start at z = 14.5) -->
+    <a-text value="HELLO WORLD" align="center" color="#ffd84d" position="0 3.4 12" width="6"></a-text>
     <a-text value="Aritra  |  Immersive Digital Environments" align="center"
-            color="#ffffff" position="0 1.9 -2" width="2.5"></a-text>
+            color="#222" position="0 3.0 12" width="4"></a-text>
+    <!-- How-to board: beside the path at the start, angled towards you, below eye level -->
+    <a-entity position="-2.4 1.1 13.2" rotation="0 25 0">
+      <a-plane color="#000" opacity="0.6" width="1.9" height="0.95"></a-plane>
+      <a-text value="RIGHT STICK&#10;Push forward: aim&#10;Release: teleport&#10;Left / right: turn&#10;&#10;Enter by the front door,&#10;leave by the kitchen's back door"
+              align="center" color="#fff" position="0 0 0.01" width="1.7"></a-text>
+    </a-entity>
 
-    <!-- Player rig -->
-    <a-entity id="rig" position="0 0 0">
-      <a-camera></a-camera>
+    <!-- Player rig: teleporting moves the rig, never the camera -->
+    <a-entity id="rig" position="0 0 14.5">
+      <a-camera id="cam"></a-camera>
+      <a-entity id="lhand" oculus-touch-controls="hand: left"></a-entity>
+      <a-entity id="rhand" oculus-touch-controls="hand: right" teleport></a-entity>
     </a-entity>
   </a-scene>
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
   <script>
-    // If house.glb exists, swap it in for the placeholder.
-    // HEAD request = "is the file there?" without downloading it.
-    fetch('house.glb', { method: 'HEAD' }).then(function (r) {
-      if (!r.ok) return;
-      var scene = document.querySelector('a-scene');
-      // Pedestal so the house reads as a small tabletop model.
-      var ped = document.createElement('a-cylinder');
-      ped.setAttribute('radius', '0.9');
-      ped.setAttribute('height', '0.8');
-      ped.setAttribute('position', '0 0.4 -2');
-      ped.setAttribute('color', '#555');
-      scene.appendChild(ped);
-      var model = document.createElement('a-entity');
-      model.setAttribute('gltf-model', 'url(house.glb)');
-      // The house is ~11 m wide in Blender; 0.1 makes it ~1.1 m.
-      model.setAttribute('scale', '0.1 0.1 0.1');
-      model.setAttribute('position', '0 0.8 -2');
-      // Slow spin so it reads as 3D. Duration in ms.
-      model.setAttribute('animation',
-        'property: rotation; to: 0 360 0; loop: true; dur: 14000; easing: linear');
-      scene.appendChild(model);
-      document.getElementById('placeholder').remove();
-    }).catch(function () {});
+    // ---------------------------------------------------------------
+    // Teleport: push the right thumbstick forward to show an arc,
+    // release to jump to where it lands. Push left/right to snap-turn.
+    // ---------------------------------------------------------------
+    AFRAME.registerComponent('teleport', {
+      init: function () {
+        var T = AFRAME.THREE, self = this;
+        this.rig = document.querySelector('#rig');
+        this.cam = document.querySelector('#cam');
+        this.world = document.querySelector('#world');
+        this.aiming = false;
+        this.turned = false;
+        this.last = null;
+        this.targets = [];
+        this.raycaster = new T.Raycaster();
+        this.N = 26; // arc segments
+
+        // Arc is drawn as a line plus dots (dots are easier to see in a headset than a 1px line).
+        var geo = new T.BufferGeometry();
+        geo.setAttribute('position', new T.BufferAttribute(new Float32Array((this.N + 1) * 3), 3));
+        this.line = new T.Line(geo, new T.LineBasicMaterial({ color: 0x44ff88 }));
+        this.dots = new T.Points(geo, new T.PointsMaterial({ color: 0x44ff88, size: 0.06 }));
+        this.line.frustumCulled = this.dots.frustumCulled = false;
+        this.line.visible = this.dots.visible = false;
+        this.marker = new T.Mesh(new T.RingGeometry(0.22, 0.32, 32).rotateX(-Math.PI / 2),
+                                 new T.MeshBasicMaterial({ color: 0x44ff88, side: T.DoubleSide }));
+        this.marker.visible = false;
+        this.el.sceneEl.object3D.add(this.line, this.dots, this.marker);
+
+        // Quest thumbsticks report through "thumbstickmoved" ({x, y}, y < 0 = pushed forward)
+        this.el.addEventListener('thumbstickmoved', function (e) { self.onStick(e.detail.x, e.detail.y); });
+      },
+
+      // Collect every mesh under #world (walls, floors, furniture...) as ray targets.
+      collect: function () {
+        var list = [];
+        this.world.object3D.traverse(function (o) { if (o.isMesh) list.push(o); });
+        this.targets = list;
+      },
+
+      // A mesh is walkable if it, or a parent, is named WALK_* (from Blender) or is .walkable (ground).
+      isWalk: function (obj) {
+        for (var o = obj; o; o = o.parent) {
+          if (o.name && /^WALK_/.test(o.name)) return true;
+          if (o.el && o.el.classList && o.el.classList.contains('walkable')) return true;
+        }
+        return false;
+      },
+
+      // Follow a thrown-ball path from the hand and stop at the first surface.
+      // Valid landing = the first thing hit is walkable AND faces up.
+      computeArc: function (origin, dir) {
+        var T = AFRAME.THREE, v = 10, g = 9.8, dt = 0.05;
+        var pts = [origin.clone()], p0 = origin.clone(), hit = null, valid = false;
+        for (var i = 1; i <= this.N; i++) {
+          var t = i * dt;
+          var p1 = new T.Vector3(origin.x + dir.x * v * t,
+                                 origin.y + dir.y * v * t - 0.5 * g * t * t,
+                                 origin.z + dir.z * v * t);
+          var seg = p1.clone().sub(p0), len = seg.length();
+          this.raycaster.set(p0, seg.normalize());
+          this.raycaster.far = len;
+          var hits = this.raycaster.intersectObjects(this.targets, false);
+          if (hits.length) {
+            var h = hits[0];
+            var n = h.face.normal.clone().transformDirection(h.object.matrixWorld);
+            valid = this.isWalk(h.object) && n.y > 0.9;
+            hit = h.point.clone();
+            pts.push(hit);
+            break;
+          }
+          pts.push(p1.clone());
+          p0 = p1;
+        }
+        return { pts: pts, hit: hit, valid: valid };
+      },
+
+      onStick: function (x, y) {
+        if (!this.aiming && y < -0.75) {
+          this.aiming = true;
+          this.collect();
+          this.line.visible = this.dots.visible = true;
+        } else if (this.aiming && y > -0.35) {
+          this.aiming = false;
+          this.line.visible = this.dots.visible = this.marker.visible = false;
+          if (this.last && this.last.valid) this.teleportTo(this.last.hit);
+        }
+        if (!this.aiming) {
+          if (Math.abs(x) > 0.8 && Math.abs(y) < 0.5 && !this.turned) {
+            this.turned = true;
+            this.turn(x > 0 ? -30 : 30);
+          } else if (Math.abs(x) < 0.4) {
+            this.turned = false;
+          }
+        }
+      },
+
+      // Move the rig so the player's HEAD lands on the target (not the rig origin).
+      teleportTo: function (p) {
+        var head = new AFRAME.THREE.Vector3(), rig = this.rig.object3D;
+        this.cam.object3D.getWorldPosition(head);
+        rig.position.x += p.x - head.x;
+        rig.position.z += p.z - head.z;
+        rig.position.y = p.y; // floor height of the spot we landed on
+      },
+
+      // Snap turn about the player's head so you don't swing around the rig origin.
+      turn: function (deg) {
+        var T = AFRAME.THREE, rig = this.rig.object3D, a = new T.Vector3(), b = new T.Vector3();
+        this.cam.object3D.getWorldPosition(a);
+        rig.rotation.y += T.MathUtils.degToRad(deg);
+        rig.updateMatrixWorld(true);
+        this.cam.object3D.getWorldPosition(b);
+        rig.position.x += a.x - b.x;
+        rig.position.z += a.z - b.z;
+      },
+
+      tick: function () {
+        if (!this.aiming) return;
+        var T = AFRAME.THREE, o = new T.Vector3(), q = new T.Quaternion(), d = new T.Vector3(0, 0, -1);
+        this.el.object3D.getWorldPosition(o);
+        this.el.object3D.getWorldQuaternion(q);
+        d.applyQuaternion(q);
+        var r = this.last = this.computeArc(o, d);
+        var pos = this.line.geometry.attributes.position;
+        r.pts.forEach(function (p, i) { pos.setXYZ(i, p.x, p.y, p.z); });
+        this.line.geometry.setDrawRange(0, r.pts.length);
+        pos.needsUpdate = true;
+        var c = r.valid ? 0x44ff88 : 0xff4444;
+        this.line.material.color.setHex(c); this.dots.material.color.setHex(c);
+        this.marker.material.color.setHex(c);
+        this.marker.visible = !!r.hit;
+        if (r.hit) this.marker.position.set(r.hit.x, r.hit.y + 0.02, r.hit.z);
+      },
+
+      remove: function () {
+        this.el.sceneEl.object3D.remove(this.line, this.dots, this.marker);
+      }
+    });
+
+    // ---- load status for the flat view ----
+    var statusEl = document.getElementById('status');
+    var house = document.getElementById('house');
+    function loaded() {
+      statusEl.textContent = 'Loaded. Tap Enter VR (goggles, bottom right).';
+      statusEl.className = 'done';
+    }
+    // The model can finish loading before this script runs (cached), so check first.
+    if (house.getObject3D('mesh')) loaded();
+    house.addEventListener('model-loaded', loaded);
+    house.addEventListener('model-error', function () {
+      statusEl.textContent = 'Could not load house.glb'; statusEl.className = 'error';
+    });
+    window.addEventListener('error', function (e) {
+      statusEl.textContent = 'Error: ' + e.message; statusEl.className = 'error';
+    });
   </script>
 </body>
 </html>
