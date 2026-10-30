@@ -18,8 +18,10 @@
 <body>
   <div id="status">Loading house model…</div>
 
+  <!-- cursor + raycaster on the scene = mouse clicks on .choice buttons (desktop). In VR the right controller has its own ray. -->
   <a-scene background="color: #bfe3f2" renderer="colorManagement: true"
-           fog="type: linear; color: #bfe3f2; near: 30; far: 80">
+           fog="type: linear; color: #bfe3f2; near: 30; far: 80"
+           cursor="rayOrigin: mouse" raycaster="objects: .choice">
 
     <!-- Lighting -->
     <a-entity light="type: ambient; intensity: 0.85"></a-entity>
@@ -30,7 +32,7 @@
          (floor, steps, paving). Walls, furniture and roof block the ray. -->
     <a-entity id="world">
       <a-plane class="walkable" rotation="-90 0 0" width="90" height="90" color="#5d8a3f"></a-plane>
-      <a-entity id="house" gltf-model="url(house.glb)"></a-entity>
+      <a-entity id="house" gltf-model="url(house.glb?v=3)"></a-entity>
     </a-entity>
 
     <!-- Entrance gate sign and a how-to board (the gate is at z = 12, you start at z = 14.5) -->
@@ -40,21 +42,61 @@
     <!-- How-to board: beside the path at the start, angled towards you, below eye level -->
     <a-entity position="-2.4 1.1 13.2" rotation="0 25 0">
       <a-plane color="#000" opacity="0.6" width="1.9" height="0.95"></a-plane>
-      <a-text value="RIGHT STICK&#10;Push forward: aim&#10;Release: teleport&#10;Left / right: turn&#10;&#10;Enter by the front door,&#10;leave by the kitchen's back door"
-              align="center" color="#fff" position="0 0 0.01" width="1.7"></a-text>
+      <a-text id="board-text" align="center" color="#fff" position="0 0 0.01" width="1.7"
+              value="Choose WALK or FLY on the panel,&#10;then aim the right controller&#10;and hold the TRIGGER."></a-text>
     </a-entity>
 
-    <!-- Player rig: teleporting moves the rig, never the camera -->
-    <a-entity id="rig" position="0 0 14.5">
+    <!-- Start-of-experience choice. Aim the right controller (or click with the mouse) and pull the trigger. -->
+    <a-entity id="chooser" position="0 1.5 12.8">
+      <a-plane color="#000" opacity="0.7" width="2.2" height="1.05" position="0 0 -0.01"></a-plane>
+      <a-text value="HOW DO YOU WANT TO MOVE?" align="center" color="#ffd84d" position="0 0.38 0" width="2.0"></a-text>
+      <a-plane id="btn-walk" class="choice" color="#2e7d32" width="0.95" height="0.5" position="-0.52 -0.05 0">
+        <a-text value="WALK&#10;stroll the house" align="center" position="0 0 0.01" width="1.5"></a-text>
+      </a-plane>
+      <a-plane id="btn-fly" class="choice" color="#1565c0" width="0.95" height="0.5" position="0.52 -0.05 0">
+        <a-text value="FLY&#10;drone view" align="center" position="0 0 0.01" width="1.5"></a-text>
+      </a-plane>
+      <a-text value="Point the right controller at a button, pull the trigger" align="center" color="#ccc"
+              position="0 -0.4 0" width="1.9"></a-text>
+    </a-entity>
+
+    <!-- Player rig: moving the rig moves the player, never the camera itself -->
+    <a-entity id="rig" position="0 0 14.5" locomotion>
       <a-camera id="cam"></a-camera>
-      <a-entity id="lhand" oculus-touch-controls="hand: left"></a-entity>
-      <a-entity id="rhand" oculus-touch-controls="hand: right" teleport></a-entity>
+      <a-entity id="lhand" oculus-touch-controls="hand: left">
+        <!-- Small readout on the back of the left hand: mode, altitude, speed -->
+        <a-text id="hud" value="" align="center" color="#fff" width="0.5" position="0 0.07 -0.1" rotation="-60 0 0"></a-text>
+      </a-entity>
+      <a-entity id="rhand" oculus-touch-controls="hand: right" teleport
+                raycaster="objects: .choice; far: 8; showLine: true; lineColor: #44ff88"></a-entity>
     </a-entity>
   </a-scene>
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
   <script>
+    // ---------------------------------------------------------------
+    // Shared helpers
+    // ---------------------------------------------------------------
+    // Where the controller "points". If the aim feels too high or low on your headset,
+    // add ?aim=<degrees> to the URL (positive = tilts the aim up), e.g. .../vr/?aim=-15
+    var AIM_PITCH = (parseFloat(new URLSearchParams(location.search).get('aim')) || 0) * Math.PI / 180;
+    function aimRay(el, origin, dir) {
+      var T = AFRAME.THREE, q = new T.Quaternion();
+      el.object3D.getWorldPosition(origin);
+      el.object3D.getWorldQuaternion(q);
+      if (AIM_PITCH) q.multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1, 0, 0), AIM_PITCH));
+      dir.set(0, 0, -1).applyQuaternion(q);
+    }
+    // A mesh is walkable if it, or a parent, is named WALK_* (from Blender) or is .walkable (ground).
+    function isWalkMesh(obj) {
+      for (var o = obj; o; o = o.parent) {
+        if (o.name && /^WALK_/.test(o.name)) return true;
+        if (o.el && o.el.classList && o.el.classList.contains('walkable')) return true;
+      }
+      return false;
+    }
+
     // ---------------------------------------------------------------
     // Teleport: push the right thumbstick forward to show an arc,
     // release to jump to where it lands. Push left/right to snap-turn.
@@ -95,14 +137,7 @@
         this.targets = list;
       },
 
-      // A mesh is walkable if it, or a parent, is named WALK_* (from Blender) or is .walkable (ground).
-      isWalk: function (obj) {
-        for (var o = obj; o; o = o.parent) {
-          if (o.name && /^WALK_/.test(o.name)) return true;
-          if (o.el && o.el.classList && o.el.classList.contains('walkable')) return true;
-        }
-        return false;
-      },
+      isWalk: isWalkMesh,
 
       // Follow a thrown-ball path from the hand and stop at the first surface.
       // Valid landing = the first thing hit is walkable AND faces up.
@@ -133,7 +168,9 @@
       },
 
       onStick: function (x, y) {
-        if (!this.aiming && y < -0.75) {
+        var loco = this.rig.components.locomotion;
+        var flying = loco && loco.mode === 'fly'; // no teleport while flying, snap turn still works
+        if (!this.aiming && y < -0.75 && !flying) {
           this.aiming = true;
           this.collect();
           this.line.visible = this.dots.visible = true;
@@ -174,10 +211,8 @@
 
       tick: function () {
         if (!this.aiming) return;
-        var T = AFRAME.THREE, o = new T.Vector3(), q = new T.Quaternion(), d = new T.Vector3(0, 0, -1);
-        this.el.object3D.getWorldPosition(o);
-        this.el.object3D.getWorldQuaternion(q);
-        d.applyQuaternion(q);
+        var T = AFRAME.THREE, o = new T.Vector3(), d = new T.Vector3();
+        aimRay(this.el, o, d);
         var r = this.last = this.computeArc(o, d);
         var pos = this.line.geometry.attributes.position;
         r.pts.forEach(function (p, i) { pos.setXYZ(i, p.x, p.y, p.z); });
@@ -195,11 +230,211 @@
       }
     });
 
+    // ---------------------------------------------------------------
+    // Locomotion: hold the right TRIGGER and the player moves where the controller points.
+    //   WALK: follows the horizontal part of the aim at walking pace, glued to the floor,
+    //         stops at walls and furniture, steps up stairs.
+    //   FLY:  follows the full 3D aim like an FPV drone. Speed builds up with a little lag,
+    //         and letting go of the trigger brakes smoothly to a hover.
+    // ---------------------------------------------------------------
+    var WALK_SPEED = 1.8, FLY_SPEED = 7;           // metres per second
+    var WALK_RADIUS = 0.3, FLY_RADIUS = 0.4;       // how close to a wall you can get
+    var MAX_STEP_UP = 0.36;                        // tallest step you can walk up
+    var BODY_RAYS = [0.2, 0.43, 0.7, 1.1, 1.5];    // heights above the floor that must be clear when walking
+    var MODE_HELP = {
+      walk: 'WALK\nAim the right controller,\nhold TRIGGER to walk.\nStick left/right: turn\nStick forward: teleport\nB button: switch to FLY\n\nFront door in,\nkitchen back door out.',
+      fly:  'FLY\nAim anywhere, hold TRIGGER\nto fly like a drone.\nRelease: brake and hover.\nStick left/right: turn\nB button: switch to WALK'
+    };
+
+    AFRAME.registerComponent('locomotion', {
+      init: function () {
+        var T = AFRAME.THREE, self = this;
+        this.mode = null;            // null until the player picks 'walk' or 'fly'
+        this.trigger = false;        // right controller trigger held
+        this.keyTrigger = false;     // desktop: Space held
+        this.aimOverride = null;     // test hook
+        this.vel = new T.Vector3();
+        this.groundY = 0;            // floor height under the player (target, not eased)
+        this.hudT = 0;
+        this.raycaster = new T.Raycaster();
+        this.cam = document.querySelector('#cam');
+        this.hand = document.querySelector('#rhand');
+        this.hud = document.querySelector('#hud');
+        this.world = document.querySelector('#world');
+        this.all = []; this.solid = []; this.floors = [];
+        // reusable scratch vectors (avoid garbage every frame)
+        this._h = new T.Vector3(); this._o = new T.Vector3(); this._d = new T.Vector3();
+        this._t = new T.Vector3(); this._a = new T.Vector3(); this._q = new T.Quaternion();
+        this._q2 = new T.Vector3(); this._w = new T.Vector3();
+
+        this.hand.addEventListener('triggerdown', function () {
+          self.trigger = true;
+          if (!self.mode) {                          // still choosing: the trigger clicks the button we point at
+            var rc = self.hand.components.raycaster;
+            if (rc && rc.intersectedEls.length) rc.intersectedEls[0].emit('click');
+          } else self.collect();
+        });
+        this.hand.addEventListener('triggerup', function () { self.trigger = false; });
+        this.hand.addEventListener('bbuttondown', function () { if (self.mode) self.setMode(self.mode === 'fly' ? 'walk' : 'fly'); });
+
+        // Desktop fallback: hold Space to move toward where you look, M switches mode, 1 / 2 choose.
+        window.addEventListener('keydown', function (e) {
+          if (e.code === 'Space') { self.keyTrigger = true; e.preventDefault(); }
+          else if (e.code === 'Digit1') self.setMode('walk');
+          else if (e.code === 'Digit2') self.setMode('fly');
+          else if (e.code === 'KeyM' && self.mode) self.setMode(self.mode === 'fly' ? 'walk' : 'fly');
+        });
+        window.addEventListener('keyup', function (e) { if (e.code === 'Space') self.keyTrigger = false; });
+
+        ['walk', 'fly'].forEach(function (m) {
+          document.getElementById('btn-' + m).addEventListener('click', function () { self.setMode(m); });
+        });
+      },
+
+      // Sort every mesh under #world into floors (can stand on) and solid (blocks you).
+      collect: function () {
+        var all = [], solid = [], floors = [];
+        this.world.object3D.traverse(function (o) {
+          if (!o.isMesh) return;
+          all.push(o);
+          (isWalkMesh(o) ? floors : solid).push(o);
+        });
+        this.all = all; this.solid = solid; this.floors = floors;
+      },
+
+      setMode: function (m) {
+        this.mode = m;
+        this.vel.set(0, 0, 0);
+        this.collect();
+        var ch = document.getElementById('chooser');
+        if (ch && ch.parentNode) ch.parentNode.removeChild(ch);          // choice made: remove the panel
+        this.hand.removeAttribute('raycaster');                           // and the pointer ray
+        var bt = document.getElementById('board-text');
+        if (bt) bt.setAttribute('value', MODE_HELP[m]);
+      },
+
+      // Direction the player wants to go: the controller in VR, or the head on desktop.
+      getAim: function () {
+        var d = this._a;
+        if (this.aimOverride) return d.copy(this.aimOverride).normalize();
+        if (this.keyTrigger || !this.el.sceneEl.is('vr-mode')) {
+          this.cam.object3D.getWorldQuaternion(this._q);
+          return d.set(0, 0, -1).applyQuaternion(this._q);
+        }
+        aimRay(this.hand, this._o, d);
+        return d;
+      },
+
+      // Height of the floor under (x, z), looking down from fromY. null = nothing to stand on.
+      groundAt: function (x, z, fromY) {
+        this.raycaster.set(this._o.set(x, fromY, z), this._d.set(0, -1, 0));
+        this.raycaster.far = fromY + 20;
+        var hits = this.raycaster.intersectObjects(this.floors, false);
+        return hits.length ? hits[0].point.y : null;
+      },
+
+      // Is it OK to move the player's body by (sx, sz)? Walls and furniture block, steps must be low enough.
+      passable: function (head, base, sx, sz) {
+        var len = Math.hypot(sx, sz);
+        if (len < 1e-6) return true;
+        var dx = sx / len, dz = sz / len;
+        this._d.set(dx, 0, dz);
+        this.raycaster.far = len + WALK_RADIUS;
+        for (var i = 0; i < BODY_RAYS.length; i++) {
+          this.raycaster.set(this._o.set(head.x, base + BODY_RAYS[i], head.z), this._d);
+          if (this.raycaster.intersectObjects(this.solid, false).length) return false;
+        }
+        var g = this.groundAt(head.x + dx * (len + 0.15), head.z + dz * (len + 0.15), base + MAX_STEP_UP + 0.1);
+        return g !== null && g - base <= MAX_STEP_UP;
+      },
+
+      tick: function (time, dtMs) {
+        if (!this.mode) return;
+        var fly = this.mode === 'fly', on = this.trigger || this.keyTrigger;
+        var dt = Math.min(dtMs, 50) / 1000, tgt = this._t.set(0, 0, 0);
+        if (on) {
+          var aim = this.getAim();
+          if (fly) tgt.copy(aim).multiplyScalar(FLY_SPEED);
+          else {
+            tgt.set(aim.x, 0, aim.z);                 // walking ignores pitch: point anywhere, go level
+            if (tgt.lengthSq() > 1e-4) tgt.normalize().multiplyScalar(WALK_SPEED); else tgt.set(0, 0, 0);
+          }
+        }
+        // Ease toward the target velocity. Slow thrust + slow brake gives the drone its glide;
+        // walking responds faster so turning while walking feels immediate but not jerky.
+        var k = fly ? (on ? 2.2 : 4.5) : (on ? 8 : 12);
+        this.vel.lerp(tgt, 1 - Math.exp(-k * dt));
+        if (!on && this.vel.lengthSq() < 0.0004) this.vel.set(0, 0, 0);
+        if (fly) this.stepFly(dt); else this.stepWalk(dt);
+        this.updateHud(time, on);
+      },
+
+      stepWalk: function (dt) {
+        var rig = this.el.object3D, head = this._h;
+        this.cam.object3D.getWorldPosition(head);
+        var gy = this.groundAt(head.x, head.z, rig.position.y + MAX_STEP_UP + 0.1);
+        if (gy !== null) this.groundY = gy;
+        var base = Math.max(rig.position.y, this.groundY);
+        if (this.vel.lengthSq() > 0) {
+          var sx = this.vel.x * dt, sz = this.vel.z * dt;
+          if (this.passable(head, base, sx, sz)) { rig.position.x += sx; rig.position.z += sz; }
+          else if (Math.abs(sx) > 1e-5 && this.passable(head, base, sx, 0)) rig.position.x += sx;   // slide along walls
+          else if (Math.abs(sz) > 1e-5 && this.passable(head, base, 0, sz)) rig.position.z += sz;
+        }
+        // Follow the floor: smooth over stairs, and cap how fast you can drop or climb.
+        var st = (this.groundY - rig.position.y) * (1 - Math.exp(-12 * dt));
+        rig.position.y += Math.max(-6 * dt, Math.min(3 * dt, st));
+      },
+
+      stepFly: function (dt) {
+        var rig = this.el.object3D, head = this._h;
+        this.cam.object3D.getWorldPosition(head);
+        var speed = this.vel.length();
+        if (speed > 0) {
+          var dir = this._d.copy(this.vel).divideScalar(speed);
+          // The drone has some width: cast the centre ray plus four around it, so it can't slip through gaps (window bars).
+          var u = this._q2.set(0, 1, 0).cross(dir);
+          if (u.lengthSq() < 1e-4) u.set(1, 0, 0);
+          u.normalize().multiplyScalar(FLY_RADIUS * 0.7);
+          var w = this._w.copy(dir).cross(u);
+          var best = null, offs = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]];
+          this.raycaster.far = speed * dt + FLY_RADIUS;
+          for (var i = 0; i < offs.length; i++) {
+            this._o.copy(head).addScaledVector(u, offs[i][0]).addScaledVector(w, offs[i][1]);
+            this.raycaster.set(this._o, dir);
+            var hits = this.raycaster.intersectObjects(this.all, false);
+            if (hits.length && (!best || hits[0].distance < best.distance)) best = hits[0];
+          }
+          if (best) {                                  // slide along whatever we are about to hit
+            var n = best.face.normal.clone().transformDirection(best.object.matrixWorld);
+            var vn = this.vel.dot(n);
+            if (vn < 0) this.vel.addScaledVector(n, -vn);
+          }
+          rig.position.addScaledVector(this.vel, dt);
+        }
+        // Never dip below the floor (or the roof-top ground), and cap altitude.
+        this.cam.object3D.getWorldPosition(head);
+        var gy = this.groundAt(head.x, head.z, head.y);
+        if (gy !== null) this.groundY = gy;
+        rig.position.y = Math.min(80, Math.max(rig.position.y, this.groundY));
+      },
+
+      updateHud: function (time, on) {
+        if (!this.hud || time - this.hudT < 250) return;
+        this.hudT = time;
+        var spd = this.vel.length(), y = this._h.y;
+        var txt = this.mode === 'fly'
+          ? 'FLY  ALT ' + y.toFixed(1) + ' m\n' + (spd < 0.05 && !on ? 'HOVER' : spd.toFixed(1) + ' m/s')
+          : 'WALK  ' + spd.toFixed(1) + ' m/s';
+        this.hud.setAttribute('value', txt);
+      }
+    });
+
     // ---- load status for the flat view ----
     var statusEl = document.getElementById('status');
     var house = document.getElementById('house');
     function loaded() {
-      statusEl.textContent = 'Loaded. Tap Enter VR (goggles, bottom right).';
+      statusEl.textContent = 'Loaded. Click WALK or FLY, then hold Space to move (look with the mouse, M switches). In VR: tap Enter VR.';
       statusEl.className = 'done';
     }
     // The model can finish loading before this script runs (cached), so check first.
