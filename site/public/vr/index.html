@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aritra: VR Showcase</title>
+  <!-- Pinned A-Frame release. WebXR needs HTTPS; GitHub Pages provides it. -->
+  <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+</head>
+<body>
+  <a-scene background="color: #0b0b1a" renderer="colorManagement: true">
+
+    <!-- Lighting -->
+    <a-entity light="type: ambient; intensity: 0.7"></a-entity>
+    <a-entity light="type: directional; intensity: 0.9" position="2 4 2"></a-entity>
+
+    <!-- Floor -->
+    <a-plane rotation="-90 0 0" width="10" height="10" color="#1d1d3a"></a-plane>
+
+    <!-- Placeholder shown until tiger.glb loads -->
+    <a-entity id="placeholder" position="0 0 -2">
+      <a-cylinder radius="0.4" height="0.2" position="0 0.1 0" color="#555"></a-cylinder>
+      <a-cone radius-bottom="0.3" radius-top="0" height="0.6" position="0 0.5 0" color="#ff8a00"></a-cone>
+    </a-entity>
+
+    <!-- Title text -->
+    <a-text value="HELLO WORLD" align="center" color="#ffd84d"
+            position="0 2.2 -2" width="4"></a-text>
+    <a-text value="Aritra  |  Immersive Digital Environments" align="center"
+            color="#ffffff" position="0 1.9 -2" width="2.5"></a-text>
+
+    <!-- Player rig -->
+    <a-entity id="rig" position="0 0 0">
+      <a-camera></a-camera>
+    </a-entity>
+  </a-scene>
+
+  <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
+
+  <script>
+    // If house.glb exists, swap it in for the placeholder.
+    // HEAD request = "is the file there?" without downloading it.
+    fetch('house.glb', { method: 'HEAD' }).then(function (r) {
+      if (!r.ok) return;
+      var scene = document.querySelector('a-scene');
+      // Pedestal so the house reads as a small tabletop model.
+      var ped = document.createElement('a-cylinder');
+      ped.setAttribute('radius', '0.9');
+      ped.setAttribute('height', '0.8');
+      ped.setAttribute('position', '0 0.4 -2');
+      ped.setAttribute('color', '#555');
+      scene.appendChild(ped);
+      var model = document.createElement('a-entity');
+      model.setAttribute('gltf-model', 'url(house.glb)');
+      // The house is ~11 m wide in Blender; 0.1 makes it ~1.1 m.
+      model.setAttribute('scale', '0.1 0.1 0.1');
+      model.setAttribute('position', '0 0.8 -2');
+      // Slow spin so it reads as 3D. Duration in ms.
+      model.setAttribute('animation',
+        'property: rotation; to: 0 360 0; loop: true; dur: 14000; easing: linear');
+      scene.appendChild(model);
+      document.getElementById('placeholder').remove();
+    }).catch(function () {});
+  </script>
+</body>
+</html>
