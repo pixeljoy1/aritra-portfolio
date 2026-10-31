@@ -134,7 +134,7 @@
       ],
       [
         "Locomotion.",
-        "The same walk and fly engine as the Kerala house. Aim and pull the trigger to fly, let go to hover. Flight speed grows with the model scale, so at 40 times you can fly inside the trachea."
+        "The same walk and fly engine as the Kerala house, slowed right down for control. Pick an organ in the menu and you glide to it while everything else goes translucent. Hold the stick at 3 or 9 o'clock to circle it, run its function, and finish its two tasks."
       ],
       [
         "Reset.",
@@ -144,7 +144,7 @@
     "controls": [
       [
         "Right trigger",
-        "Fly where you aim, release to hover"
+        "Fly where you aim, slowly and smoothly. Release to hover"
       ],
       [
         "Right stick",
@@ -160,11 +160,15 @@
       ],
       [
         "Left laser and trigger",
-        "Press the panel buttons or a label to isolate that system"
+        "Press a panel organ button or a label to focus that organ. Everything else turns translucent"
       ],
       [
-        "Left stick",
-        "Left or right orbits the model, forward or back scales it"
+        "Left stick at 3 or 9 o'clock",
+        "Hold it to circle the focused organ at a steady speed, in a perfect circle"
+      ],
+      [
+        "Left stick forward or back",
+        "Scales the model"
       ],
       [
         "Left X and Y",
@@ -172,7 +176,7 @@
       ],
       [
         "Desktop",
-        "Space to fly, WASD to steer, Q and E to orbit, [ and ] to scale, R to reset"
+        "Space to fly, WASD to steer, 1 to 7 to focus an organ, Q and E or O to circle it, U for its function, R to reset"
       ]
     ],
     "status": "Checked on desktop: loading, fly and walk modes, orbit and scale, explode, isolate, the three view presets, the breath cycle, reset and reload. Next pass: controller aim, comfort and frame rate on the headset."

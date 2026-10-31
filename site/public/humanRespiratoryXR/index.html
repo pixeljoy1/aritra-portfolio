@@ -29,7 +29,7 @@
   </style>
 </head>
 <body>
-  <div id="brand">Human Respiratory XR <span class="pill">v1.01</span></div>
+  <div id="brand">Human Respiratory XR <span class="pill">v1.02</span></div>
   <div id="status">Loading the anatomy…</div>
   <button id="reset-btn" type="button" title="Reset the experience (R)">Reset</button>
   <div id="hud"></div>
@@ -106,10 +106,14 @@
     var START = [0, 0, 0];
     var APP = {
       scale: 1, scaleT: 1, spin: 0, auto: false, explodeIdx: 0, explode: 0, iso: 'ALL', preset: 'clinical',
-      bpm: 12, labels: true, audio: false, mode: 'fly', anchor: 'dock', homing: false, speed: 0, hover: null
+      bpm: 12, labels: true, audio: false, mode: 'fly', anchor: 'dock', homing: false, speed: 0, hover: null,
+      orbit: 0, func: false, funcDone: false, orbitAcc: 0, flyTo: null, focusDone: false
     };
+    var ORBIT_RATE = 0.42;                                // rad/s: one full circle in about 15 s, steady and comfortable
+    var TWO_PI = Math.PI * 2;
+    var FOCUS_MIN = { lungs: 0.62, heart: 0.85, diaphragm: 0.62, airway: 0.92, trachea: 0.95, bronchi: 1.0 };   // the focused organ is lifted, the rest go translucent
     var CAPTION = {
-      ALL: 'Pick a label, or ISOLATE, to study one system. One breath: inhale 2.0 s, pause 0.5 s, exhale 2.5 s, pause 0.5 s.',
+      ALL: 'Pick an organ above to focus on it. You glide to it, everything else turns translucent, and you finish two tasks: circle it, then run its function.',
       AIRWAY: 'Upper airway: the nose, mouth, pharynx and larynx warm and filter air before it reaches the trachea.',
       TRACHEA: 'Trachea: about 12 cm long and held open by C-shaped cartilage rings. It splits into two bronchi at the carina.',
       LUNGS: 'Lungs: the right has 3 lobes, the left has 2 to make room for the heart. About 2.4 to 2.9 L of air in quiet breathing.',
@@ -129,7 +133,27 @@
         var u = new SpeechSynthesisUtterance(text); u.rate = 0.95; window.speechSynthesis.speak(u);
       } catch (e) {}
     }
-    function setIso(name) { APP.iso = name; dirtyPanel(); speak(CAPTION[name]); }
+    var FUNC_TEXT = {
+      AIRWAY: 'Function: warm, moisten and filter the air. Watch the airflow on the path from nose to larynx.',
+      TRACHEA: 'Function: carry air down to the carina through rings that keep it open. Watch the airflow.',
+      BRONCHI: 'Function: split the air into ever finer branches that end in the alveoli. Watch the airflow.',
+      LUNGS: 'Function: swell and shrink to move air and swap gases. The breath is shown stronger.',
+      HEART: 'Function: pump blood through the lungs and body. The heartbeat is shown stronger and slower.',
+      DIAPHRAGM: 'Function: contract and drop to draw air in, relax and rise to push it out. The motion is shown stronger.'
+    };
+    // Focus an organ (or ALL to leave focus): glide to it, fade the rest to translucent, reset its tasks.
+    function focusOrgan(name) {
+      APP.iso = name; APP.func = false; APP.funcDone = false; APP.orbitAcc = 0; APP.orbit = 0; APP.focusDone = false; APP.homing = false; APP.flyTo = null;
+      var m = model();
+      if (name !== 'ALL' && m && m.ready) { var f = m.focusInfo(name); if (f) APP.flyTo = { d: Math.max(f.r * 2.8, 0.34) }; }
+      dirtyPanel(); speak(CAPTION[name]);
+    }
+    function setIso(name) { focusOrgan(name); }
+    function checkFocusDone() {
+      if (APP.iso === 'ALL' || APP.focusDone || APP.orbitAcc < TWO_PI || !APP.funcDone) return;
+      APP.focusDone = true; dirtyPanel(); speak('Focus complete. Pick the next organ.');
+      var u = ui(); if (u) u.haptic(0.8, 90);
+    }
 
     var ACT = {
       scaleUp: function () { APP.scaleT = clamp(APP.scaleT * 1.25, SCALE_MIN, SCALE_MAX); },
@@ -137,6 +161,12 @@
       rotate: function () { APP.auto = !APP.auto; },
       explode: function () { APP.explodeIdx = (APP.explodeIdx + 1) % EXPLODE_STEPS.length; },
       isolate: function () { setIso(ISO[(ISO.indexOf(APP.iso) + 1) % ISO.length]); },
+      orbit: function () { var o = [0, 1, -1]; APP.orbit = o[(o.indexOf(APP.orbit) + 1) % 3]; },
+      func: function () {
+        if (APP.iso === 'ALL') return;
+        APP.func = !APP.func;
+        if (APP.func) { APP.funcDone = true; speak(FUNC_TEXT[APP.iso]); checkFocusDone(); }
+      },
       view: function () { APP.preset = PRESET_ORDER[(PRESET_ORDER.indexOf(APP.preset) + 1) % PRESET_ORDER.length]; },
       breath: function () { APP.bpm = BPM_STEPS[(BPM_STEPS.indexOf(APP.bpm) + 1) % BPM_STEPS.length]; },
       mode: function () { var L = loco(); if (L) L.toggleMode(); },
@@ -149,6 +179,7 @@
       },
       anchor: function () { var u = ui(); if (u) u.toggleAnchor(); }
     };
+    ISO.forEach(function (c) { ACT['f_' + c] = function () { focusOrgan(c); }; });
     function act(name) { if (ACT[name]) { ACT[name](); dirtyPanel(); } }
 
     function disposeTree(root) {
@@ -356,6 +387,22 @@
         this.cIn = new T.Color(0x00e5ff); this.cOut = new T.Color(0xffaa40);
       },
 
+      // World-space centre and radius of one organ group (or the whole chest when cat is ALL), for flying to it and circling it
+      focusInfo: function (cat) {
+        if (!this.root) return null;
+        var box = new T.Box3(), tmp = new T.Box3(), any = false;
+        this.root.updateWorldMatrix(true, true);
+        this.fades.forEach(function (f) {
+          if (f.cat === 'TORSO' || (cat !== 'ALL' && f.cat !== cat)) return;
+          f.objs.forEach(function (o) {
+            if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+            tmp.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld); box.union(tmp); any = true;
+          });
+        });
+        if (!any) return null;
+        return { c: box.getCenter(new T.Vector3()), r: box.getSize(new T.Vector3()).length() / 2 };
+      },
+
       // Four phases of one breath: inhale 2.0, pause 0.5, exhale 2.5, pause 0.5 (scaled to the chosen breaths per minute)
       breath: function (time) {
         var T0 = 60 / APP.bpm, k = T0 / 5.5, c = time % T0;
@@ -381,7 +428,8 @@
         var table = PRESETS[APP.preset], iso = APP.iso;
         for (var i = 0; i < this.fades.length; i++) {
           var f = this.fades[i], want = table[f.key], on = iso === 'ALL' || f.cat === iso;
-          if (!on) want = Math.min(want, f.cat === 'TORSO' ? 0.02 : 0.04);
+          if (!on) want = Math.min(want, f.cat === 'TORSO' ? 0.03 : 0.07);                          // everything else goes translucent
+          else if (iso !== 'ALL' && FOCUS_MIN[f.key]) want = Math.max(want, FOCUS_MIN[f.key]);       // the focused organ is lifted
           f.cur = f.cur < 0 ? want : f.cur + (want - f.cur) * kk;
           f.mat.opacity = f.cur;
           var vis = f.cur > 0.004; for (var j = 0; j < f.objs.length; j++) f.objs[j].visible = vis;
@@ -395,11 +443,13 @@
         this.exhale.visible = APP.labels; this.hud.visible = APP.labels;
 
         // breathing: lungs swell, diaphragm drops, chest opens, heart beats
-        var b = this.breath(t), vol = b.vol;
-        this.lungPivots[0].scale.set(1 + 0.04 * vol, 1 + 0.05 * vol, 1 + 0.045 * vol); this.lungPivots[1].scale.copy(this.lungPivots[0].scale);
-        this.dia.position.y = PIVOT.diaphragm[1] - 0.022 * vol;
-        P.torso.g.scale.set(1 + 0.012 * vol, 1, 1 + 0.016 * vol);
-        var hb = Math.pow(Math.max(0, Math.sin(t * 7.2)), 6) * 0.07 + Math.pow(Math.max(0, Math.sin(t * 7.2 - 1.0)), 6) * 0.04;
+        var b = this.breath(t), vol = b.vol, FN = APP.func ? APP.iso : '';       // function demo exaggerates the focused organ's motion
+        var lm = FN === 'LUNGS' ? 2.4 : FN === 'DIAPHRAGM' ? 1.6 : 1, dm = FN === 'DIAPHRAGM' ? 3 : FN === 'LUNGS' ? 1.8 : 1;
+        this.lungPivots[0].scale.set(1 + 0.04 * vol * lm, 1 + 0.05 * vol * lm, 1 + 0.045 * vol * lm); this.lungPivots[1].scale.copy(this.lungPivots[0].scale);
+        this.dia.position.y = PIVOT.diaphragm[1] - 0.022 * vol * dm;
+        P.torso.g.scale.set(1 + 0.012 * vol * lm, 1, 1 + 0.016 * vol * lm);
+        var hr = FN === 'HEART' ? 4.6 : 7.2, hm = FN === 'HEART' ? 2.6 : 1;
+        var hb = (Math.pow(Math.max(0, Math.sin(t * hr)), 6) * 0.07 + Math.pow(Math.max(0, Math.sin(t * hr - 1.0)), 6) * 0.04) * hm;
         this.heart.scale.setScalar(1 + hb);
         this.volClock += dt;
         if (this.volClock > 0.15) {
@@ -411,7 +461,7 @@
         if (this.flowMesh) {
           var pos = this.iPos.array, al = this.iAlpha.array, M = 139;
           this.flowMat.uniforms.uColor.value.copy(b.ph <= 1 ? this.cIn : this.cOut);
-          this.flowMat.uniforms.uSize.value = 0.013 * APP.scale;
+          this.flowMat.uniforms.uSize.value = 0.013 * APP.scale * ((FN === 'AIRWAY' || FN === 'TRACHEA' || FN === 'BRONCHI') ? 1.9 : 1);
           for (var p = 0; p < this.N; p++) {
             var pr, a;
             if (b.ph === 0) { pr = smooth((b.u - this.lag[p] * 0.45) / 0.55); a = smooth(pr / 0.04); }
@@ -470,9 +520,9 @@
     // Locomotion. Ported from the Kerala house engine (XR_LOCOMOTION_SPEC.md): shared plumbing, WALK (Part B), FLY (Part C).
     // There is nothing solid to hit here, so collision is replaced by a soft and hard play-area limit (C.7).
     // ---------------------------------------------------------------
-    var WALK_SPEED = 2.1, WALK_BACK = 1.2, WALK_ACCEL = 10, WALK_BRAKE = 14, STICK_YAW = 1.9;
-    var FLY_SPEED = 9, CLIMB_SPEED = 4, FLY_ACCEL = 3.2, FLY_BRAKE = 5.5;
-    var AIM_DEAD = 0.1, AIM_GAIN = 3.4, AIM_MAX = 2.6, YAW_EASE = 9;
+    var WALK_SPEED = 1.4, WALK_BACK = 0.9, WALK_ACCEL = 6, WALK_BRAKE = 12, STICK_YAW = 1.1;
+    var FLY_SPEED = 9, CLIMB_SPEED = 4, FLY_ACCEL = 1.8, FLY_BRAKE = 4.5;          // slow, controlled: about 1.2 m/s at full trigger on a life-size body
+    var AIM_DEAD = 0.14, AIM_GAIN = 2.0, AIM_MAX = 1.1, YAW_EASE = 6;
     var TILT_PITCH = 0.12, TILT_ROLL = 0.3, ROLL_GAIN = 0.14;
     var BX = 30, BZ = 30, BYMAX = 40, BYMIN = -30, BSOFT = 8;
 
@@ -506,7 +556,8 @@
 
         // Desktop fallback: Space = trigger, WASD / arrows = right stick, Q E = orbit, the rest are panel buttons
         var keys = {}, KEYMAP = { KeyG: 'explode', KeyI: 'isolate', KeyV: 'view', KeyT: 'rotate', KeyN: 'breath', KeyL: 'labels',
-                                  KeyM: 'audio', KeyF: 'mode', KeyX: 'home', BracketRight: 'scaleUp', BracketLeft: 'scaleDown', KeyP: 'anchor' };
+                                  KeyM: 'audio', KeyF: 'mode', KeyX: 'home', BracketRight: 'scaleUp', BracketLeft: 'scaleDown', KeyP: 'anchor', KeyO: 'orbit', KeyU: 'func',
+                                  Digit1: 'f_ALL', Digit2: 'f_AIRWAY', Digit3: 'f_TRACHEA', Digit4: 'f_BRONCHI', Digit5: 'f_LUNGS', Digit6: 'f_HEART', Digit7: 'f_DIAPHRAGM' };
         function stickKeys() {
           self.kx = (keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0);
           self.ky = (keys.ArrowDown || keys.KeyS ? 1 : 0) - (keys.ArrowUp || keys.KeyW ? 1 : 0);
@@ -583,14 +634,16 @@
           APP.spin = this.grab.s0 + wrapPi(Math.atan2(-this._d.x, -this._d.z) - this.grab.a0);
         }
 
-        // left stick: x orbits the player around the anatomy, y scales it (forward = bigger)
-        if (lsx) {
-          var c = this._t; $('model').object3D.getWorldPosition(c);
-          var ang = lsx * 1.2 * dt, cs = Math.cos(ang), sn = Math.sin(ang), px = rig.position.x - c.x, pz = rig.position.z - c.z;
-          rig.position.x = c.x + px * cs + pz * sn; rig.position.z = c.z - px * sn + pz * cs;
-          rig.rotation.y += ang;
-        }
-        if (lsy) APP.scaleT = clamp(APP.scaleT * Math.exp(-lsy * 1.1 * dt), SCALE_MIN, SCALE_MAX);
+        // left stick held at 3 o'clock or 9 o'clock (or Q / E): circle the focused organ at a steady rate, a perfect circle at constant radius.
+        // The panel's ORBIT button does the same hands-free. Left stick forward or back (away from 3 and 9) scales the model.
+        var sdir = this.korbit ? this.korbit : (Math.abs(this.lsx) > 0.6 && Math.abs(this.lsy) < 0.55 ? Math.sign(this.lsx) : 0);
+        var odir = sdir || APP.orbit;
+        if (odir && !APP.homing) this.orbitStep(dt, odir);
+        if (lsy && Math.abs(this.lsx) < 0.5) APP.scaleT = clamp(APP.scaleT * Math.exp(-lsy * 1.1 * dt), SCALE_MIN, SCALE_MAX);
+
+        // any flight input cancels the automatic glide to a focused organ
+        if (APP.flyTo && (trig > 0.12 || Math.abs(sx) > 0.3 || Math.abs(sy) > 0.3)) APP.flyTo = null;
+        if (APP.flyTo && !APP.homing) { this.glideTo(dt); this.updateHud(); return; }
 
         // Reset view: glide back to the start pose, model upright at 1x
         if (APP.homing) {
@@ -608,9 +661,41 @@
         this.updateHud();
       },
 
+      // Rotate the whole rig about the vertical axis through the focused organ's centre: the head moves on a perfect circle and keeps facing it.
+      orbitStep: function (dt, dir) {
+        var rig = this.el.object3D, c = this._t, m = model(), f = m && m.ready ? m.focusInfo(APP.iso) : null;
+        if (f) c.copy(f.c); else $('model').object3D.getWorldPosition(c);
+        var ang = dir * ORBIT_RATE * dt, cs = Math.cos(ang), sn = Math.sin(ang), px = rig.position.x - c.x, pz = rig.position.z - c.z;
+        rig.position.x = c.x + px * cs + pz * sn; rig.position.z = c.z - px * sn + pz * cs;
+        rig.rotation.y += ang; this.vel.set(0, 0, 0);
+        if (APP.iso !== 'ALL') {
+          var before = Math.floor(APP.orbitAcc / TWO_PI * 100); APP.orbitAcc += Math.abs(ang);
+          if (Math.floor(APP.orbitAcc / TWO_PI * 100) !== before) dirtyPanel();
+          checkFocusDone();
+        }
+      },
+
+      // Glide to a standing point in front of the focused organ and turn to face it.
+      glideTo: function (dt) {
+        var rig = this.el.object3D, head = this._h, m = model(), f = m && m.ready ? m.focusInfo(APP.iso) : null;
+        if (!f) { APP.flyTo = null; return; }
+        this.cam.object3D.getWorldPosition(head);
+        var dx = head.x - f.c.x, dz = head.z - f.c.z, hl = Math.hypot(dx, dz);
+        if (hl < 0.05) { dx = 0; dz = 1; hl = 1; }                                  // standing inside it: step out to the patient's front
+        var D = APP.flyTo.d, tx = f.c.x + dx / hl * D, tz = f.c.z + dz / hl * D, ty = f.c.y + D * 0.12;
+        var k = 1 - Math.exp(-2.4 * dt);
+        rig.position.x += (tx - head.x) * k; rig.position.z += (tz - head.z) * k;
+        if (APP.mode === 'fly') rig.position.y += (ty - head.y) * k;
+        var local = this.cam.object3D.rotation.y, want = Math.atan2(-(f.c.x - head.x), -(f.c.z - head.z)) - local;
+        var yerr = wrapPi(want - rig.rotation.y);
+        this.rotateRig(rig.rotation.y + yerr * k, 0, 0);
+        this.vel.set(0, 0, 0); this.yawRate = 0;
+        if (Math.hypot(tx - head.x, tz - head.z) < 0.01 && Math.abs(yerr) < 0.02 && (APP.mode !== 'fly' || Math.abs(ty - head.y) < 0.01)) APP.flyTo = null;
+      },
+
       // ---- FLY (C.3): aim sets the direction, trigger is throttle, stick yaws and climbs, release to brake and hover ----
       tickFly: function (dt, vr, trig, sx, sy) {
-        var rig = this.el.object3D, vel = this.vel, head = this._h, ss = 0.4 * Math.sqrt(APP.scale);   // speed follows model scale
+        var rig = this.el.object3D, vel = this.vel, head = this._h, ss = 0.13 * Math.sqrt(APP.scale);   // speed follows model scale
         var aim = this.getAim();
         var yawT = -sx * STICK_YAW;
         if (vr && trig > 0.15) {
@@ -673,8 +758,9 @@
         var m = model(), b = m && m.phase ? ['INHALE', 'HOLD', 'EXHALE', 'REST'][m.phase.ph] : '';
         APP.speed = this.vel.length();
         $('hud').textContent = APP.mode.toUpperCase() + '  |  scale ' + APP.scale.toFixed(2) + 'x  |  ' + APP.speed.toFixed(1) + ' m/s  |  ' + b +
-          '\nSpace thrust (aim = look), W/S climb, A/D turn, Q/E orbit' +
-          '\n[ ] scale, G explode, I isolate, V view, T rotate, N breath' +
+          '\nSpace thrust (aim = look), W/S climb, A/D turn' +
+          '\n1-7 focus an organ, Q/E or O circle it, U function' +
+          '\n[ ] scale, G explode, V view, T rotate, N breath' +
           '\nL labels, M audio, F walk/fly, X reset view, R reset';
       },
 
@@ -700,20 +786,28 @@
     // ---------------------------------------------------------------
     // Holographic panel, laser pointer and picking (mouse, left controller, right controller for the dialog)
     // ---------------------------------------------------------------
-    var PW = 640, PH = 1056, PANEL_M = [0.40, 0.66];
+    var PW = 640, PH = 1390, PANEL_M = [0.40, 0.40 * 1390 / 640];
+    function organBtn(id, label, r, c, cat) {
+      return { id: id, r: r, c: c, label: function () { return label; }, on: function () { return APP.iso === cat; } };
+    }
     var BTNS = [
-      { id: 'scale', r: 0, c: 0, label: function () { return 'SCALE: ' + APP.scaleT.toFixed(APP.scaleT < 10 ? 2 : 1) + 'x'; } },
-      { id: 'rotate', r: 0, c: 1, label: function () { return 'ROTATE: ' + (APP.auto ? 'ON' : 'OFF'); }, on: function () { return APP.auto; } },
-      { id: 'explode', r: 1, c: 0, label: function () { return 'EXPLODE: ' + Math.round(EXPLODE_STEPS[APP.explodeIdx] * 100) + '%'; }, on: function () { return APP.explodeIdx > 0; } },
-      { id: 'isolate', r: 1, c: 1, label: function () { return 'ISOLATE: ' + APP.iso; }, on: function () { return APP.iso !== 'ALL'; } },
-      { id: 'view', r: 2, c: 0, label: function () { return 'VIEW: ' + PRESET_NAME[APP.preset]; } },
-      { id: 'breath', r: 2, c: 1, label: function () { return 'BREATH: ' + APP.bpm + ' BPM'; } },
-      { id: 'mode', r: 3, c: 0, label: function () { return 'MODE: ' + APP.mode.toUpperCase(); } },
-      { id: 'labels', r: 3, c: 1, label: function () { return 'LABELS: ' + (APP.labels ? 'ON' : 'OFF'); }, on: function () { return APP.labels; } },
-      { id: 'home', r: 4, c: 0, label: function () { return 'RESET VIEW'; } },
-      { id: 'audio', r: 4, c: 1, label: function () { return 'AUDIO GUIDE: ' + (APP.audio ? 'ON' : 'OFF'); }, on: function () { return APP.audio; } }
+      organBtn('f_ALL', 'WHOLE BODY', 0, 0, 'ALL'), organBtn('f_AIRWAY', 'AIRWAY', 0, 1, 'AIRWAY'),
+      organBtn('f_TRACHEA', 'TRACHEA', 1, 0, 'TRACHEA'), organBtn('f_BRONCHI', 'BRONCHI', 1, 1, 'BRONCHI'),
+      organBtn('f_LUNGS', 'LUNGS', 2, 0, 'LUNGS'), organBtn('f_HEART', 'HEART', 2, 1, 'HEART'),
+      organBtn('f_DIAPHRAGM', 'DIAPHRAGM', 3, 0, 'DIAPHRAGM'),
+      { id: 'func', r: 3, c: 1, label: function () { return 'FUNCTION: ' + (APP.func ? 'ON' : 'OFF'); }, on: function () { return APP.func; }, dim: function () { return APP.iso === 'ALL'; } },
+      { id: 'orbit', r: 4, c: 0, label: function () { return 'ORBIT: ' + (APP.orbit > 0 ? 'RIGHT' : APP.orbit < 0 ? 'LEFT' : 'OFF'); }, on: function () { return APP.orbit !== 0; } },
+      { id: 'scale', r: 4, c: 1, label: function () { return 'SCALE: ' + APP.scaleT.toFixed(APP.scaleT < 10 ? 2 : 1) + 'x'; } },
+      { id: 'explode', r: 5, c: 0, label: function () { return 'EXPLODE: ' + Math.round(EXPLODE_STEPS[APP.explodeIdx] * 100) + '%'; }, on: function () { return APP.explodeIdx > 0; } },
+      { id: 'view', r: 5, c: 1, label: function () { return 'VIEW: ' + PRESET_NAME[APP.preset]; } },
+      { id: 'breath', r: 6, c: 0, label: function () { return 'BREATH: ' + APP.bpm + ' BPM'; } },
+      { id: 'labels', r: 6, c: 1, label: function () { return 'LABELS: ' + (APP.labels ? 'ON' : 'OFF'); }, on: function () { return APP.labels; } },
+      { id: 'mode', r: 7, c: 0, label: function () { return 'MODE: ' + APP.mode.toUpperCase(); } },
+      { id: 'rotate', r: 7, c: 1, label: function () { return 'ROTATE: ' + (APP.auto ? 'ON' : 'OFF'); }, on: function () { return APP.auto; } },
+      { id: 'home', r: 8, c: 0, label: function () { return 'RESET VIEW'; } },
+      { id: 'audio', r: 8, c: 1, label: function () { return 'AUDIO GUIDE: ' + (APP.audio ? 'ON' : 'OFF'); }, on: function () { return APP.audio; } }
     ];
-    BTNS.forEach(function (b) { b.x = 30 + b.c * 299; b.y = 118 + b.r * 138; b.w = 281; b.h = 120; });
+    BTNS.forEach(function (b) { b.x = 30 + b.c * 299; b.y = 148 + b.r * 88; b.w = 281; b.h = 76; });
 
     var pickRay = new T.Raycaster();
     function hitPanel(hit) {                                   // panel uv -> button (or scale half)
@@ -747,7 +841,7 @@
         this.panel.renderOrder = 30;
         // The panel is docked to the rig (it travels with you) at the position and angle from the spec; P toggles WORLD anchor
         this.group = new T.Group(); this.group.add(this.panel);
-        this.group.position.set(-0.55, 1.35, -0.95); this.group.rotation.y = 28 * Math.PI / 180;
+        this.group.position.set(-0.55, 1.35, -0.95); this.group.rotation.y = 28 * Math.PI / 180; this.group.scale.setScalar(0.82);
         rig.add(this.group);
         APP.anchor = 'dock';
 
@@ -846,29 +940,43 @@
         g.fillStyle = 'rgba(8,18,32,0.78)'; g.strokeStyle = '#00e5ff'; g.lineWidth = 4;
         g.beginPath(); g.roundRect(4, 4, PW - 8, PH - 8, 34); g.fill(); g.stroke();
         g.textBaseline = 'middle'; g.textAlign = 'center';
-        g.fillStyle = '#00e5ff'; g.font = '700 31px system-ui, sans-serif'; g.fillText('RESPIRATORY XR CONTROLS', PW / 2, 48);
+        g.fillStyle = '#00e5ff'; g.font = '700 31px system-ui, sans-serif'; g.fillText('RESPIRATORY XR', PW / 2, 46);
         g.fillStyle = '#7fb8c8'; g.font = '500 20px system-ui, sans-serif';
-        g.fillText(this.el.sceneEl.is('vr-mode') ? 'LEFT LASER + LEFT TRIGGER' : 'CLICK A BUTTON', PW / 2, 86);
+        g.fillText(this.el.sceneEl.is('vr-mode') ? 'LEFT LASER + LEFT TRIGGER' : 'CLICK A BUTTON', PW / 2, 82);
+        g.fillStyle = '#00e5ff'; g.font = '700 21px system-ui, sans-serif'; g.fillText('FOCUS AN ORGAN', PW / 2, 124);
         for (var i = 0; i < BTNS.length; i++) {
           var b = BTNS[i], hov = this.hoverId && (this.hoverId === b.id || (b.id === 'scale' && /^scale/.test(this.hoverId)));
-          var fl = this.flash[b.id] && now - this.flash[b.id] < 220, on = b.on && b.on();
+          var fl = this.flash[b.id] && now - this.flash[b.id] < 220, on = b.on && b.on(), dim = b.dim && b.dim();
           g.fillStyle = fl ? 'rgba(0,229,255,0.55)' : hov ? 'rgba(0,229,255,0.28)' : on ? 'rgba(0,229,255,0.16)' : 'rgba(20,48,72,0.7)';
           g.strokeStyle = hov || on ? '#00e5ff' : '#2f6f8c'; g.lineWidth = hov ? 4 : 2.5;
           g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 16); g.fill(); g.stroke();
-          g.fillStyle = '#eafcff'; g.font = '700 24px system-ui, sans-serif'; g.fillText(b.label(), b.x + b.w / 2, b.y + b.h / 2 + 1);
-          if (b.id === 'scale') { g.font = '700 44px system-ui, sans-serif'; g.fillStyle = '#00e5ff';
-            g.fillText('−', b.x + 34, b.y + b.h / 2 - 2); g.fillText('+', b.x + b.w - 34, b.y + b.h / 2 - 2); }
+          g.fillStyle = dim ? '#58798a' : '#eafcff'; g.font = '700 22px system-ui, sans-serif'; g.fillText(b.label(), b.x + b.w / 2, b.y + b.h / 2 + 1);
+          if (b.id === 'scale') { g.font = '700 40px system-ui, sans-serif'; g.fillStyle = '#00e5ff';
+            g.fillText('−', b.x + 30, b.y + b.h / 2 - 2); g.fillText('+', b.x + b.w - 30, b.y + b.h / 2 - 2); g.textAlign = 'center'; }
         }
-        // caption for the current isolate target
+        // caption, function line and the task tracker for the focused organ
+        var foc = APP.iso !== 'ALL', y = 968;
+        function wrap(text, x, font, color, lh) {
+          g.font = font; g.fillStyle = color; var words = text.split(' '), line = '';
+          words.forEach(function (w) {
+            var test = line ? line + ' ' + w : w;
+            if (g.measureText(test).width > PW - 72 && line) { g.fillText(line, x, y); y += lh; line = w; } else line = test;
+          });
+          g.fillText(line, x, y); y += lh;
+        }
         g.textAlign = 'left'; g.fillStyle = '#00e5ff'; g.font = '700 22px system-ui, sans-serif';
-        g.fillText(APP.iso === 'ALL' ? 'WHOLE SYSTEM' : APP.iso, 36, 822);
-        g.fillStyle = '#cfeff7'; g.font = '500 24px system-ui, sans-serif';
-        var words = CAPTION[APP.iso].split(' '), line = '', y = 862;
-        words.forEach(function (w) {
-          var test = line ? line + ' ' + w : w;
-          if (g.measureText(test).width > PW - 72 && line) { g.fillText(line, 36, y); y += 32; line = w; } else line = test;
-        });
-        g.fillText(line, 36, y);
+        g.fillText(foc ? APP.iso + ' IN FOCUS' : 'WHOLE BODY', 36, y); y += 34;
+        wrap(CAPTION[APP.iso], 36, '500 22px system-ui, sans-serif', '#cfeff7', 29);
+        if (foc) {
+          y += 4;
+          if (APP.func) wrap(FUNC_TEXT[APP.iso], 36, '500 20px system-ui, sans-serif', '#ffd88a', 27);
+          y += 6; g.fillStyle = '#00e5ff'; g.font = '700 20px system-ui, sans-serif'; g.fillText('YOUR TASKS', 36, y); y += 30;
+          var pct = Math.min(100, Math.floor(APP.orbitAcc / TWO_PI * 100)), o1 = pct >= 100;
+          g.font = '600 21px system-ui, sans-serif';
+          g.fillStyle = o1 ? '#7dffb2' : '#cfeff7'; g.fillText((o1 ? '✓ ' : '○ ') + 'Circle it (stick to 3 or 9 o\'clock): ' + pct + '%', 36, y); y += 30;
+          g.fillStyle = APP.funcDone ? '#7dffb2' : '#cfeff7'; g.fillText((APP.funcDone ? '✓ ' : '○ ') + 'Run its function (FUNCTION button)', 36, y); y += 34;
+          if (APP.focusDone) { g.fillStyle = '#7dffb2'; g.font = '700 22px system-ui, sans-serif'; g.fillText('FOCUS COMPLETE. PICK THE NEXT ORGAN.', 36, y); }
+        }
         g.fillStyle = '#5b8fa0'; g.font = '500 18px system-ui, sans-serif';
         g.fillText('PANEL: ' + (APP.anchor === 'dock' ? 'DOCKED TO YOU' : 'FIXED IN SPACE') + '  (LEFT GRIP / P)', 36, PH - 28);
         this.tex.needsUpdate = true;
