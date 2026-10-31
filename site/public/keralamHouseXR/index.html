@@ -39,19 +39,12 @@
       <a-entity id="house" gltf-model="url(house.glb?v=10)"></a-entity>
     </a-entity>
 
-    <!-- The plaque: a freestanding board beside the front steps (template: plaque.js). Bump `version` on every publish. -->
+    <!-- The plaque: the ONE board, standing right outside the front door beside the steps, angled to face the path (template: plaque.js). Bump `version` on every publish. -->
     <a-entity id="plaque" plaque="title: KERALAM HOUSE XR; name: Aritra Mitra;
         detail: BDes, Immersive Digital Environments|O.P. Jindal Global University, Class of 2028;
         columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: glide ahead|Stick back: reverse|Left stick: up / down|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Stairs: left side up|to the upper floor, roof;
-        version: 1.05"
-        position="2.3 0 6.6"></a-entity>
-
-    <!-- How-to board near the start (you start at z = 14.5, the gate is at z = 12) -->
-    <a-entity position="-2.4 1.1 13.2" rotation="0 25 0">
-      <a-plane color="#000" opacity="0.6" width="1.9" height="1.04"></a-plane>
-      <a-text id="board-text" align="center" color="#fff" position="0 0 0.01" width="1.7"
-              value="WALK: right stick = walk and turn.&#10;Hold TRIGGER to speed up.&#10;Left stick forward: teleport.&#10;A: switch WALK / FLY.&#10;FLY: trigger thrusts where you aim,&#10;stick up/down = climb.&#10;B or Y: reset.&#10;&#10;Front door in, kitchen back door&#10;out. Stairs up the left side."></a-text>
-    </a-entity>
+        version: 1.06"
+        position="2.45 0 5.4" rotation="0 -45 0"></a-entity>
 
     <!-- Reset dialog. Opens in front of you (Y button, R key or the Reset button). -->
     <a-entity id="dialog" visible="false">
@@ -82,7 +75,7 @@
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
-  <script src="plaque.js?v=1.05"></script>
+  <script src="plaque.js?v=1.06"></script>
   <script>
     var T = AFRAME.THREE;
     function $(id) { return document.getElementById(id); }
@@ -403,13 +396,15 @@
       // Stand in front of the plaque, facing it, in walk mode. (Left X button, P on desktop.)
       goToPlaque: function () {
         if (this.paused) return;
-        var rig = this.el.object3D, p = $('plaque').object3D.position, head = this._h;
-        this.mode = 'walk'; this.vel.set(0, 0, 0); this.yawRate = 0;
-        this.rotateRig(0);
+        var rig = this.el.object3D, pe = $('plaque').object3D, p = pe.position, head = this._h;
+        var yaw = pe.rotation.y, nx = Math.sin(yaw), nz = Math.cos(yaw);       // the board's front normal
+        var tx = p.x + nx * 1.9, tz = p.z + nz * 1.9;
+        this.mode = 'walk'; this.vel.set(0, 0, 0); this.yawRate = 0; this.mv = undefined;
+        this.rotateRig(yaw);                                                   // look straight at the board
         this.cam.object3D.getWorldPosition(head);
-        rig.position.x += p.x - head.x;
-        rig.position.z += p.z + 1.8 - head.z;
-        var g = this.groundAt(p.x, p.z + 1.8, rig.position.y + 30);
+        rig.position.x += tx - head.x;
+        rig.position.z += tz - head.z;
+        var g = this.groundAt(tx, tz, rig.position.y + 30);
         this.groundY = g !== null ? g : 0; rig.position.y = this.groundY;
       },
 
