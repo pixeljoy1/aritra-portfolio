@@ -6,7 +6,7 @@
   <title>Aritra: Human Respiratory XR</title>
   <!-- Pinned A-Frame release. WebXR needs HTTPS; GitHub Pages provides it. -->
   <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
-  <script src="museum-display.js?v=2"></script>
+  <script src="museum-display.js?v=3"></script>
   <style>
     /* Flat-view overlays. The Quest has no console, so status and errors are printed on the page. */
     #brand { position: fixed; left: 12px; top: 12px; z-index: 10; display: flex; align-items: center; gap: 8px;
@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <div id="brand">Human Respiratory XR <span class="pill">v1.04</span></div>
+  <div id="brand">Human Respiratory XR <span class="pill">v1.05</span></div>
   <div id="status">Loading the anatomy…</div>
   <button id="reset-btn" type="button" title="Reset the experience (R)">Reset</button>
   <div id="hud"></div>
@@ -563,7 +563,7 @@
       // Frame an organ: the rig eases to the right distance and height, then you can circle it
       frame: function (name) {
         var rc = rigC(); if (!rc) return;
-        if (name === 'ALL') rc.frameTo(3.6, 0.3); else rc.frameTo(2.8, 0.34);
+        if (name === 'ALL') rc.frameTo(4.6, 0.3); else rc.frameTo(4.4, 0.3);
       },
 
       tick: function (time, dtMs) {
@@ -660,9 +660,10 @@
         this.panel.renderOrder = 30;
         // The panel is docked to the rig (it travels with you) at the position and angle from the spec; P toggles WORLD anchor
         this.group = new T.Group(); this.group.add(this.panel);
-        this.group.position.set(-0.55, 1.35, -0.95); this.group.rotation.y = 28 * Math.PI / 180; this.group.scale.setScalar(0.82);
-        rig.add(this.group);
-        APP.anchor = 'dock';
+        // The panel is tied to the model, not to the viewer: it hangs beside the organ at the same depth, turns with the viewer
+        // round the circle and scales with the viewing distance, so the two can never drift apart (see followModel()).
+        sc.object3D.add(this.group);
+        APP.anchor = 'model';
 
         this._o = new T.Vector3(); this._d = new T.Vector3(); this.wired = false;
 
@@ -690,11 +691,14 @@
         sc.addEventListener('render-target-loaded', bind); if (sc.canvas) bind();
       },
 
-      toggleAnchor: function () {
-        var sc = this.el.sceneEl.object3D;
-        if (APP.anchor === 'dock') { sc.attach(this.group); APP.anchor = 'world'; }
-        else { this.el.object3D.attach(this.group); APP.anchor = 'dock'; }
-        this.dirty = true;
+      toggleAnchor: function () {},
+
+      followModel: function () {
+        var rc = this.el.components['museum-rig']; if (!rc || rc.R === null) return;
+        var s = clamp(0.82 * rc.R / 0.95, 0.55, 3), th = rc.theta, side = rc.subject.r * 1.1 + 0.2 * s + 0.12 * s;
+        this.group.scale.setScalar(s);
+        this.group.rotation.y = th - 0.22;
+        this.group.position.set(rc.c.x - side * Math.cos(th), rc.c.y + 0.05 * s, rc.c.z + side * Math.sin(th));
       },
 
       targets: function () {
@@ -786,11 +790,12 @@
         }
         g.fillStyle = '#5b8fa0'; g.font = '500 18px system-ui, sans-serif';
         var ps = this.el.components['museum-pointer'], st = ps && ps.status, vr = this.el.sceneEl.is('vr-mode');
-        g.fillText('PANEL: ' + (APP.anchor === 'dock' ? 'DOCKED' : 'FIXED') + ' (GRIP / P)' + (vr ? '   HANDS: L ' + (st && st.l ? 'ON' : 'OFF') + '  R ' + (st && st.r ? 'ON' : 'OFF') : ''), 36, PH - 28);
+        g.fillText('PANEL FOLLOWS THE MODEL' + (vr ? '   HANDS: L ' + (st && st.l ? 'ON' : 'OFF') + '  R ' + (st && st.r ? 'ON' : 'OFF') : ''), 36, PH - 28);
         this.tex.needsUpdate = true;
       },
 
       tick: function () {
+        this.followModel();
         var self = this, p = this.el.components['museum-pointer'];
         if (p && !this.wired) {                                // both hands point; either trigger clicks
           this.wired = true;
@@ -844,7 +849,7 @@
       document.body.classList.add('shot');
       var m = model(); m.breath = function () { return { ph: 0, u: 0.62, vol: 0.62 }; };
       APP.explodeIdx = parseInt(QS.get('explode')) || 0; APP.iso = QS.get('iso') || 'ALL'; APP.preset = QS.get('view') || 'clinical';
-      var rc = rigC(); rc.frameTo(parseFloat(QS.get('frame')) || 3.6, parseFloat(QS.get('lift')) || 0.3); rc.theta = (parseFloat(QS.get('th')) || 0) * Math.PI / 180; rc.R = null;
+      var rc = rigC(); rc.frameTo(parseFloat(QS.get('frame')) || 4.6, parseFloat(QS.get('lift')) || 0.3); rc.theta = (parseFloat(QS.get('th')) || 0) * Math.PI / 180; rc.R = null;
       dirtyPanel();
     };
   </script>

@@ -38,9 +38,9 @@
   AFRAME.registerComponent('museum-rig', {
     schema: {
       rate: { default: 0.9 },           // rad/s while a stick is held to the side: one lap in about 7 s
-      frame: { default: 2.8 },          // distance to the subject, in subject radii
-      minFrame: { default: 1.5 }, maxFrame: { default: 7 },
-      minRadius: { default: 0.34 },     // never closer than this many metres
+      frame: { default: 4.4 },          // distance to the subject, in subject radii
+      minFrame: { default: 2.6 }, maxFrame: { default: 9 },
+      minRadius: { default: 0.7 },     // never closer than this many metres
       lift: { default: 0.34 },          // eye height above the subject centre, in subject radii
       minLift: { default: -0.9 }, maxLift: { default: 1.4 },
       dolly: { default: 0.55 },         // closer/further speed (fraction of distance per second)
