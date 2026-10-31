@@ -1,62 +1,17 @@
 ---
-import { u, SITE } from '../../config';
 import Base from '../../layouts/Base.astro';
-import Panel from '../../components/Panel.astro';
-import Chip from '../../components/Chip.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
 import ExperienceCard from '../../components/ExperienceCard.astro';
 import items from '../../data/experiences.json';
 ---
-<Base title="Experiences" description="VR and XR experiences by Aritra Mitra: walkable immersive builds that run in a headset or a browser tab.">
+<Base title="Experiences" description="VR and XR experiences by Aritra Mitra: walkable and explorable immersive builds that run in a headset or a browser tab.">
   <div class="wrap">
+    <Breadcrumb trail={[{ label: 'HOME', href: '/' }, { label: 'EXPERIENCES' }]} />
     <h1 class="display">EXPERIENCES</h1>
-    <p class="lede">Builds you can step into: VR and XR experiences that run in a headset or a plain browser tab.</p>
-
-    <h2 class="h2">All experiences</h2>
+    <p class="lede">Builds you can step into: VR and XR experiences that run in a headset or a plain browser tab. Open one to see how it was made, then launch it.</p>
     <div class="grid" id="cards">
       {items.map((x) => <ExperienceCard {...x} />)}
     </div>
     <p class="muted">More VR and XR builds will be added here as the course goes on.</p>
-
-    {items.map((f: any) => (
-      <section id={f.slug} class="xp-block" aria-labelledby={`${f.slug}-title`}>
-        <div class="xp-hero">
-          <a class="xp-hero__img" href={u(f.hero)} data-lb data-lb-group={f.galleryGroup} data-lb-src={u(f.hero)} data-lb-alt={f.heroAlt} data-lb-title={f.title} data-lb-meta={`Experience ${String(f.n).padStart(2, '0')} · ${f.kind}`}>
-            <img src={u(f.hero)} alt={f.heroAlt} width="1170" height="850" loading={f.n === 1 ? 'eager' : 'lazy'} />
-            <span class="label label--indigo">TAP TO ENLARGE</span>
-          </a>
-          <div class="xp-hero__body">
-            <p class="label label--pink">EXPERIENCE {String(f.n).padStart(2, '0')} · {f.kind}</p>
-            <h2 id={`${f.slug}-title`} class="xp-hero__title">{f.title}</h2>
-            <p>{f.blurb}</p>
-            <div class="tags">{f.tags.map((t: string) => <Chip>{t}</Chip>)}</div>
-            <p class="xp-hero__cta">
-              <a class="btn btn--primary" href={u(f.url)} target="_blank" rel="noopener">{f.cta}</a>
-              {f.caseStudy && <a class="btn btn--secondary" href={u(f.caseStudy)}>SPATIAL NARRATIVE CASE STUDY</a>}
-            </p>
-            <p class="label muted">{f.ctaNote}</p>
-          </div>
-        </div>
-
-        <h2 class="h2">{f.galleryHeading}</h2>
-        <p class="lede">{f.galleryLede}</p>
-        <div class="gallery">
-          {f.gallery.map((g: any) => <a href={u(g.src)} class="gallery__item" data-lb data-lb-group={f.galleryGroup} data-lb-src={u(g.src)} data-lb-alt={g.alt} data-lb-title={g.alt} data-lb-meta={f.title}><img src={u(g.src)} alt={g.alt} width="1170" height="850" loading="lazy" /></a>)}
-        </div>
-
-        <h2 class="h2">How it works</h2>
-        <Panel label="HOW IT IS BUILT">
-          <ul>{f.how.map(([k, v]: string[]) => <li><strong>{k}</strong> {v}</li>)}</ul>
-        </Panel>
-        <Panel variant="indigo" label="CONTROLS">
-          <ul>{f.controls.map(([k, v]: string[]) => <li><strong>{k}.</strong> {v}</li>)}</ul>
-        </Panel>
-        <Panel variant="pink" label="STATUS">
-          <p>{f.status}</p>
-        </Panel>
-      </section>
-    ))}
-
-    <p>Strategy and design are Aritra's; the code was written with Claude as the enabler. See <a href={u('/about/')}>how this site was made</a>.</p>
-    <p>Questions or want a demo? <a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
   </div>
 </Base>

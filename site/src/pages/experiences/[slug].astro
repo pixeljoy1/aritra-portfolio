@@ -1,0 +1,64 @@
+---
+import { u, SITE } from '../../config';
+import Base from '../../layouts/Base.astro';
+import Panel from '../../components/Panel.astro';
+import Chip from '../../components/Chip.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import items from '../../data/experiences.json';
+
+export function getStaticPaths() {
+  return items.map((f: any, i: number) => ({
+    params: { slug: f.slug },
+    props: { f, prev: items[i - 1] ?? null, next: items[i + 1] ?? null },
+  }));
+}
+const { f, prev, next } = Astro.props as any;
+const num = String(f.n).padStart(2, '0');
+---
+<Base title={f.title} description={f.oneLiner}>
+  <article class="wrap case">
+    <Breadcrumb trail={[{ label: 'HOME', href: '/' }, { label: 'EXPERIENCES', href: '/experiences/' }, { label: f.title.split(':')[0].toUpperCase() }]} />
+    <p class="label label--pink">EXPERIENCE {num} · {f.kind}</p>
+    <h1 class="display">{f.title}</h1>
+    <p class="lede">{f.oneLiner}</p>
+
+    <div class="xp-hero">
+      <a class="xp-hero__img" href={u(f.hero)} data-lb data-lb-group={f.galleryGroup} data-lb-src={u(f.hero)} data-lb-alt={f.heroAlt} data-lb-title={f.title} data-lb-meta={`Experience ${num} · ${f.kind}`}>
+        <img src={u(f.hero)} alt={f.heroAlt} width="1170" height="850" />
+        <span class="label label--indigo">TAP TO ENLARGE</span>
+      </a>
+      <div class="xp-hero__body">
+        <p>{f.blurb}</p>
+        <div class="tags">{f.tags.map((t: string) => <Chip>{t}</Chip>)}</div>
+        <p class="xp-hero__cta">
+          <a class="btn btn--primary" href={u(f.url)} target="_blank" rel="noopener">{f.cta}</a>
+          {f.caseStudy && <a class="btn btn--secondary" href={u(f.caseStudy)}>SPATIAL NARRATIVE CASE STUDY</a>}
+        </p>
+        <p class="label muted">{f.ctaNote}</p>
+      </div>
+    </div>
+
+    <h2 class="h2">{f.galleryHeading}</h2>
+    <p class="lede">{f.galleryLede}</p>
+    <div class="gallery">
+      {f.gallery.map((g: any) => <a href={u(g.src)} class="gallery__item" data-lb data-lb-group={f.galleryGroup} data-lb-src={u(g.src)} data-lb-alt={g.alt} data-lb-title={g.alt} data-lb-meta={f.title}><img src={u(g.src)} alt={g.alt} width="1170" height="850" loading="lazy" /></a>)}
+    </div>
+
+    <h2 class="h2">How it works</h2>
+    <Panel label="HOW IT IS BUILT">
+      <ul>{f.how.map(([k, v]: string[]) => <li><strong>{k}</strong> {v}</li>)}</ul>
+    </Panel>
+    <Panel variant="indigo" label="CONTROLS">
+      <ul>{f.controls.map(([k, v]: string[]) => <li><strong>{k}.</strong> {v}</li>)}</ul>
+    </Panel>
+    <Panel variant="pink" label="STATUS">
+      <p>{f.status}</p>
+    </Panel>
+    <p>Strategy and design are Aritra's; the code was written with Claude as the enabler. See <a href={u('/about/')}>how this site was made</a>. Questions or want a demo? <a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
+
+    <nav class="prevnext" aria-label="More experiences">
+      {prev ? <a href={u(`/experiences/${prev.slug}/`)}>← {prev.title}</a> : <span></span>}
+      {next ? <a href={u(`/experiences/${next.slug}/`)}>{next.title} →</a> : <span></span>}
+    </nav>
+  </article>
+</Base>

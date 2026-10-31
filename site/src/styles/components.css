@@ -309,3 +309,11 @@ div.card:hover { transform: none; box-shadow: none; }
 .xp-hero__title { font-family: var(--f-display); font-size: 16px; line-height: 1.5; color: var(--pink); margin: 0 0 var(--s3); }
 .xp-hero__body p { margin: 0 0 var(--s3); }
 .xp-hero__cta { display: flex; flex-wrap: wrap; gap: var(--s3); }
+
+/* Breadcrumb */
+.crumbs { margin: 0 0 var(--s4); }
+.crumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s2); font: 11px/1.4 var(--f-ui); letter-spacing: .08em; }
+.crumbs li + li::before { content: "/"; color: var(--muted); margin-right: var(--s2); }
+.crumbs a { color: var(--mint); text-decoration: none; padding: var(--s2) 0; display: inline-block; min-height: 24px; }
+.crumbs a:hover { text-decoration: underline; }
+.crumbs [aria-current] { color: var(--pink); }

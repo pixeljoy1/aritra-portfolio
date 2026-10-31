@@ -1,5 +1,6 @@
 import { getCollection } from 'astro:content';
 import { YEARS } from '../config';
+import xp from '../data/experiences.json';
 
 // Lists every public page so search engines can index the site once it has its final domain.
 export async function GET({ site }: { site: URL }) {
@@ -7,6 +8,7 @@ export async function GET({ site }: { site: URL }) {
   const work = await getCollection('work');
   const paths = ['/', '/play/', '/work/', '/experiences/', '/years/', '/resume/', '/about/', '/contact/',
     ...work.filter((w) => w.data.slug !== 'tiger-run').map((w) => `/work/${w.data.slug}/`),
+    ...xp.map((x) => `/experiences/${x.slug}/`),
     ...YEARS.map((y) => `/years/${y.slug}/`)];
   const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map((p) => `  <url><loc>${base}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
   return new Response(body, { headers: { 'Content-Type': 'application/xml' } });

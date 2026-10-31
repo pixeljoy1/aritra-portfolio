@@ -1,9 +1,9 @@
 ---
 import { u } from '../config';
 import Chip from './Chip.astro';
-const { n, kind, title, oneLiner, url, thumb, heroAlt = '', tags = [] } = Astro.props as any;
+const { slug, n, kind, title, oneLiner, url, thumb, heroAlt = '', tags = [] } = Astro.props as any;
 ---
-<a href={u(url)} class="card card--pink" target="_blank" rel="noopener">
+<a href={u(`/experiences/${slug}/`)} class="card card--pink">
   <div class="card__thumb">
     <img src={u(thumb)} alt={heroAlt} width="720" height="523" loading="lazy" />
   </div>
@@ -12,6 +12,6 @@ const { n, kind, title, oneLiner, url, thumb, heroAlt = '', tags = [] } = Astro.
     <h3 class="card__title">{title}</h3>
     <p>{oneLiner}</p>
     <div class="tags">{tags.map((t: string) => <Chip>{t}</Chip>)}</div>
-    <p class="label label--indigo">LAUNCHES IN A NEW TAB ↗</p>
+    <p class="label label--indigo">HOW IT WORKS + LAUNCH →</p>
   </div>
 </a>

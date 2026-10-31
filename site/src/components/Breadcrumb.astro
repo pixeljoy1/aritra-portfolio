@@ -1,0 +1,18 @@
+---
+// Trail like: HOME / EXPERIENCES / KERALA HOUSE. The last item is the current page (not a link).
+import { u } from '../config';
+const { trail = [] } = Astro.props as { trail: { label: string; href?: string }[] };
+---
+<nav class="crumbs" aria-label="Breadcrumb">
+  <ol>
+    {trail.map((t, i) => (
+      <li>
+        {t.href && i < trail.length - 1 ? <a href={u(t.href)}>{t.label}</a> : <span aria-current="page">{t.label}</span>}
+      </li>
+    ))}
+  </ol>
+</nav>
+<script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+  itemListElement: trail.map((t, i) => ({ '@type': 'ListItem', position: i + 1, name: t.label })),
+})} />
