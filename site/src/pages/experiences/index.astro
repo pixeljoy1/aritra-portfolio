@@ -4,14 +4,14 @@ import Breadcrumb from '../../components/Breadcrumb.astro';
 import ExperienceCard from '../../components/ExperienceCard.astro';
 import items from '../../data/experiences.json';
 ---
-<Base title="Experiences" description="VR and XR experiences by Aritra Mitra: walkable and explorable immersive builds that run in a headset or a browser tab.">
+<Base title="Portals" description="VR and XR experiences by Aritra Mitra: walkable and explorable immersive builds that run in a headset or a browser tab.">
   <div class="wrap">
-    <Breadcrumb trail={[{ label: 'HOME', href: '/' }, { label: 'EXPERIENCES' }]} />
-    <h1 class="display">EXPERIENCES</h1>
-    <p class="lede">Builds you can step into: VR and XR experiences that run in a headset or a plain browser tab. Open one to see how it was made, then launch it.</p>
+    <Breadcrumb trail={[{ label: 'HOME', href: '/' }, { label: 'PORTALS' }]} />
+    <h1 class="display">PORTALS</h1>
+    <p class="lede">Doorways into worlds I have built. Step inside a house, or walk through a pair of lungs, in a headset or a plain browser tab. Peek at how each was made, then jump in.</p>
     <div class="grid" id="cards">
       {items.map((x) => <ExperienceCard {...x} />)}
     </div>
-    <p class="muted">More VR and XR builds will be added here as the course goes on.</p>
+    <p class="muted">More portals will open here as the course goes on.</p>
   </div>
 </Base>
