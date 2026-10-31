@@ -10,11 +10,171 @@
     "thumb": "/img/experiences/kerala-house/thumb.webp",
     "hero": "/img/experiences/kerala-house/hero.webp",
     "heroAlt": "The Kerala house model: a two-storey house with a tiled roof, timber veranda and balcony, set in a walled garden with a play yard",
-    "tags": ["WEBXR", "META QUEST 3", "BLENDER", "A-FRAME"],
+    "tags": [
+      "WEBXR",
+      "META QUEST 3",
+      "BLENDER",
+      "A-FRAME"
+    ],
     "gallery": [
-      { "src": "/img/experiences/kerala-house/01.webp", "alt": "Close view of the house in flat colour: carved fascia, shuttered windows, brass-banded pillars and a balcony ring" },
-      { "src": "/img/experiences/kerala-house/02.webp", "alt": "Grey overview of the whole compound: house, walled garden, play yard and palms outside the wall" },
-      { "src": "/img/experiences/kerala-house/03.webp", "alt": "Early grey blockout of the house, staircase, paths, trees and fence" }
-    ]
+      {
+        "src": "/img/experiences/kerala-house/01.webp",
+        "alt": "Close view of the house in flat colour: carved fascia, shuttered windows, brass-banded pillars and a balcony ring"
+      },
+      {
+        "src": "/img/experiences/kerala-house/02.webp",
+        "alt": "Grey overview of the whole compound: house, walled garden, play yard and palms outside the wall"
+      },
+      {
+        "src": "/img/experiences/kerala-house/03.webp",
+        "alt": "Early grey blockout of the house, staircase, paths, trees and fence"
+      }
+    ],
+    "blurb": "A two-storey Kerala house with a timber veranda, a balcony ring, an outside staircase, a walled garden and a play yard. Walk the gate, the hall and the kitchen, climb to the balcony, or teleport around the grounds.",
+    "cta": "ENTER THE WALKTHROUGH ↗",
+    "ctaNote": "OPENS IN A NEW TAB · BEST ON META QUEST 3, ALSO WORKS ON DESKTOP",
+    "galleryHeading": "From grey blockout to walkable house",
+    "galleryLede": "The house was modelled in Blender, then exported as one small file with flat colours and no textures, so it loads fast even on a headset.",
+    "galleryGroup": "kerala",
+    "how": [
+      [
+        "Model.",
+        "Built in Blender with a script, so the whole house can be rebuilt in one run. About 61,000 triangles, 39 flat-colour materials, 1.2 MB."
+      ],
+      [
+        "Engine.",
+        "A-Frame (WebXR), loaded from a fixed version. No app to install: it is a web page."
+      ],
+      [
+        "Walkable by name.",
+        "Anything named for walking (floors, steps, stairs, paths) can be stood on or teleported to. Everything else blocks you, so walls, furniture and railings behave."
+      ],
+      [
+        "Smooth stairs.",
+        "The floor under you is followed with easing, so climbing the outside stairs to the balcony feels steady."
+      ],
+      [
+        "Reset.",
+        "One button clears the model from memory and reloads it, which keeps a long headset session stable."
+      ]
+    ],
+    "controls": [
+      [
+        "Right trigger",
+        "Walk where you aim"
+      ],
+      [
+        "Right stick, left or right",
+        "Turn"
+      ],
+      [
+        "Left stick forward, then release",
+        "Teleport to the green marker"
+      ],
+      [
+        "Left Y button",
+        "Reset the experience"
+      ],
+      [
+        "Desktop",
+        "Space to walk, arrows or WASD to steer, R to reset"
+      ]
+    ],
+    "status": "Checked on desktop: the route from the gate to the hall, kitchen and back door, the stairs up to the balcony, wall and furniture blocking, and reset. Next pass: tuning controller aim, comfort and frame rate on the headset."
+  },
+  {
+    "slug": "human-respiratory-xr",
+    "n": 2,
+    "kind": "XR",
+    "title": "Human Respiratory System: XR anatomy atlas",
+    "oneLiner": "Fly through a hologram of the human airway, lungs, heart and diaphragm in VR on a Meta Quest 3 or in any desktop browser.",
+    "url": "/humanRespiratoryXR/",
+    "caseStudy": null,
+    "thumb": "/img/experiences/human-respiratory/thumb.webp",
+    "hero": "/img/experiences/human-respiratory/hero.webp",
+    "heroAlt": "A cyan hologram of the human body in wire mesh with the airway, both lungs, heart and diaphragm inside, labelled, beside a floating XR control panel",
+    "tags": [
+      "WEBXR",
+      "META QUEST 3",
+      "BLENDER",
+      "A-FRAME"
+    ],
+    "blurb": "A life-size hologram of the human respiratory system. Follow a breath from the nose down the trachea into 18 branching paths, scale the body up to 40 times and fly inside the airway, explode the organs apart, isolate one system at a time and watch cyan air go in and warm air come out on a breath cycle you control.",
+    "cta": "ENTER THE ATLAS ↗",
+    "ctaNote": "OPENS IN A NEW TAB · BEST ON META QUEST 3, ALSO WORKS ON DESKTOP",
+    "gallery": [
+      {
+        "src": "/img/experiences/human-respiratory/01.webp",
+        "alt": "Exploded X-ray view: the ribcage, heart, vessels and trachea separated from the torso shell, with the labels and the control panel"
+      },
+      {
+        "src": "/img/experiences/human-respiratory/02.webp",
+        "alt": "Lungs isolated: two violet lungs with cyan breath particles moving along the airway, everything else faded to a faint outline"
+      },
+      {
+        "src": "/img/experiences/human-respiratory/03.webp",
+        "alt": "Bronchial tree isolated in X-ray view, showing the branching airways inside the faded body"
+      }
+    ],
+    "galleryHeading": "Four ways to look at one breath",
+    "galleryLede": "The same model in different views: exploded, with one system isolated, and through the X-ray preset.",
+    "galleryGroup": "respiratory",
+    "how": [
+      [
+        "Model.",
+        "Modelled in Blender: body, ribcage, nose to bronchi, both lungs (3 lobes right, 2 left), heart with great vessels and the diaphragm. About 107,000 triangles, 2.2 MB."
+      ],
+      [
+        "Lighting.",
+        "The lighting is baked into the model itself: a cyan key light, a violet rim light and ambient occlusion, written into the vertex colours. The headset draws it unlit, so it looks the same everywhere and runs fast."
+      ],
+      [
+        "Airflow.",
+        "The 18 breathing paths (10 into the right lung, 8 into the left) were exported from the bronchial tree. The particles ride them: cyan air in, warm amber air out, on a 12 breaths per minute cycle you can change."
+      ],
+      [
+        "Locomotion.",
+        "The same walk and fly engine as the Kerala house. Aim and pull the trigger to fly, let go to hover. Flight speed grows with the model scale, so at 40 times you can fly inside the trachea."
+      ],
+      [
+        "Reset.",
+        "One button throws the model out of memory and loads it again, which keeps a long headset session stable."
+      ]
+    ],
+    "controls": [
+      [
+        "Right trigger",
+        "Fly where you aim, release to hover"
+      ],
+      [
+        "Right stick",
+        "Left or right turns, forward or back climbs or dives"
+      ],
+      [
+        "Right grip",
+        "Grab and spin the model"
+      ],
+      [
+        "Right A and B",
+        "A cycles the X-ray view, B switches walk and fly"
+      ],
+      [
+        "Left laser and trigger",
+        "Press the panel buttons or a label to isolate that system"
+      ],
+      [
+        "Left stick",
+        "Left or right orbits the model, forward or back scales it"
+      ],
+      [
+        "Left X and Y",
+        "X resets the view, Y resets the experience"
+      ],
+      [
+        "Desktop",
+        "Space to fly, WASD to steer, Q and E to orbit, [ and ] to scale, R to reset"
+      ]
+    ],
+    "status": "Checked on desktop: loading, fly and walk modes, orbit and scale, explode, isolate, the three view presets, the breath cycle, reset and reload. Next pass: controller aim, comfort and frame rate on the headset."
   }
 ]

@@ -297,6 +297,9 @@ div.card:hover { transform: none; box-shadow: none; }
 .hud__hi b { color: var(--yellow); font-weight: 700; }
 @media (min-width: 960px) { .hud__hi:not([hidden]) { display: inline; } }
 
+/* Experiences: one block per experience */
+.xp-block { margin-top: var(--s7, 56px); }
+
 /* Experiences: featured highlight */
 .xp-hero { display: grid; gap: var(--s5); margin: var(--s5) 0 var(--s6); padding: var(--s4); background: var(--panel-bg); border: 2px solid var(--pink); border-radius: var(--radius); box-shadow: 6px 6px 0 #b1389a; }
 @media (min-width: 880px) { .xp-hero { grid-template-columns: 1.1fr 1fr; align-items: center; padding: var(--s5); } }
