@@ -37,8 +37,9 @@
   // ------------------------------------------------------------------------------------------------
   AFRAME.registerComponent('museum-rig', {
     schema: {
+      boost: { default: 2.2 },          // extra speed at a full trigger pull: 1 + boost times the base rate
       rate: { default: 0.9 },           // rad/s while a stick is held to the side: one lap in about 7 s
-      frame: { default: 4.4 },          // distance to the subject, in subject radii
+      frame: { default: 3.0 },          // distance to the subject, in subject radii
       minFrame: { default: 2.6 }, maxFrame: { default: 9 },
       minRadius: { default: 0.7 },     // never closer than this many metres
       lift: { default: 0.34 },          // eye height above the subject centre, in subject radii
@@ -56,7 +57,9 @@
       this.stick = { l: { x: 0, y: 0 }, r: { x: 0, y: 0 } };
       this.key = { x: 0, y: 0, z: 0 };                  // keyboard: circle, dolly, rise (-1, 0, 1)
       this.auto = 0;                                      // hands-free circling: 0 off, 1 or -1 direction
+      this.trig = 0;                                      // trigger pull on either hand speeds the circling up
       this.speedMul = 1;                                  // page can offer a slow / normal / fast setting
+      this.trigs = { l: 0, r: 0 };
       this.paused = false;
       this.frame = d.frame; this.lift = d.lift;           // targets
       this.theta = 0; this.w = 0;                         // angle round the subject and current angular speed
@@ -69,6 +72,7 @@
       ['l', 'r'].forEach(function (h) {
         var el = self.hands[h]; if (!el) return;
         el.addEventListener('thumbstickmoved', function (e) { self.stick[h].x = e.detail.x; self.stick[h].y = e.detail.y; });
+        el.addEventListener('triggerchanged', function (e) { self.trigs[h] = e.detail.value; self.trig = Math.max(self.trigs.l, self.trigs.r); });
       });
     },
 
@@ -102,7 +106,8 @@
       if (rise) this.lift = clamp(this.lift + rise * d.rise * dt, d.minLift, d.maxLift);
 
       // A steady angular speed, eased in and out, so the path is a perfect circle at constant radius
-      this.w += (dir * d.rate * this.speedMul - this.w) * (1 - Math.exp(-5 * dt));
+      var boost = 1 + d.boost * Math.max(this.trig, this.key.fast || 0);              // trigger = accelerator
+      this.w += (dir * d.rate * this.speedMul * boost - this.w) * (1 - Math.exp(-5 * dt));
       if (Math.abs(this.w) < 1e-4 && !dir) this.w = 0;
       var dth = this.w * dt;
       this.theta += dth;

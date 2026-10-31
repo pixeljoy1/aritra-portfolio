@@ -139,6 +139,10 @@
       [
         "Reset.",
         "One button throws the model out of memory and loads it again, which keeps a long headset session stable."
+      ],
+      [
+        "Explode.",
+        "Explode fades the body shell right out and draws a circulation diagram between the pieces: blue tubes for low-oxygen blood returning from the body and going to the lungs, red tubes for oxygen-rich blood coming back and leaving through the aorta, with moving dots showing the flow."
       ]
     ],
     "controls": [
@@ -148,7 +152,7 @@
       ],
       [
         "Either stick to the side",
-        "Circle the focused organ at a steady speed, in a perfect circle"
+        "Circle the focused organ in a perfect circle. Pull a trigger while holding it to speed up"
       ],
       [
         "Left stick forward or back",
@@ -164,7 +168,7 @@
       ],
       [
         "Right A and B",
-        "A cycles the X-ray view, B changes the circling speed"
+        "A cycles the view (deep X-ray is the default), B changes the circling speed"
       ],
       [
         "Left X and Y",

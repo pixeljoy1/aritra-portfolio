@@ -6,7 +6,7 @@
   <title>Aritra: Human Respiratory XR</title>
   <!-- Pinned A-Frame release. WebXR needs HTTPS; GitHub Pages provides it. -->
   <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
-  <script src="museum-display.js?v=3"></script>
+  <script src="museum-display.js?v=5"></script>
   <style>
     /* Flat-view overlays. The Quest has no console, so status and errors are printed on the page. */
     #brand { position: fixed; left: 12px; top: 12px; z-index: 10; display: flex; align-items: center; gap: 8px;
@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <div id="brand">Human Respiratory XR <span class="pill">v1.05</span></div>
+  <div id="brand">Human Respiratory XR <span class="pill">v1.06</span></div>
   <div id="status">Loading the anatomy…</div>
   <button id="reset-btn" type="button" title="Reset the experience (R)">Reset</button>
   <div id="hud"></div>
@@ -96,7 +96,7 @@
     var EXPLODE_STEPS = [0, 0.5, 1];
     var BPM_STEPS = [6, 12, 18];
         var APP = {
-      scale: 1, scaleT: 1, spin: 0, auto: false, explodeIdx: 0, explode: 0, iso: 'ALL', preset: 'clinical',
+      scale: 1, scaleT: 1, spin: 0, auto: false, explodeIdx: 0, explode: 0, iso: 'ALL', preset: 'xray',
       bpm: 12, labels: true, audio: false, anchor: 'dock', hover: null,
       orbit: 0, func: false, funcDone: false, orbitAcc: 0, focusDone: false
     };
@@ -343,11 +343,89 @@
         this.volSprite = textSprite('LUNG VOLUME: 2.4 L', { w: 420, h: 56, sw: 0.20, font: 26, color: '#aef4ff' });
         this.volSprite.position.set(-0.34, -0.27, 0); this.hud.add(this.volSprite);
 
+        this.buildDiagram();
         this.el.setObject3D('anat', root);
         if (this.pathData) this.buildAirflow(); else this.pendingFlow = true;
         this.ready = true;
         statusEl.textContent = 'Ready. A and D circle the organ, W and S move closer or further, click the panel buttons. In VR tap Enter VR.'; statusEl.className = 'done';
         if (window.__afterModel) window.__afterModel();
+      },
+
+      // Circulation diagram, shown when the model is exploded: blue tubes carry low-oxygen blood, red tubes oxygen-rich blood.
+      // Every end point sits on one of the exploded groups, so the tubes stretch between the pieces and explain how they connect.
+      buildDiagram: function () {
+        var self = this, P = this.parts;
+        var N = {                                                  // group, position in that group's own (model) coordinates, label
+          head:  ['airway', [0, 0.20, 0.02], 'HEAD AND ARMS'],
+          lower: ['diaphragm', [0, -0.30, 0], 'LOWER BODY'],
+          svc:   ['heart', [-0.022, -0.03, 0.035], 'Vena cava: low-oxygen blood returns'],
+          ra:    ['heart', [-0.012, -0.085, 0.055], 'Right atrium'],
+          rv:    ['heart', [0.02, -0.115, 0.078], 'Right ventricle'],
+          pt:    ['heart', [0.022, -0.05, 0.07], 'Pulmonary arteries: to the lungs'],
+          la:    ['heart', [0.05, -0.075, 0.015], 'Left atrium'],
+          lv:    ['heart', [0.058, -0.115, 0.05], 'Left ventricle'],
+          ao:    ['heart', [0.03, -0.02, 0.04], 'Aorta: oxygen-rich blood to the body'],
+          hr:    ['lungR', [-0.05, -0.05, 0.0], ''],
+          hl:    ['lungL', [0.055, -0.05, 0.0], ''],
+          ivc:   ['heart', [-0.03, -0.2, 0.0], ''],
+          dao:   ['heart', [0.045, -0.2, -0.03], ''],
+          pvr:   ['heart', [-0.06, -0.06, 0.02], ''],
+          pvl:   ['heart', [0.08, -0.06, 0.02], '']
+        };
+        var BLUE = 0x3d8bff, RED = 0xff4d4d;
+        var E = [['head', 'svc', 'ra'], ['lower', 'ivc', 'ra'], ['ra', 'rv'], ['rv', 'pt', 'hr'], ['pt', 'hl'],
+                 ['hr', 'pvr', 'la'], ['hl', 'pvl', 'la'], ['la', 'lv'], ['lv', 'ao', 'head'], ['ao', 'dao', 'lower']];
+        var blue = { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1 };
+        var dg = this.diag = new T.Group(); dg.visible = false; this.root.add(dg);
+        this.dHeartC = [0.035, -0.095, 0.045]; this.dSpread = { svc: 1, ra: 1, rv: 1, pt: 1, la: 1, lv: 1, ao: 1 };
+        this.dNodes = N; this.dEdges = E.map(function (e, i) { return { ids: e, color: blue[i] ? BLUE : RED, mesh: null, curve: null, dots: [] }; });
+        this.dEdges.forEach(function (ed) {
+          ed.mat = new T.MeshBasicMaterial({ color: ed.color, transparent: true, opacity: 0.8, depthTest: false, depthWrite: false, blending: T.AdditiveBlending, toneMapped: false });
+          ed.mesh = new T.Mesh(new T.BufferGeometry(), ed.mat); ed.mesh.renderOrder = 25; ed.mesh.frustumCulled = false; dg.add(ed.mesh);
+          for (var k = 0; k < 4; k++) {
+            var d = new T.Mesh(new T.SphereGeometry(0.0065, 8, 6), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthTest: false, toneMapped: false }));
+            d.renderOrder = 26; d.userData.u = k / 4; dg.add(d); ed.dots.push(d);
+          }
+        });
+        this.dLabels = [];
+        var offs = { head: [0.17, 0, 0], lower: [0.17, 0, 0], svc: [-0.2, 0.0, 0.02], ra: [-0.17, -0.04, 0.02], rv: [-0.17, -0.1, 0.02], pt: [0.2, 0.03, 0.02],
+                     la: [0.19, 0.0, 0.02], lv: [0.19, -0.07, 0.02], ao: [0.22, 0.05, 0.02] };
+        for (var id in offs) {
+          var col = (id === 'head' || id === 'lower') ? '#ffffff' : (id === 'ra' || id === 'rv' || id === 'svc' || id === 'pt') ? '#8fbaff' : '#ff9a9a';
+          var sp = textSprite(N[id][2], { w: 560, h: 60, sw: 0.26, font: 28, color: col, box: true }); sp.renderOrder = 27; sp.material.depthTest = false;
+          dg.add(sp); this.dLabels.push({ sp: sp, id: id, off: offs[id] });
+        }
+        var lg = textSprite('BLUE: low-oxygen blood    RED: oxygen-rich blood', { w: 640, h: 56, sw: 0.30, font: 26, color: '#ffffff', box: true });
+        lg.renderOrder = 27; lg.material.depthTest = false; dg.add(lg); this.dLegend = lg; this.dBuilt = -1;
+      },
+      nodePos: function (id, out) {
+        var n = this.dNodes[id], g = this.parts[n[0]].g.position, p = n[1];
+        if (n[0] === 'heart' && this.dSpread[id]) {                  // the diagram spreads the chambers apart so each connection can be followed
+          var c = this.dHeartC, k = 2.4; return out.set(g.x + c[0] + (p[0] - c[0]) * k, g.y + c[1] + (p[1] - c[1]) * k, g.z + c[2] + (p[2] - c[2]) * k);
+        }
+        return out.set(g.x + p[0], g.y + p[1], g.z + p[2]);
+      },
+      updateDiagram: function (ex, show, t) {
+        var dg = this.diag; dg.visible = show; if (!show) return;
+        var self = this, rebuild = Math.abs(ex - this.dBuilt) > 0.004;
+        this.dEdges.forEach(function (ed) {
+          if (rebuild) {
+            var pts = ed.ids.map(function (id) { return self.nodePos(id, new T.Vector3()); });
+            if (pts.length === 2) pts.splice(1, 0, pts[0].clone().lerp(pts[1], 0.5).add(new T.Vector3(0, 0, 0.03)));
+            ed.curve = new T.CatmullRomCurve3(pts, false, 'catmullrom', 0.5);
+            if (ed.mesh.geometry.dispose) ed.mesh.geometry.dispose();
+            ed.mesh.geometry = new T.TubeGeometry(ed.curve, 32, 0.0035, 5, false);
+          }
+          for (var k = 0; k < ed.dots.length; k++) {
+            var u = (ed.dots[k].userData.u + t * 0.22) % 1; ed.curve.getPoint(u, ed.dots[k].position);
+          }
+        });
+        if (rebuild) this.dBuilt = ex;
+        var v = new T.Vector3(), lab = APP.labels;
+        this.dLabels.forEach(function (l) { self.nodePos(l.id, v); l.sp.position.set(v.x + l.off[0], v.y + l.off[1], v.z + l.off[2]); l.sp.visible = lab; });
+        this.dLegend.position.set(0.34, 0.30, 0.1); this.dLegend.visible = lab;
+        var a = Math.min(1, ex * 2);
+        this.dEdges.forEach(function (ed) { ed.mat.opacity = 0.8 * a; });
       },
 
       // Airflow: 320 soft glowing billboards, one instanced draw call, riding the 18 centre lines exported from Blender
@@ -418,19 +496,22 @@
         var table = PRESETS[APP.preset], iso = APP.iso;
         for (var i = 0; i < this.fades.length; i++) {
           var f = this.fades[i], want = table[f.key], on = iso === 'ALL' || f.cat === iso;
+          if (f.cat === 'TORSO' && (f.key === 'torso' || f.key === 'wire')) want *= 1 - Math.min(1, ex * 2);   // exploded: the body shell goes dark, only the organs and the diagram remain
+          else if (f.cat === 'TORSO') want *= 1 - Math.min(1, ex * 2);
           if (!on) want = Math.min(want, f.cat === 'TORSO' ? 0.03 : 0.07);                          // everything else goes translucent
           else if (iso !== 'ALL' && FOCUS_MIN[f.key]) want = Math.max(want, FOCUS_MIN[f.key]);       // the focused organ is lifted
           f.cur = f.cur < 0 ? want : f.cur + (want - f.cur) * kk;
           f.mat.opacity = f.cur;
           var vis = f.cur > 0.004; for (var j = 0; j < f.objs.length; j++) f.objs[j].visible = vis;
         }
+        this.updateDiagram(ex, ex > 0.04 && (iso === 'ALL' || iso === 'HEART' || iso === 'LUNGS'), t);
         if (this.flowMesh) this.flowMesh.visible = iso === 'ALL' || iso === 'AIRWAY' || iso === 'TRACHEA' || iso === 'BRONCHI' || iso === 'LUNGS';
         for (var L = 0; L < this.labelList.length; L++) {
-          var lb = this.labelList[L], show = APP.labels && (iso === 'ALL' || lb.cat === iso);
+          var lb = this.labelList[L], show = APP.labels && ex < 0.15 && (iso === 'ALL' || lb.cat === iso);
           lb.sprite.visible = lb.line.visible = lb.dot.visible = show;
           var hov = APP.hover === lb.sprite ? 1.12 : 1; lb.sprite.scale.set(0.15 * hov, 0.15 * hov * 64 / 320, 1);
         }
-        this.exhale.visible = APP.labels; this.hud.visible = APP.labels;
+        this.exhale.visible = this.hud.visible = APP.labels && ex < 0.15;
 
         // breathing: lungs swell, diaphragm drops, chest opens, heart beats
         var b = this.breath(t), vol = b.vol, FN = APP.func ? APP.iso : '';       // function demo exaggerates the focused organ's motion
@@ -543,7 +624,7 @@
           var k = rigC().key;
           k.x = (keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0);
           k.y = (keys.ArrowDown || keys.KeyS ? 1 : 0) - (keys.ArrowUp || keys.KeyW ? 1 : 0);
-          k.z = (keys.KeyE ? 1 : 0) - (keys.KeyQ ? 1 : 0);
+          k.z = (keys.KeyE ? 1 : 0) - (keys.KeyQ ? 1 : 0); k.fast = keys.ShiftLeft || keys.ShiftRight ? 1 : 0;
         }
         window.addEventListener('keydown', function (e) {
           if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -563,7 +644,7 @@
       // Frame an organ: the rig eases to the right distance and height, then you can circle it
       frame: function (name) {
         var rc = rigC(); if (!rc) return;
-        if (name === 'ALL') rc.frameTo(4.6, 0.3); else rc.frameTo(4.4, 0.3);
+        if (name === 'ALL') rc.frameTo(3.0, 0.3); else rc.frameTo(4.4, 0.3);
       },
 
       tick: function (time, dtMs) {
@@ -587,7 +668,7 @@
       reset: function () {
         this.speedIdx = 0;
         APP.scale = APP.scaleT = 1; APP.spin = 0; APP.auto = false; APP.explodeIdx = 0; APP.explode = 0; APP.iso = 'ALL';
-        APP.preset = 'clinical'; APP.bpm = 12; APP.labels = true; APP.hover = null; APP.orbit = 0;
+        APP.preset = 'xray'; APP.bpm = 12; APP.labels = true; APP.hover = null; APP.orbit = 0;
         APP.func = false; APP.funcDone = false; APP.orbitAcc = 0; APP.focusDone = false;
         rigC().home(); this.frame('ALL');
         try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
@@ -697,8 +778,10 @@
         var rc = this.el.components['museum-rig']; if (!rc || rc.R === null) return;
         var s = clamp(0.82 * rc.R / 0.95, 0.55, 3), th = rc.theta, side = rc.subject.r * 1.1 + 0.2 * s + 0.12 * s;
         this.group.scale.setScalar(s);
-        this.group.rotation.y = th - 0.22;
-        this.group.position.set(rc.c.x - side * Math.cos(th), rc.c.y + 0.05 * s, rc.c.z + side * Math.sin(th));
+        var hd = this._hd || (this._hd = new T.Vector3()); this.el.querySelector('#cam').object3D.getWorldPosition(hd);
+        var px = rc.c.x - side * Math.cos(th), pz = rc.c.z + side * Math.sin(th);
+        this.group.rotation.set(0, Math.atan2(hd.x - px, hd.z - pz), 0);          // always upright, square on to the viewer
+        this.group.position.set(px, hd.y - 0.04 * s, pz);                         // centred at eye level
       },
 
       targets: function () {
@@ -848,8 +931,8 @@
       if (!QS.get('shot')) return;
       document.body.classList.add('shot');
       var m = model(); m.breath = function () { return { ph: 0, u: 0.62, vol: 0.62 }; };
-      APP.explodeIdx = parseInt(QS.get('explode')) || 0; APP.iso = QS.get('iso') || 'ALL'; APP.preset = QS.get('view') || 'clinical';
-      var rc = rigC(); rc.frameTo(parseFloat(QS.get('frame')) || 4.6, parseFloat(QS.get('lift')) || 0.3); rc.theta = (parseFloat(QS.get('th')) || 0) * Math.PI / 180; rc.R = null;
+      APP.explodeIdx = parseInt(QS.get('explode')) || 0; APP.iso = QS.get('iso') || 'ALL'; APP.preset = QS.get('view') || 'xray';
+      var rc = rigC(); rc.frameTo(parseFloat(QS.get('frame')) || 3.0, parseFloat(QS.get('lift')) || 0.3); rc.theta = (parseFloat(QS.get('th')) || 0) * Math.PI / 180; rc.R = null;
       dirtyPanel();
     };
   </script>
