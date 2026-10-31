@@ -190,7 +190,7 @@
     "url": "/biharMuseumXR/",
     "thumb": "/img/experiences/bihar-museum/thumb.webp",
     "hero": "/img/experiences/bihar-museum/hero.webp",
-    "heroAlt": "Looking out of the tapering sandstone corridor, lit by recessed vertical slots, into the hall with the bust of Nefertiti standing lit at the end",
+    "heroAlt": "Looking down the tapering sandstone corridor, lit by recessed vertical slots, into the dim hall with the bust of Nefertiti standing in a pool of light at the end",
     "tags": [
       "WEBXR",
       "META QUEST 3",
@@ -201,19 +201,19 @@
     "gallery": [
       {
         "src": "/img/experiences/bihar-museum/01.webp",
-        "alt": "Stephenson's Rocket on its low platform in the south-east corner, under a concealed light slot in the alcove soffit"
+        "alt": "Stephenson's Rocket on its low platform in the south-east corner, picked out by a concealed light slot in the alcove soffit"
       },
       {
         "src": "/img/experiences/bihar-museum/02.webp",
-        "alt": "The triangular hall: a red travertine wall on the left, a backlit teak screen on the right, and the bust of Nefertiti lit in the open ahead of her alcove"
+        "alt": "The triangular hall: a red travertine wall on the left, a backlit teak screen on the right, a near-black floor, and the bust of Nefertiti lit in the open ahead of her alcove"
       },
       {
         "src": "/img/experiences/bihar-museum/03.webp",
-        "alt": "The bust of Nefertiti close up on her plinth out in the hall, lit from three sides, with the travertine wall behind her"
+        "alt": "The bust of Nefertiti close up on her plinth out in the hall, lit from three sides against the glowing teak screen"
       },
       {
         "src": "/img/experiences/bihar-museum/04.webp",
-        "alt": "The bust of Julius Caesar on a plinth in the south-west alcove, its label stand beside him"
+        "alt": "The bust of Julius Caesar on a plinth in the south-west alcove, his label stand beside him"
       }
     ],
     "blurb": "A gallery floor after the Bihar Museum in Patna: a lobby with backlit teak screens, a corridor that tapers open with light slots cut into leaning sandstone, and a triangular hall whose three corners are cut back into alcoves. A bust of Julius Caesar and Stephenson's Rocket stand one to a corner, and the bust of Nefertiti stands free in front of hers, under an elliptical skylight, where you can walk a full circle round her.",
@@ -229,7 +229,7 @@
       ],
       [
         "Light.",
-        "Lit in Cycles behind a light-tight shell, so the only light is the designed light: a raking sun through slot windows, two skylight dishes, warm emission behind the teak, and a key and fill spot on each piece."
+        "Lit in Cycles behind a light-tight shell, so the only light is the designed light: a raking sun through slot windows, two skylight dishes, warm emission behind the teak, and a tight spot on each piece. The room is deliberately kept dim and the spots are not, so each masterpiece stands in its own pool of light."
       ],
       [
         "Baked, not computed.",
@@ -237,7 +237,11 @@
       ],
       [
         "Walkable by name.",
-        "The floors are one mesh named for walking; everything else blocks. The masterpieces sit outside the collision world, with three invisible boxes standing in for them, so no raycast ever touches their 150,000 triangles."
+        "The floors are one mesh named for walking; everything else blocks. The masterpieces sit outside the collision world, with three invisible boxes standing in for them, so no raycast ever touches their 384,000 triangles."
+      ],
+      [
+        "Compressed, not simplified.",
+        "Caesar and the Rocket ship at the full resolution of their scans, 160,000 and 169,000 triangles, Draco-compressed to 1.3 and 1.4 MB. The decoder is served from the site rather than a CDN."
       ],
       [
         "Walk and fly.",
@@ -274,6 +278,6 @@
         "Space to walk, arrows or WASD to steer, F to fly, E and Q for height, P for the board, R to reset"
       ]
     ],
-    "status": "Checked on desktop: the walk from the lobby through the corridor into the hall, a full circle round Nefertiti at four radii with the page's own collision test, collision against benches and walls, fly and the climb through the skylight, and teleport validity on the museum floor. Not yet felt on the headset: controller aim, frame rate, and whether the board and the three labels read at the right distance."
+    "status": "Checked on desktop: the walk from the lobby through the corridor into the hall, a full circle round Nefertiti at four radii with the page's own collision test, every label and the board measured clear of the walls, fly and the climb through the skylight, and teleport validity on the museum floor. Not yet felt on the headset: controller aim, frame rate, and whether the board and the three labels read at the right distance."
   }
 ]

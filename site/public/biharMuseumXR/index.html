@@ -23,25 +23,29 @@
   <div id="status">Loading the museum…</div>
   <button id="reset-btn" type="button" title="Reset the experience (R)">Reset</button>
 
-  <a-scene background="color: #07070a" renderer="colorManagement: true">
+  <a-scene background="color: #07070a" renderer="colorManagement: true"
+           gltf-model="dracoDecoderPath: draco/">
 
     <!-- The room carries its own light: every surface was baked in Cycles and exported as an
          emissive texture, so these lights fall only on the three masterpieces. -->
-    <a-entity light="type: ambient; intensity: 0.22; color: #b9c4d6"></a-entity>
+    <a-entity light="type: ambient; intensity: 0.09; color: #b9c4d6"></a-entity>
     <!-- Nefertiti stands free in the hall, so she gets the same three-sided ring the bake has:
          she has to read from wherever you stop while walking round her. -->
-    <a-entity light="type: point; intensity: 8; distance: 6; decay: 2; color: #ffd6a6" position="0 3.40 -9.44"></a-entity>
-    <a-entity light="type: point; intensity: 8; distance: 6; decay: 2; color: #ffd6a6" position="-1.30 3.40 -7.19"></a-entity>
-    <a-entity light="type: point; intensity: 8; distance: 6; decay: 2; color: #ffd6a6" position="1.30 3.40 -7.19"></a-entity>
-    <a-entity light="type: point; intensity: 11; distance: 7; decay: 2; color: #ffd6a6" position="-8.78 4.08 5.07"></a-entity>
-    <a-entity light="type: point; intensity: 6; distance: 9; decay: 2; color: #ffe0ba" position="-6.27 5.40 3.62"></a-entity>
-    <a-entity light="type: point; intensity: 14; distance: 9; decay: 2; color: #ffd6a6" position="8.78 4.08 5.07"></a-entity>
-    <a-entity light="type: point; intensity: 7; distance: 10; decay: 2; color: #ffe0ba" position="6.27 5.40 3.62"></a-entity>
+    <a-entity light="type: point; intensity: 15; distance: 6; decay: 2; color: #ffd6a6" position="0 3.40 -9.44"></a-entity>
+    <a-entity light="type: point; intensity: 15; distance: 6; decay: 2; color: #ffd6a6" position="-1.30 3.40 -7.19"></a-entity>
+    <a-entity light="type: point; intensity: 15; distance: 6; decay: 2; color: #ffd6a6" position="1.30 3.40 -7.19"></a-entity>
+    <a-entity light="type: point; intensity: 20; distance: 7; decay: 2; color: #ffd6a6" position="-8.78 4.08 5.07"></a-entity>
+    <a-entity light="type: point; intensity: 8; distance: 9; decay: 2; color: #ffe0ba" position="-6.27 5.40 3.62"></a-entity>
+    <a-entity light="type: point; intensity: 24; distance: 9; decay: 2; color: #ffd6a6" position="8.78 4.08 5.07"></a-entity>
+    <a-entity light="type: point; intensity: 9; distance: 10; decay: 2; color: #ffe0ba" position="6.27 5.40 3.62"></a-entity>
+
+    <!-- The board is lit geometry too, and the corridor no longer spills enough on it. -->
+    <a-entity light="type: point; intensity: 4; distance: 3.4; decay: 2; color: #ffdcb0" position="0.2 2.2 17.6"></a-entity>
 
     <!-- Everything the teleport ray and walking can hit lives under #world.
          WALK_* meshes inside museum.glb (the floors) are standable; every other mesh blocks. -->
     <a-entity id="world">
-      <a-entity id="museum" gltf-model="url(models/museum.glb?v=1.02)"></a-entity>
+      <a-entity id="museum" gltf-model="url(models/museum.glb?v=1.03)"></a-entity>
       <!-- Invisible blockers so you cannot walk your head through a masterpiece. The plinths
            themselves are solid geometry in the model; these cover the piece standing on top. -->
       <a-box class="blocker" position="0 1.37 -7.94" rotation="0 0 0" width="0.5" height="0.62" depth="0.6"
@@ -55,30 +59,30 @@
     <!-- The three masterpieces. They sit outside #world: they are 55-70k triangles each and the
          per-frame collision raycasts must never see them (the blockers above stand in for them). -->
     <a-entity id="art">
-      <a-entity gltf-model="url(models/nefertiti.glb?v=1.02)" position="0 1.074 -7.943" rotation="0 0 0"></a-entity>
-      <a-entity gltf-model="url(models/caesar.glb?v=1.02)"    position="-9.579 0.974 5.531" rotation="0 120 0"></a-entity>
-      <a-entity gltf-model="url(models/rocket.glb?v=1.02)"    position="9.579 0.224 5.531" rotation="0 -120 0"></a-entity>
+      <a-entity gltf-model="url(models/nefertiti.glb?v=1.03)" position="0 1.074 -7.943" rotation="0 0 0"></a-entity>
+      <a-entity gltf-model="url(models/caesar.glb?v=1.03)"    position="-9.579 0.974 5.531" rotation="0 120 0"></a-entity>
+      <a-entity gltf-model="url(models/rocket.glb?v=1.03)"    position="9.579 0.224 5.531" rotation="0 -120 0"></a-entity>
     </a-entity>
 
-    <!-- The ONE board, standing at the mouth of the long corridor, beside the doorway, so you
-         read it on your way through rather than back at the entrance (template: plaque.js).
+    <!-- The ONE board, standing just inside the mouth of the long corridor, against its right
+         wall, so you read it as you enter the corridor (template: plaque.js).
          Bump `version` on every publish. -->
     <a-entity id="plaque" plaque="title: XR MUSEUM; name: Aritra Mitra;
         detail: BDes, Immersive Digital Environments|O.P. Jindal Global University, Class of 2028|After the Bihar Museum, Patna;
         columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: glide ahead|Stick back: reverse|Left stick: up / down|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Three corners,|three masterpieces;
-        version: 1.02"
-        position="2.6 0 20.1" rotation="0 -28 0"></a-entity>
+        version: 1.03"
+        position="1.02 0 17.6" rotation="0 -90 0"></a-entity>
 
     <!-- Gallery labels: the same plaque construct, scaled down to label size. -->
     <a-entity plaque="title: NEFERTITI; name: Bust of Nefertiti;
         detail: Thutmose, c. 1345 BCE|Limestone and stucco|Amarna, Egypt;
-        version: 1.02" position="1.9 0 -10.4" rotation="0 -65 0" scale="0.55 0.55 0.55"></a-entity>
+        version: 1.03" position="0.9 0 -11.55" rotation="0 -18 0" scale="0.55 0.55 0.55"></a-entity>
     <a-entity plaque="title: CAESAR; name: Bust of Julius Caesar;
         detail: Roman, 1st century BCE|Marble|Musee du Louvre, Paris;
-        version: 1.02" position="-8.83 0 6.83" rotation="0 120 0" scale="0.55 0.55 0.55"></a-entity>
+        version: 1.03" position="-7.95 0 4.95" rotation="0 120 0" scale="0.55 0.55 0.55"></a-entity>
     <a-entity plaque="title: ROCKET; name: Stephensons Rocket;
         detail: Robert Stephenson, 1829|Iron, copper and brass|Rainhill Trials, England;
-        version: 1.02" position="8.48 0 7.43" rotation="0 -120 0" scale="0.55 0.55 0.55"></a-entity>
+        version: 1.03" position="6.73 0 5.53" rotation="0 -120 0" scale="0.55 0.55 0.55"></a-entity>
 
     <!-- Reset dialog. Opens in front of you (Y button, R key or the Reset button). -->
     <a-entity id="dialog" visible="false">
@@ -109,7 +113,7 @@
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
-  <script src="plaque.js?v=1.02"></script>
+  <script src="plaque.js?v=1.03"></script>
   <script>
     var T = AFRAME.THREE;
     function $(id) { return document.getElementById(id); }
@@ -136,7 +140,7 @@
     }
 
     var BX = 17, BZ = 28;                               // you cannot walk or teleport outside this box
-    var MODEL_URL = 'url(models/museum.glb?v=1.02)';
+    var MODEL_URL = 'url(models/museum.glb?v=1.03)';
     var START = [0, 0, 25.2];
 
     function loco() { return $('rig').components.locomotion; }
