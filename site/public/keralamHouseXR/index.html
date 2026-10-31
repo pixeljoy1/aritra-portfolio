@@ -36,7 +36,7 @@
          (floors, steps, stairs, paving, play surfaces). Walls, furniture and roof block. -->
     <a-entity id="world">
       <a-plane class="walkable" rotation="-90 0 0" width="160" height="160" color="#5d8a3f"></a-plane>
-      <a-entity id="house" gltf-model="url(house.glb?v=11)"></a-entity>
+      <a-entity id="house" gltf-model="url(house.glb?v=12)"></a-entity>
     </a-entity>
 
     <!-- Playground and the oonjal: these move under simulated physics (play.js). They sit OUTSIDE #world so the
@@ -59,7 +59,7 @@
         <a-cylinder radius="0.01" height="2.4" material="color: #8e98a3; roughness: 1; metalness: 0" position="-0.7 -1.2 0.215"></a-cylinder>
         <a-cylinder radius="0.01" height="2.4" material="color: #8e98a3; roughness: 1; metalness: 0" position="0.7 -1.2 0.215"></a-cylinder>
         <a-box width="1.5" height="0.06" depth="0.43" material="color: #b07a43; roughness: 1; metalness: 0" position="0 -2.42 0"></a-box>
-        <a-box width="1.5" height="0.64" depth="0.05" material="color: #6a3d20; roughness: 1; metalness: 0" position="0 -2.1 0.19"></a-box>
+        <a-box width="1.5" height="0.64" depth="0.05" material="color: #6a3d20; roughness: 1; metalness: 0" position="0 -2.1 -0.19"></a-box>
         <a-box width="1.3" height="0.08" depth="0.34" material="color: #b8352f; roughness: 1; metalness: 0" position="0 -2.35 -0.02"></a-box>
       </a-entity>
       <!-- seesaw -->
@@ -85,12 +85,12 @@
       <a-sphere radius="0.1" material="color: #ff7a1a; roughness: 1; metalness: 0" slideball="from: 13.85 1.71 1.4; to: 16.2 0.43 1.4"></a-sphere>
     </a-entity>
 
-    <!-- The plaque: the ONE board, standing right outside the front door beside the steps, angled to face the path (template: plaque.js). Bump `version` on every publish. -->
+    <!-- The plaque: the ONE board, standing just outside the front gate beside the start point, angled to face the player (template: plaque.js). Bump `version` on every publish. -->
     <a-entity id="plaque" plaque="title: KERALAM HOUSE XR; name: Aritra Mitra;
         detail: BDes, Immersive Digital Environments|O.P. Jindal Global University, Class of 2028;
         columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: glide ahead|Stick back: reverse|Left stick: up / down|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Stairs: left side up|to the upper floor, roof;
-        version: 1.07"
-        position="2.45 0 5.4" rotation="0 -45 0"></a-entity>
+        version: 1.08"
+        position="3.5 0 13.7" rotation="0 -22 0"></a-entity>
 
     <!-- Reset dialog. Opens in front of you (Y button, R key or the Reset button). -->
     <a-entity id="dialog" visible="false">
@@ -121,8 +121,8 @@
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
-  <script src="plaque.js?v=1.07"></script>
-  <script src="play.js?v=1.07"></script>
+  <script src="plaque.js?v=1.08"></script>
+  <script src="play.js?v=1.08"></script>
   <script>
     var T = AFRAME.THREE;
     function $(id) { return document.getElementById(id); }
@@ -149,7 +149,7 @@
     }
 
     var BX = 34, BZ = 34;                               // you cannot walk or teleport outside this square
-    var MODEL_URL = 'url(house.glb?v=11)';
+    var MODEL_URL = 'url(house.glb?v=12)';
     var START = [0, 0, 14.5];
 
     function loco() { return $('rig').components.locomotion; }
@@ -288,8 +288,8 @@
     var WALK_ACCEL = 10, WALK_BRAKE = 14;           // how fast velocity follows the target (1/s)
     var STICK_YAW = 1.9;                            // rad/s at full stick (about 110 deg/s)
     var WALK_BOOST = 1.2, WALK_RAMP = 3.5;          // trigger adds up to +120% speed, building up at this rate (1/s)
-    var FLY_SPEED = 4.5, FLY_BACK = 2.2, CLIMB_SPEED = 1.4, FLY_PITCH = 0.2;   // fly mode (m/s); aim pitch only adds 20% as climb
-    var FLY_ACCEL = 1.0, FLY_BRAKE = 3.5;                                      // 1/s: slow to build up, gentle to stop
+    var FLY_SPEED = 4.5, FLY_BACK = 3.4, CLIMB_SPEED = 1.4, FLY_PITCH = 0.2;   // fly mode (m/s); aim pitch only adds 20% as climb
+    var FLY_ACCEL = 2.4, FLY_REV = 5.0, FLY_BRAKE = 3.5;                        // 1/s: smooth build up, quick reverse, gentle stop
     var AIM_DEAD = 0.1, AIM_GAIN = 3.4, AIM_MAX = 2.6;                      // wrist steering: dead zone, gain, max rad/s
     var FLY_RADIUS = 0.4, FLY_MIN_ALT = 0.7, BY = 36, BSOFT = 8;
     var WALK_RADIUS = 0.3, MAX_STEP_UP = 0.36, MAX_DROP = 0.6;   // you cannot step off an edge higher than this
@@ -496,10 +496,10 @@
           var hh = this._u.set(aim.x, 0, aim.z);
           if (hh.lengthSq() < 1e-4) { this.cam.object3D.getWorldQuaternion(this._q); hh.set(0, 0, -1).applyQuaternion(this._q); hh.y = 0; }
           hh.normalize();
-          var sp = c >= 0 ? FLY_SPEED * Math.pow(c, 1.3) : FLY_BACK * c;
+          var sp = c >= 0 ? FLY_SPEED * c * c * (3 - 2 * c) : FLY_BACK * c;
           var tg = this._t.copy(hh).multiplyScalar(sp);
           tg.y = clamp((c > 0 ? clamp(aim.y, -1, 1) * sp * FLY_PITCH : 0) - ls * CLIMB_SPEED, -CLIMB_SPEED, CLIMB_SPEED);
-          var braking = Math.abs(c) < 0.05 && Math.abs(ls) < 0.05, k = braking ? FLY_BRAKE : FLY_ACCEL;
+          var braking = Math.abs(c) < 0.05 && Math.abs(ls) < 0.05, k = braking ? FLY_BRAKE : (c < -0.05 ? FLY_REV : FLY_ACCEL);
           var ke = 1 - Math.exp(-k * dt), kv = 1 - Math.exp(-Math.max(k, 2.5) * dt);
           vel.x += (tg.x - vel.x) * ke; vel.z += (tg.z - vel.z) * ke; vel.y += (tg.y - vel.y) * kv;
           if (braking && vel.lengthSq() < 0.0004) vel.set(0, 0, 0);
