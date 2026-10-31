@@ -10,7 +10,7 @@ status: "featured"
 tools: ["Maya", "Marmoset Toolbag"]
 role: "3D environment artist"
 order: 4
-links: { "Walk a Kerala house in VR (Meta Quest 3 or browser)": "/vr/" }
+links: { "Walk a Kerala house in VR (Meta Quest 3 or browser)": "/keralamHouseXR/" }
 ---
 ## At a glance
 - **Problem:** make a place that tells its story without a single line of text.
