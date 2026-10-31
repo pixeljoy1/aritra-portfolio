@@ -99,7 +99,7 @@
       "BLENDER",
       "A-FRAME"
     ],
-    "blurb": "A life-size hologram of the human respiratory system. Follow a breath from the nose down the trachea into 18 branching paths, scale the body up to 40 times and fly inside the airway, explode the organs apart, isolate one system at a time and watch cyan air go in and warm air come out on a breath cycle you control.",
+    "blurb": "A life-size hologram of the human respiratory system. Follow a breath from the nose down the trachea into 18 branching paths, scale the body up to 40 times, explode the organs apart, isolate one system at a time and watch cyan air go in and warm air come out on a breath cycle you control.",
     "cta": "ENTER THE ATLAS ↗",
     "ctaNote": "OPENS IN A NEW TAB · BEST ON META QUEST 3, ALSO WORKS ON DESKTOP",
     "gallery": [
@@ -134,7 +134,7 @@
       ],
       [
         "Locomotion.",
-        "The same walk and fly engine as the Kerala house, slowed right down for control. Pick an organ in the menu and you glide to it while everything else goes translucent. Hold the stick at 3 or 9 o'clock to circle it, run its function, and finish its two tasks."
+        "A museum display, not a world to walk around: you ride a smooth circle round the organ you pick, always facing it. Pick an organ in the menu and you glide to it while everything else goes translucent. Hold either stick to the side to circle it, run its function, and finish its two tasks."
       ],
       [
         "Reset.",
@@ -143,32 +143,28 @@
     ],
     "controls": [
       [
-        "Right trigger",
-        "Fly where you aim, slowly and smoothly. Release to hover"
+        "Either hand: laser and trigger",
+        "Point at a panel button or a label and pull the trigger. Both hands show a laser"
       ],
       [
-        "Right stick",
-        "Left or right turns, forward or back climbs or dives"
-      ],
-      [
-        "Right grip",
-        "Grab and spin the model"
-      ],
-      [
-        "Right A and B",
-        "A cycles the X-ray view, B switches walk and fly"
-      ],
-      [
-        "Left laser and trigger",
-        "Press a panel organ button or a label to focus that organ. Everything else turns translucent"
-      ],
-      [
-        "Left stick at 3 or 9 o'clock",
-        "Hold it to circle the focused organ at a steady speed, in a perfect circle"
+        "Either stick to the side",
+        "Circle the focused organ at a steady speed, in a perfect circle"
       ],
       [
         "Left stick forward or back",
-        "Scales the model"
+        "Move closer or further away"
+      ],
+      [
+        "Right stick forward or back",
+        "Rise or lower"
+      ],
+      [
+        "Right A and B",
+        "A cycles the X-ray view, B changes the circling speed"
+      ],
+      [
+        "Grip",
+        "Dock the panel to you, or leave it fixed in space"
       ],
       [
         "Left X and Y",
@@ -176,9 +172,9 @@
       ],
       [
         "Desktop",
-        "Space to fly, WASD to steer, 1 to 7 to focus an organ, Q and E or O to circle it, U for its function, R to reset"
+        "A and D to circle, W and S closer and further, Q and E lower and raise, 1 to 7 to focus an organ, O to circle hands-free, U for its function, R to reset"
       ]
     ],
-    "status": "Checked on desktop: loading, fly and walk modes, orbit and scale, explode, isolate, the three view presets, the breath cycle, reset and reload. Next pass: controller aim, comfort and frame rate on the headset."
+    "status": "Checked on desktop: loading, the circling path (constant radius and height, always facing the organ), focus and translucency, the laser click path, explode, isolate, the three view presets, the breath cycle, reset and reload. Not yet felt on the headset: laser visibility, trigger response, circling speed."
   }
 ]

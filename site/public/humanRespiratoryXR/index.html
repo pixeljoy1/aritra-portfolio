@@ -6,6 +6,7 @@
   <title>Aritra: Human Respiratory XR</title>
   <!-- Pinned A-Frame release. WebXR needs HTTPS; GitHub Pages provides it. -->
   <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+  <script src="museum-display.js?v=1"></script>
   <style>
     /* Flat-view overlays. The Quest has no console, so status and errors are printed on the page. */
     #brand { position: fixed; left: 12px; top: 12px; z-index: 10; display: flex; align-items: center; gap: 8px;
@@ -29,7 +30,7 @@
   </style>
 </head>
 <body>
-  <div id="brand">Human Respiratory XR <span class="pill">v1.02</span></div>
+  <div id="brand">Human Respiratory XR <span class="pill">v1.03</span></div>
   <div id="status">Loading the anatomy…</div>
   <button id="reset-btn" type="button" title="Reset the experience (R)">Reset</button>
   <div id="hud"></div>
@@ -64,11 +65,11 @@
     </a-entity>
 
     <!-- Player rig: moving the rig moves the player, never the camera itself -->
-    <a-entity id="rig" position="0 0 0" locomotion holo-ui>
+    <a-entity id="rig" position="0 0 0" museum-rig museum-pointer app-controls holo-ui>
       <a-camera id="cam" wasd-controls="enabled: false"></a-camera>
-      <!-- Left hand: laser + trigger = panel buttons. Stick x orbits the model, stick y scales it. -->
+      <!-- Both hands: visible laser + trigger = panel buttons. Either stick to the side circles the organ, forward/back moves closer/further. -->
       <a-entity id="lhand" oculus-touch-controls="hand: left"></a-entity>
-      <!-- Right hand: aim + trigger = thrust. Stick turns and climbs. Grip = grab and spin the model. -->
+      <!-- Right stick forward/back = rise / lower. -->
       <a-entity id="rhand" oculus-touch-controls="hand: right"></a-entity>
     </a-entity>
   </a-scene>
@@ -83,16 +84,7 @@
     function wrapPi(a) { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; }
     function smooth(u) { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); }
 
-    // Tuning URL parameters: ?aim=<deg> tilts the controller aim (positive = up), ?tilt=1 turns on drone bank and nose-down.
-    var QS = new URLSearchParams(location.search);
-    var AIM_Q = new T.Quaternion().setFromAxisAngle(new T.Vector3(1, 0, 0), (parseFloat(QS.get('aim')) || 0) * Math.PI / 180);
-    var TILT_ON = QS.get('tilt') === '1';
-    var _aq = new T.Quaternion();
-    function aimRay(el, origin, dir) {                 // scratch objects only: no garbage per frame
-      el.object3D.getWorldPosition(origin);
-      el.object3D.getWorldQuaternion(_aq).multiply(AIM_Q);
-      dir.set(0, 0, -1).applyQuaternion(_aq);
-    }
+    var QS = new URLSearchParams(location.search);     // ?aim=<deg> (tilt the controller aim) is read by museum-display.js
 
     // ---------------------------------------------------------------
     // Shared app state. The panel, keys, labels and controllers all change this one object.
@@ -103,14 +95,12 @@
     var PRESET_NAME = { clinical: 'CLINICAL', xray: 'DEEP X-RAY', solid: 'SOLID' };
     var EXPLODE_STEPS = [0, 0.5, 1];
     var BPM_STEPS = [6, 12, 18];
-    var START = [0, 0, 0];
-    var APP = {
+        var APP = {
       scale: 1, scaleT: 1, spin: 0, auto: false, explodeIdx: 0, explode: 0, iso: 'ALL', preset: 'clinical',
-      bpm: 12, labels: true, audio: false, mode: 'fly', anchor: 'dock', homing: false, speed: 0, hover: null,
-      orbit: 0, func: false, funcDone: false, orbitAcc: 0, flyTo: null, focusDone: false
+      bpm: 12, labels: true, audio: false, anchor: 'dock', hover: null,
+      orbit: 0, func: false, funcDone: false, orbitAcc: 0, focusDone: false
     };
-    var ORBIT_RATE = 0.42;                                // rad/s: one full circle in about 15 s, steady and comfortable
-    var TWO_PI = Math.PI * 2;
+        var TWO_PI = Math.PI * 2;
     var FOCUS_MIN = { lungs: 0.62, heart: 0.85, diaphragm: 0.62, airway: 0.92, trachea: 0.95, bronchi: 1.0 };   // the focused organ is lifted, the rest go translucent
     var CAPTION = {
       ALL: 'Pick an organ above to focus on it. You glide to it, everything else turns translucent, and you finish two tasks: circle it, then run its function.',
@@ -123,7 +113,7 @@
     };
 
     function model() { return $('model').components['respiratory-model']; }
-    function loco() { return $('rig').components.locomotion; }
+    function loco() { return $('rig').components['app-controls']; }
     function ui() { return $('rig').components['holo-ui']; }
     function dirtyPanel() { var u = ui(); if (u) u.dirty = true; }
     function speak(text) {
@@ -143,9 +133,8 @@
     };
     // Focus an organ (or ALL to leave focus): glide to it, fade the rest to translucent, reset its tasks.
     function focusOrgan(name) {
-      APP.iso = name; APP.func = false; APP.funcDone = false; APP.orbitAcc = 0; APP.orbit = 0; APP.focusDone = false; APP.homing = false; APP.flyTo = null;
-      var m = model();
-      if (name !== 'ALL' && m && m.ready) { var f = m.focusInfo(name); if (f) APP.flyTo = { d: Math.max(f.r * 2.8, 0.34) }; }
+      APP.iso = name; APP.func = false; APP.funcDone = false; APP.orbitAcc = 0; APP.orbit = 0; APP.focusDone = false;
+      var L = loco(); if (L) L.frame(name);
       dirtyPanel(); speak(CAPTION[name]);
     }
     function setIso(name) { focusOrgan(name); }
@@ -169,9 +158,9 @@
       },
       view: function () { APP.preset = PRESET_ORDER[(PRESET_ORDER.indexOf(APP.preset) + 1) % PRESET_ORDER.length]; },
       breath: function () { APP.bpm = BPM_STEPS[(BPM_STEPS.indexOf(APP.bpm) + 1) % BPM_STEPS.length]; },
-      mode: function () { var L = loco(); if (L) L.toggleMode(); },
+      speed: function () { var L = loco(); if (L) L.speedIdx = (L.speedIdx + 1) % SPEEDS.length; },
       labels: function () { APP.labels = !APP.labels; },
-      home: function () { APP.homing = true; },
+      home: function () { APP.scaleT = 1; APP.spin = 0; APP.auto = false; rigC().home(); focusOrgan('ALL'); },
       audio: function () {
         APP.audio = !APP.audio;
         try { if (!APP.audio && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
@@ -356,7 +345,7 @@
         this.el.setObject3D('anat', root);
         if (this.pathData) this.buildAirflow(); else this.pendingFlow = true;
         this.ready = true;
-        statusEl.textContent = 'Ready. Space = thrust along your look direction, WASD steers, click the panel buttons. In VR tap Enter VR.'; statusEl.className = 'done';
+        statusEl.textContent = 'Ready. A and D circle the organ, W and S move closer or further, click the panel buttons. In VR tap Enter VR.'; statusEl.className = 'done';
         if (window.__afterModel) window.__afterModel();
       },
 
@@ -517,262 +506,88 @@
     });
 
     // ---------------------------------------------------------------
-    // Locomotion. Ported from the Kerala house engine (XR_LOCOMOTION_SPEC.md): shared plumbing, WALK (Part B), FLY (Part C).
-    // There is nothing solid to hit here, so collision is replaced by a soft and hard play-area limit (C.7).
+    // Movement is the MUSEUM DISPLAY model (museum-display.js, reference in XR_MuseumDisplay/README.md): you ride a circle round the
+    // focused organ, always facing it. There is no walking and no free flight. This component only wires keys, buttons and the page.
     // ---------------------------------------------------------------
-    var WALK_SPEED = 1.4, WALK_BACK = 0.9, WALK_ACCEL = 6, WALK_BRAKE = 12, STICK_YAW = 1.1;
-    var FLY_SPEED = 9, CLIMB_SPEED = 4, FLY_ACCEL = 1.8, FLY_BRAKE = 4.5;          // slow, controlled: about 1.2 m/s at full trigger on a life-size body
-    var AIM_DEAD = 0.14, AIM_GAIN = 2.0, AIM_MAX = 1.1, YAW_EASE = 6;
-    var TILT_PITCH = 0.12, TILT_ROLL = 0.3, ROLL_GAIN = 0.14;
-    var BX = 30, BZ = 30, BYMAX = 40, BYMIN = -30, BSOFT = 8;
+    var SUBJECT = { c: new T.Vector3(0, 1.4, -1.2), r: 0.5, t: 0 };
+    function rigC() { return $('rig').components['museum-rig']; }
+    var SPEEDS = [1, 0.5, 1.6], SPEED_NAME = ['NORMAL', 'SLOW', 'FAST'];
 
-    AFRAME.registerComponent('locomotion', {
+    AFRAME.registerComponent('app-controls', {
       init: function () {
-        var self = this;
-        this.paused = false; this.dialogOpen = false;
-        this.trig = 0; this.keyTrig = 0; this.sx = 0; this.sy = 0; this.kx = 0; this.ky = 0;   // right trigger and stick, desktop keys
-        this.lsx = 0; this.lsy = 0; this.korbit = 0;                                          // left stick (orbit, scale)
-        this.vel = new T.Vector3(); this.yawRate = 0; this.pitch = 0; this.roll = 0;
-        this.aimOverride = null; this.vrTest = false; this.grab = null; this.hudClock = 0;
-        this.cam = $('cam'); this.hand = $('rhand'); this.lhand = $('lhand');
-        this._h = new T.Vector3(); this._o = new T.Vector3(); this._d = new T.Vector3(); this._t = new T.Vector3();
-        this._a = new T.Vector3(); this._q = new T.Quaternion(); this._u = new T.Vector3(); this._w1 = new T.Vector3(); this._w2 = new T.Vector3();
+        var self = this, rig = this.el;
+        this.paused = false; this.dialogOpen = false; this.hudClock = 0; this.speedIdx = 0;
+        this.rh = $('rhand'); this.lh = $('lhand');
+        this.rh.addEventListener('abuttondown', function () { act('view'); });
+        this.rh.addEventListener('bbuttondown', function () { act('speed'); });
+        this.lh.addEventListener('xbuttondown', function () { act('home'); });
+        this.lh.addEventListener('ybuttondown', function () { openDialog(); });
+        this.lh.addEventListener('gripdown', function () { act('anchor'); });
+        this.rh.addEventListener('gripdown', function () { act('anchor'); });
 
-        this.hand.addEventListener('triggerchanged', function (e) { self.trig = e.detail.value; });
-        this.hand.addEventListener('triggerdown', function () {
-          self.trig = 1;
-          if (self.dialogOpen) { aimRay(self.hand, self._o, self._d); pickDialog(self._o, self._d); }
+        // every full lap of the focused organ counts towards its first task
+        rig.addEventListener('museum-orbit', function (e) {
+          if (APP.iso === 'ALL') return;
+          var before = Math.floor(APP.orbitAcc / TWO_PI * 100); APP.orbitAcc += e.detail.delta;
+          if (Math.floor(APP.orbitAcc / TWO_PI * 100) !== before) dirtyPanel();
+          checkFocusDone();
         });
-        this.hand.addEventListener('triggerup', function () { self.trig = 0; });
-        this.hand.addEventListener('thumbstickmoved', function (e) { self.sx = e.detail.x; self.sy = e.detail.y; });
-        this.hand.addEventListener('gripdown', function () { self.startGrab(); });
-        this.hand.addEventListener('gripup', function () { self.grab = null; });
-        this.hand.addEventListener('abuttondown', function () { act('view'); });
-        this.hand.addEventListener('bbuttondown', function () { self.toggleMode(); });
-        this.lhand.addEventListener('thumbstickmoved', function (e) { self.lsx = e.detail.x; self.lsy = e.detail.y; });
-        this.lhand.addEventListener('xbuttondown', function () { act('home'); });
-        this.lhand.addEventListener('ybuttondown', function () { openDialog(); });
-        this.lhand.addEventListener('gripdown', function () { act('anchor'); });
 
-        // Desktop fallback: Space = trigger, WASD / arrows = right stick, Q E = orbit, the rest are panel buttons
+        // Desktop: A D / arrows circle, W S closer/further, Q E lower/raise; the rest are panel buttons
         var keys = {}, KEYMAP = { KeyG: 'explode', KeyI: 'isolate', KeyV: 'view', KeyT: 'rotate', KeyN: 'breath', KeyL: 'labels',
-                                  KeyM: 'audio', KeyF: 'mode', KeyX: 'home', BracketRight: 'scaleUp', BracketLeft: 'scaleDown', KeyP: 'anchor', KeyO: 'orbit', KeyU: 'func',
+                                  KeyM: 'audio', KeyF: 'speed', KeyX: 'home', BracketRight: 'scaleUp', BracketLeft: 'scaleDown', KeyP: 'anchor', KeyO: 'orbit', KeyU: 'func',
                                   Digit1: 'f_ALL', Digit2: 'f_AIRWAY', Digit3: 'f_TRACHEA', Digit4: 'f_BRONCHI', Digit5: 'f_LUNGS', Digit6: 'f_HEART', Digit7: 'f_DIAPHRAGM' };
-        function stickKeys() {
-          self.kx = (keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0);
-          self.ky = (keys.ArrowDown || keys.KeyS ? 1 : 0) - (keys.ArrowUp || keys.KeyW ? 1 : 0);
-          self.korbit = (keys.KeyE ? 1 : 0) - (keys.KeyQ ? 1 : 0);
+        function sync() {
+          var k = rigC().key;
+          k.x = (keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0);
+          k.y = (keys.ArrowDown || keys.KeyS ? 1 : 0) - (keys.ArrowUp || keys.KeyW ? 1 : 0);
+          k.z = (keys.KeyE ? 1 : 0) - (keys.KeyQ ? 1 : 0);
         }
         window.addEventListener('keydown', function (e) {
           if (e.metaKey || e.ctrlKey || e.altKey) return;
-          keys[e.code] = true; stickKeys();
-          if (e.code === 'Space') { self.keyTrig = 1; e.preventDefault(); }
-          else if (e.code === 'KeyR') openDialog();
+          keys[e.code] = true; sync();
+          if (e.code === 'KeyR') openDialog();
           else if (e.code === 'Escape') closeDialog();
           else if (KEYMAP[e.code] && !e.repeat && !self.dialogOpen) act(KEYMAP[e.code]);
         });
-        window.addEventListener('keyup', function (e) {
-          keys[e.code] = false; stickKeys();
-          if (e.code === 'Space') self.keyTrig = 0;
-        });
+        window.addEventListener('keyup', function (e) { keys[e.code] = false; sync(); });
         $('reset-btn').addEventListener('click', function () { openDialog(); });
         var sc = this.el.sceneEl;
         sc.addEventListener('enter-vr', function () { $('reset-btn').style.display = 'none'; $('hud').style.display = 'none'; });
         sc.addEventListener('exit-vr', function () { $('reset-btn').style.display = ''; $('hud').style.display = ''; });
+        rigC().setSubject(function (out) { out.c.copy(SUBJECT.c); out.r = SUBJECT.r; return true; });
       },
 
-      // Turn (and optionally tilt) the rig about the player's head so the head stays put in the world (A.5).
-      rotateRig: function (yaw, pitch, roll) {
-        var rig = this.el.object3D, a = this._w1, b = this._w2;
-        this.cam.object3D.getWorldPosition(a);
-        rig.rotation.set(pitch || 0, yaw, roll || 0, 'YXZ');
-        rig.updateMatrixWorld(true);
-        this.cam.object3D.getWorldPosition(b);
-        rig.position.add(a.sub(b));
-      },
-
-      // Direction the player wants to go: the controller in VR, or the head on desktop.
-      getAim: function () {
-        var d = this._a;
-        if (this.aimOverride) return d.copy(this.aimOverride).normalize();
-        if (!this.vrTest && !this.el.sceneEl.is('vr-mode')) {
-          this.cam.object3D.getWorldQuaternion(this._q);
-          return d.set(0, 0, -1).applyQuaternion(this._q);
-        }
-        aimRay(this.hand, this._o, d);
-        return d;
-      },
-
-      toggleMode: function () {
-        APP.mode = APP.mode === 'fly' ? 'walk' : 'fly';
-        this.vel.set(0, 0, 0); this.yawRate = 0;
-        if (APP.mode === 'walk') {                          // level out and settle onto the floor
-          this.pitch = this.roll = 0; this.rotateRig(this.el.object3D.rotation.y, 0, 0);
-        }
-        dirtyPanel();
-      },
-
-      // Hold the right grip: the model's yaw follows the hand's yaw 1:1
-      startGrab: function () {
-        var m = model(); if (!m || this.dialogOpen) return;
-        aimRay(this.hand, this._o, this._d);
-        this.grab = { a0: Math.atan2(-this._d.x, -this._d.z), s0: APP.spin };
+      // Frame an organ: the rig eases to the right distance and height, then you can circle it
+      frame: function (name) {
+        var rc = rigC(); if (!rc) return;
+        if (name === 'ALL') rc.frameTo(3.6, 0.3); else rc.frameTo(2.8, 0.34);
       },
 
       tick: function (time, dtMs) {
-        var dt = Math.min(dtMs, 50) / 1000, rig = this.el.object3D, head = this._h, vel = this.vel, sceneEl = this.el.sceneEl;
-        this.hudClock += dt;
-        if (this.paused) { this.updateHud(); return; }
-        var vr = this.vrTest || sceneEl.is('vr-mode');
-        var trig = Math.max(this.trig, this.keyTrig);
-        var sx = dead(this.sx + this.kx), sy = dead(this.sy + this.ky);          // sy < 0 = stick pushed forward
-        var lsx = clamp(dead(this.lsx) + this.korbit, -1, 1), lsy = dead(this.lsy);
-
-        // grab-rotate the model with the right hand
-        if (this.grab) {
-          aimRay(this.hand, this._o, this._d);
-          APP.spin = this.grab.s0 + wrapPi(Math.atan2(-this._d.x, -this._d.z) - this.grab.a0);
+        var dt = Math.min(dtMs, 50) / 1000, rc = rigC(), m = model();
+        this.hudClock += dt; SUBJECT.t += dt;
+        rc.paused = this.paused; rc.auto = APP.orbit; rc.speedMul = SPEEDS[this.speedIdx];
+        if (m && m.ready && SUBJECT.t > 0.1) {                      // subject centre and size, ten times a second
+          SUBJECT.t = 0; var f = m.focusInfo(APP.iso);
+          if (f) { SUBJECT.c.copy(f.c); SUBJECT.r = f.r; }
         }
-
-        // left stick held at 3 o'clock or 9 o'clock (or Q / E): circle the focused organ at a steady rate, a perfect circle at constant radius.
-        // The panel's ORBIT button does the same hands-free. Left stick forward or back (away from 3 and 9) scales the model.
-        var sdir = this.korbit ? this.korbit : (Math.abs(this.lsx) > 0.6 && Math.abs(this.lsy) < 0.55 ? Math.sign(this.lsx) : 0);
-        var odir = sdir || APP.orbit;
-        if (odir && !APP.homing) this.orbitStep(dt, odir);
-        if (lsy && Math.abs(this.lsx) < 0.5) APP.scaleT = clamp(APP.scaleT * Math.exp(-lsy * 1.1 * dt), SCALE_MIN, SCALE_MAX);
-
-        // any flight input cancels the automatic glide to a focused organ
-        if (APP.flyTo && (trig > 0.12 || Math.abs(sx) > 0.3 || Math.abs(sy) > 0.3)) APP.flyTo = null;
-        if (APP.flyTo && !APP.homing) { this.glideTo(dt); this.updateHud(); return; }
-
-        // Reset view: glide back to the start pose, model upright at 1x
-        if (APP.homing) {
-          var kh = 1 - Math.exp(-5 * dt), nearest = Math.round(APP.spin / (2 * Math.PI)) * 2 * Math.PI;
-          APP.scaleT += (1 - APP.scaleT) * kh; APP.spin += (nearest - APP.spin) * kh; APP.auto = false;
-          rig.position.x += (START[0] - rig.position.x) * kh; rig.position.y += (START[1] - rig.position.y) * kh; rig.position.z += (START[2] - rig.position.z) * kh;
-          rig.rotation.y += wrapPi(0 - rig.rotation.y) * kh; vel.set(0, 0, 0);
-          if (Math.abs(APP.scaleT - 1) < 0.003 && Math.abs(nearest - APP.spin) < 0.003 && rig.position.length() < 0.01 && Math.abs(rig.rotation.y) < 0.003) {
-            APP.scaleT = 1; APP.spin = nearest; rig.position.set(START[0], START[1], START[2]); rig.rotation.y = 0; APP.homing = false;
-          }
-          this.updateHud(); return;
-        }
-
-        if (APP.mode === 'fly') this.tickFly(dt, vr, trig, sx, sy); else this.tickWalk(dt, trig, sx, sy);
-        this.updateHud();
-      },
-
-      // Rotate the whole rig about the vertical axis through the focused organ's centre: the head moves on a perfect circle and keeps facing it.
-      orbitStep: function (dt, dir) {
-        var rig = this.el.object3D, c = this._t, m = model(), f = m && m.ready ? m.focusInfo(APP.iso) : null;
-        if (f) c.copy(f.c); else $('model').object3D.getWorldPosition(c);
-        var ang = dir * ORBIT_RATE * dt, cs = Math.cos(ang), sn = Math.sin(ang), px = rig.position.x - c.x, pz = rig.position.z - c.z;
-        rig.position.x = c.x + px * cs + pz * sn; rig.position.z = c.z - px * sn + pz * cs;
-        rig.rotation.y += ang; this.vel.set(0, 0, 0);
-        if (APP.iso !== 'ALL') {
-          var before = Math.floor(APP.orbitAcc / TWO_PI * 100); APP.orbitAcc += Math.abs(ang);
-          if (Math.floor(APP.orbitAcc / TWO_PI * 100) !== before) dirtyPanel();
-          checkFocusDone();
-        }
-      },
-
-      // Glide to a standing point in front of the focused organ and turn to face it.
-      glideTo: function (dt) {
-        var rig = this.el.object3D, head = this._h, m = model(), f = m && m.ready ? m.focusInfo(APP.iso) : null;
-        if (!f) { APP.flyTo = null; return; }
-        this.cam.object3D.getWorldPosition(head);
-        var dx = head.x - f.c.x, dz = head.z - f.c.z, hl = Math.hypot(dx, dz);
-        if (hl < 0.05) { dx = 0; dz = 1; hl = 1; }                                  // standing inside it: step out to the patient's front
-        var D = APP.flyTo.d, tx = f.c.x + dx / hl * D, tz = f.c.z + dz / hl * D, ty = f.c.y + D * 0.12;
-        var k = 1 - Math.exp(-2.4 * dt);
-        rig.position.x += (tx - head.x) * k; rig.position.z += (tz - head.z) * k;
-        if (APP.mode === 'fly') rig.position.y += (ty - head.y) * k;
-        var local = this.cam.object3D.rotation.y, want = Math.atan2(-(f.c.x - head.x), -(f.c.z - head.z)) - local;
-        var yerr = wrapPi(want - rig.rotation.y);
-        this.rotateRig(rig.rotation.y + yerr * k, 0, 0);
-        this.vel.set(0, 0, 0); this.yawRate = 0;
-        if (Math.hypot(tx - head.x, tz - head.z) < 0.01 && Math.abs(yerr) < 0.02 && (APP.mode !== 'fly' || Math.abs(ty - head.y) < 0.01)) APP.flyTo = null;
-      },
-
-      // ---- FLY (C.3): aim sets the direction, trigger is throttle, stick yaws and climbs, release to brake and hover ----
-      tickFly: function (dt, vr, trig, sx, sy) {
-        var rig = this.el.object3D, vel = this.vel, head = this._h, ss = 0.13 * Math.sqrt(APP.scale);   // speed follows model scale
-        var aim = this.getAim();
-        var yawT = -sx * STICK_YAW;
-        if (vr && trig > 0.15) {
-          var off = wrapPi(Math.atan2(-aim.x, -aim.z) - rig.rotation.y), ex = Math.abs(off) - AIM_DEAD;
-          if (ex > 0) yawT += Math.sign(off) * Math.min(ex * AIM_GAIN, AIM_MAX);
-        }
-        this.yawRate += (yawT - this.yawRate) * (1 - Math.exp(-YAW_EASE * dt));
-
-        var tgt = this._t.copy(aim).multiplyScalar(FLY_SPEED * ss * Math.pow(trig, 1.3));
-        tgt.y += -sy * CLIMB_SPEED * ss;
-        var braking = trig < 0.05 && Math.abs(sy) < 0.05, k = braking ? FLY_BRAKE : FLY_ACCEL;
-        var ke = 1 - Math.exp(-k * dt), kv = 1 - Math.exp(-Math.max(k, 6) * dt);
-        vel.x += (tgt.x - vel.x) * ke; vel.z += (tgt.z - vel.z) * ke; vel.y += (tgt.y - vel.y) * kv;
-        if (braking && vel.lengthSq() < 0.0004) vel.set(0, 0, 0);
-
-        this.cam.object3D.getWorldPosition(head);                                  // soft wall near the edge of the play box
-        function soft(v, dist) { return v > 0 && dist < BSOFT ? Math.exp(-(1 - dist / BSOFT) * 8 * dt) : 1; }
-        vel.x *= soft(vel.x, BX - head.x) * soft(-vel.x, BX + head.x);
-        vel.z *= soft(vel.z, BZ - head.z) * soft(-vel.z, BZ + head.z);
-        vel.y *= soft(vel.y, BYMAX - head.y) * soft(-vel.y, head.y - BYMIN);
-
-        var pt = 0, rl = 0;
-        if (TILT_ON) {                                                             // optional drone bank and nose-down (C.5)
-          var fwdSpeed = -vel.x * Math.sin(rig.rotation.y) - vel.z * Math.cos(rig.rotation.y);
-          pt = -clamp(fwdSpeed / (FLY_SPEED * ss), 0, 1) * TILT_PITCH; rl = clamp(this.yawRate * ROLL_GAIN, -TILT_ROLL, TILT_ROLL);
-        }
-        this.pitch += (pt - this.pitch) * (1 - Math.exp(-6 * dt)); this.roll += (rl - this.roll) * (1 - Math.exp(-6 * dt));
-        if (Math.abs(this.yawRate) > 1e-3 || TILT_ON || this.pitch || this.roll) this.rotateRig(rig.rotation.y + this.yawRate * dt, this.pitch, this.roll);
-        rig.position.addScaledVector(vel, dt);
-        this.keepInside();
-      },
-
-      // ---- WALK (B.3): aim sets the direction (level), trigger walks, stick turns; stand on the floor grid ----
-      tickWalk: function (dt, trig, sx, sy) {
-        var rig = this.el.object3D, vel = this.vel;
-        this.yawRate += (-sx * STICK_YAW - this.yawRate) * (1 - Math.exp(-9 * dt));
-        if (Math.abs(this.yawRate) > 1e-3) this.rotateRig(rig.rotation.y + this.yawRate * dt, 0, 0);
-        var fwd = clamp(trig - sy, -1, 1), aim = this.getAim(), h = this._u.set(aim.x, 0, aim.z);
-        if (h.lengthSq() < 1e-4) { this.cam.object3D.getWorldQuaternion(this._q); h.set(0, 0, -1).applyQuaternion(this._q); h.y = 0; }
-        h.normalize();
-        var tgt = this._t.copy(h).multiplyScalar(fwd >= 0 ? WALK_SPEED * fwd : WALK_BACK * fwd);
-        vel.lerp(tgt, 1 - Math.exp(-(Math.abs(fwd) > 0.02 ? WALK_ACCEL : WALK_BRAKE) * dt));
-        if (Math.abs(fwd) < 0.02 && vel.lengthSq() < 0.0004) vel.set(0, 0, 0);
-        rig.position.x += vel.x * dt; rig.position.z += vel.z * dt;
-        rig.position.y += (0 - rig.position.y) * (1 - Math.exp(-6 * dt));            // settle onto the floor
-        this.keepInside();
-      },
-
-      // Hard stop at the edge of the play area (C.7)
-      keepInside: function () {
-        var rig = this.el.object3D, head = this._h, vel = this.vel;
-        this.cam.object3D.getWorldPosition(head);
-        var nx = clamp(head.x, -BX, BX), nz = clamp(head.z, -BZ, BZ), ny = APP.mode === 'fly' ? clamp(head.y, BYMIN, BYMAX) : head.y;
-        if (nx !== head.x) vel.x = 0; if (nz !== head.z) vel.z = 0; if (ny !== head.y) vel.y = 0;
-        rig.position.x += nx - head.x; rig.position.z += nz - head.z; rig.position.y += ny - head.y;
-      },
-
-      updateHud: function () {
         if (this.hudClock < 0.25) return; this.hudClock = 0;
-        var m = model(), b = m && m.phase ? ['INHALE', 'HOLD', 'EXHALE', 'REST'][m.phase.ph] : '';
-        APP.speed = this.vel.length();
-        $('hud').textContent = APP.mode.toUpperCase() + '  |  scale ' + APP.scale.toFixed(2) + 'x  |  ' + APP.speed.toFixed(1) + ' m/s  |  ' + b +
-          '\nSpace thrust (aim = look), W/S climb, A/D turn' +
-          '\n1-7 focus an organ, Q/E or O circle it, U function' +
+        var b = m && m.phase ? ['INHALE', 'HOLD', 'EXHALE', 'REST'][m.phase.ph] : '';
+        $('hud').textContent = 'MUSEUM DISPLAY  |  ' + APP.iso + '  |  scale ' + APP.scale.toFixed(2) + 'x  |  ' + SPEED_NAME[this.speedIdx] + '  |  ' + b +
+          '\nA/D circle, W/S closer/further, Q/E lower/raise' +
+          '\n1-7 focus an organ, O circle hands-free, U function' +
           '\n[ ] scale, G explode, V view, T rotate, N breath' +
-          '\nL labels, M audio, F walk/fly, X reset view, R reset';
+          '\nL labels, M audio, F speed, X reset view, R reset';
       },
 
       // Back to the start. The anatomy is thrown away and built again (frees its GPU memory).
       reset: function () {
-        this.vel.set(0, 0, 0); this.yawRate = 0; this.pitch = this.roll = 0;
-        this.trig = this.keyTrig = this.sx = this.sy = this.lsx = this.lsy = 0; this.grab = null;
-        var rig = this.el.object3D;
-        this.rotateRig(0, 0, 0);
-        rig.position.set(START[0], START[1], START[2]);
+        this.speedIdx = 0;
         APP.scale = APP.scaleT = 1; APP.spin = 0; APP.auto = false; APP.explodeIdx = 0; APP.explode = 0; APP.iso = 'ALL';
-        APP.preset = 'clinical'; APP.bpm = 12; APP.labels = true; APP.mode = 'fly'; APP.homing = false; APP.hover = null;
+        APP.preset = 'clinical'; APP.bpm = 12; APP.labels = true; APP.hover = null; APP.orbit = 0;
+        APP.func = false; APP.funcDone = false; APP.orbitAcc = 0; APP.focusDone = false;
+        rigC().home(); this.frame('ALL');
         try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
         var r = this.el.sceneEl.renderer;
         model().rebuild();
@@ -802,7 +617,7 @@
       { id: 'view', r: 5, c: 1, label: function () { return 'VIEW: ' + PRESET_NAME[APP.preset]; } },
       { id: 'breath', r: 6, c: 0, label: function () { return 'BREATH: ' + APP.bpm + ' BPM'; } },
       { id: 'labels', r: 6, c: 1, label: function () { return 'LABELS: ' + (APP.labels ? 'ON' : 'OFF'); }, on: function () { return APP.labels; } },
-      { id: 'mode', r: 7, c: 0, label: function () { return 'MODE: ' + APP.mode.toUpperCase(); } },
+      { id: 'speed', r: 7, c: 0, label: function () { var L = loco(); return 'SPEED: ' + SPEED_NAME[L ? L.speedIdx : 0]; } },
       { id: 'rotate', r: 7, c: 1, label: function () { return 'ROTATE: ' + (APP.auto ? 'ON' : 'OFF'); }, on: function () { return APP.auto; } },
       { id: 'home', r: 8, c: 0, label: function () { return 'RESET VIEW'; } },
       { id: 'audio', r: 8, c: 1, label: function () { return 'AUDIO GUIDE: ' + (APP.audio ? 'ON' : 'OFF'); }, on: function () { return APP.audio; } }
@@ -845,22 +660,7 @@
         rig.add(this.group);
         APP.anchor = 'dock';
 
-        // laser on the left hand
-        var lh = $('lhand').object3D;
-        this.laser = new T.Mesh(new T.CylinderGeometry(0.0015, 0.0015, 1, 6).rotateX(-Math.PI / 2).translate(0, 0, -0.5),
-          new T.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.75, toneMapped: false }));
-        this.laser.quaternion.copy(AIM_Q);
-        this.reticle = new T.Mesh(new T.SphereGeometry(0.006, 10, 8), new T.MeshBasicMaterial({ color: 0xffffff, toneMapped: false, depthTest: false }));
-        this.reticle.renderOrder = 40; this.reticle.visible = false;
-        lh.add(this.laser); sc.object3D.add(this.reticle);
-        this.laser.visible = false;
-        this._o = new T.Vector3(); this._d = new T.Vector3();
-
-        // left trigger presses whatever the laser points at
-        $('lhand').addEventListener('triggerdown', function () {
-          var L = loco(); aimRay($('lhand'), self._o, self._d);
-          if (L && L.dialogOpen) pickDialog(self._o, self._d); else self.click(self._o, self._d);
-        });
+        this._o = new T.Vector3(); this._d = new T.Vector3(); this.wired = false;
 
         // mouse on the flat view: hover and click (a drag to look around does not count as a click)
         var down = null;
@@ -904,7 +704,10 @@
         return hit;
       },
       hoverFrom: function (o, d) {
-        var hit = this.cast(o, d), id = null, L = loco();
+        return this.hoverHit(this.cast(o, d));
+      },
+      hoverHit: function (hit) {
+        var id = null, L = loco();
         if (L && L.dialogOpen) hit = null;
         APP.hover = hit && hit.object.isSprite ? hit.object : null;
         if (hit && hit.object === this.panel) id = hitPanel(hit);
@@ -925,13 +728,12 @@
         }
         this.haptic(0.7, 40);
       },
-      haptic: function (i, ms) {
-        try {
-          var tc = $('lhand').components['tracked-controls'], src = tc && tc.controller, gp = src && src.gamepad;
-          if (!gp) return;
-          if (gp.hapticActuators && gp.hapticActuators[0]) gp.hapticActuators[0].pulse(i || 0.4, ms || 30);
-          else if (gp.vibrationActuator) gp.vibrationActuator.playEffect('dual-rumble', { duration: ms || 30, strongMagnitude: i || 0.4, weakMagnitude: i || 0.4 });
-        } catch (e) {}
+      haptic: function (i, ms) { var p = this.el.components['museum-pointer']; if (p) p.buzz(null, i, ms); },
+      // Reset-dialog hits use the same laser: the two buttons are meshes, so they can be raycast directly
+      castDialog: function (o, d) {
+        pickRay.set(o, d);
+        var yes = $('dlg-yes').getObject3D('mesh'), no = $('dlg-no').getObject3D('mesh');
+        return yes && no ? pickRay.intersectObjects([yes, no], false)[0] || null : null;
       },
 
       draw: function () {
@@ -942,7 +744,7 @@
         g.textBaseline = 'middle'; g.textAlign = 'center';
         g.fillStyle = '#00e5ff'; g.font = '700 31px system-ui, sans-serif'; g.fillText('RESPIRATORY XR', PW / 2, 46);
         g.fillStyle = '#7fb8c8'; g.font = '500 20px system-ui, sans-serif';
-        g.fillText(this.el.sceneEl.is('vr-mode') ? 'LEFT LASER + LEFT TRIGGER' : 'CLICK A BUTTON', PW / 2, 82);
+        g.fillText(this.el.sceneEl.is('vr-mode') ? 'POINT EITHER HAND, PULL ITS TRIGGER' : 'CLICK A BUTTON', PW / 2, 82);
         g.fillStyle = '#00e5ff'; g.font = '700 21px system-ui, sans-serif'; g.fillText('FOCUS AN ORGAN', PW / 2, 124);
         for (var i = 0; i < BTNS.length; i++) {
           var b = BTNS[i], hov = this.hoverId && (this.hoverId === b.id || (b.id === 'scale' && /^scale/.test(this.hoverId)));
@@ -973,23 +775,31 @@
           y += 6; g.fillStyle = '#00e5ff'; g.font = '700 20px system-ui, sans-serif'; g.fillText('YOUR TASKS', 36, y); y += 30;
           var pct = Math.min(100, Math.floor(APP.orbitAcc / TWO_PI * 100)), o1 = pct >= 100;
           g.font = '600 21px system-ui, sans-serif';
-          g.fillStyle = o1 ? '#7dffb2' : '#cfeff7'; g.fillText((o1 ? '✓ ' : '○ ') + 'Circle it (stick to 3 or 9 o\'clock): ' + pct + '%', 36, y); y += 30;
+          g.fillStyle = o1 ? '#7dffb2' : '#cfeff7'; g.fillText((o1 ? '✓ ' : '○ ') + 'Circle it (stick to the side): ' + pct + '%', 36, y); y += 30;
           g.fillStyle = APP.funcDone ? '#7dffb2' : '#cfeff7'; g.fillText((APP.funcDone ? '✓ ' : '○ ') + 'Run its function (FUNCTION button)', 36, y); y += 34;
           if (APP.focusDone) { g.fillStyle = '#7dffb2'; g.font = '700 22px system-ui, sans-serif'; g.fillText('FOCUS COMPLETE. PICK THE NEXT ORGAN.', 36, y); }
         }
         g.fillStyle = '#5b8fa0'; g.font = '500 18px system-ui, sans-serif';
-        g.fillText('PANEL: ' + (APP.anchor === 'dock' ? 'DOCKED TO YOU' : 'FIXED IN SPACE') + '  (LEFT GRIP / P)', 36, PH - 28);
+        var ps = this.el.components['museum-pointer'], st = ps && ps.status, vr = this.el.sceneEl.is('vr-mode');
+        g.fillText('PANEL: ' + (APP.anchor === 'dock' ? 'DOCKED' : 'FIXED') + ' (GRIP / P)' + (vr ? '   HANDS: L ' + (st && st.l ? 'ON' : 'OFF') + '  R ' + (st && st.r ? 'ON' : 'OFF') : ''), 36, PH - 28);
         this.tex.needsUpdate = true;
       },
 
       tick: function () {
-        var sc = this.el.sceneEl, vr = sc.is('vr-mode'), lh = $('lhand');
-        if (vr && lh.object3D.visible) {                       // laser follows the left hand
-          var L = loco(); aimRay(lh, this._o, this._d);
-          var hit = L && L.dialogOpen ? null : this.hoverFrom(this._o, this._d), len = hit ? hit.distance : 0.9;
-          this.laser.visible = true; this.laser.scale.z = len;
-          this.reticle.visible = !!hit; if (hit) this.reticle.position.copy(hit.point);
-        } else { this.laser.visible = false; this.reticle.visible = false; }
+        var self = this, p = this.el.components['museum-pointer'];
+        if (p && !this.wired) {                                // both hands point; either trigger clicks
+          this.wired = true;
+          p.setHandlers({
+            cast: function (o, d) { var L = loco(); return L && L.dialogOpen ? self.castDialog(o, d) : self.cast(o, d); },
+            hover: function (hit) { self.hoverHit(hit); },
+            click: function (o, d, h) {
+              var L = loco();
+              if (L && L.dialogOpen) pickDialog(o, d); else self.click(o, d);
+              p.buzz(h, 0.7, 40);
+            }
+          });
+        }
+        if (p && this.el.sceneEl.is('vr-mode')) { var st = p.status || {}, key = (st.l ? 1 : 0) + (st.r ? 2 : 0); if (key !== this._st) { this._st = key; this.dirty = true; } }
         if (this.dirty || Object.keys(this.flash).length) {
           this.draw(); this.dirty = false;
           var now = performance.now(), f = this.flash;
@@ -1011,14 +821,12 @@
       d.object3D.position.set(p.x + f.x * 1.4, p.y - 0.1, p.z + f.z * 1.4);
       d.object3D.lookAt(p.x, p.y - 0.1, p.z);
       d.object3D.visible = true;
-      L.dialogOpen = L.paused = true; L.vel.set(0, 0, 0); L.grab = null;
-      var h = $('rhand'); if (!h.components.raycaster) h.setAttribute('raycaster', 'objects: [data-btn]; far: 8; showLine: true; lineColor: #00e5ff');
+      L.dialogOpen = L.paused = true;
     }
     function closeDialog() {
       var L = loco(), d = $('dialog');
       if (!L || !L.dialogOpen) return;
       d.object3D.visible = false; L.dialogOpen = L.paused = false;
-      $('rhand').removeAttribute('raycaster');
     }
     function resetAll() { closeDialog(); loco().reset(); }
 
@@ -1031,7 +839,7 @@
       document.body.classList.add('shot');
       var m = model(); m.breath = function () { return { ph: 0, u: 0.62, vol: 0.62 }; };
       APP.explodeIdx = parseInt(QS.get('explode')) || 0; APP.iso = QS.get('iso') || 'ALL'; APP.preset = QS.get('view') || 'clinical';
-      $('rig').object3D.position.set(parseFloat(QS.get('x')) || 0, parseFloat(QS.get('y')) || -0.05, parseFloat(QS.get('z')) || -0.3);
+      var rc = rigC(); rc.frameTo(parseFloat(QS.get('frame')) || 3.6, parseFloat(QS.get('lift')) || 0.3); rc.theta = (parseFloat(QS.get('th')) || 0) * Math.PI / 180; rc.R = null;
       dirtyPanel();
     };
   </script>
