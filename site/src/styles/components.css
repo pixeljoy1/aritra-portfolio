@@ -312,8 +312,10 @@ div.card:hover { transform: none; box-shadow: none; }
 
 /* Breadcrumb */
 .crumbs { margin: 0 0 var(--s4); }
-.crumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s2); font: 11px/1.4 var(--f-ui); letter-spacing: .08em; }
+.crumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); font: 11px/1.4 var(--f-ui); letter-spacing: .08em; }
+.crumbs li { display: flex; align-items: center; }
 .crumbs li + li::before { content: "/"; color: var(--muted); margin-right: var(--s2); }
-.crumbs a { color: var(--mint); text-decoration: none; padding: var(--s2) 0; display: inline-block; min-height: 24px; }
+.crumbs a, .crumbs [aria-current] { display: inline-flex; align-items: center; min-height: 24px; padding: var(--s2) 0; }
+.crumbs a { color: var(--mint); text-decoration: none; }
 .crumbs a:hover { text-decoration: underline; }
 .crumbs [aria-current] { color: var(--pink); }
