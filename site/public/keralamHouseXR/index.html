@@ -36,19 +36,19 @@
          (floors, steps, stairs, paving, play surfaces). Walls, furniture and roof block. -->
     <a-entity id="world">
       <a-plane class="walkable" rotation="-90 0 0" width="160" height="160" color="#5d8a3f"></a-plane>
-      <a-entity id="house" gltf-model="url(house.glb?v=6)"></a-entity>
+      <a-entity id="house" gltf-model="url(house.glb?v=8)"></a-entity>
     </a-entity>
 
-    <!-- Plaque beside the front door (template: plaque.js). Bump `version` on every publish. -->
-    <a-entity plaque="title: KERALAM HOUSE XR; name: Aritra Mitra;
-        detail: BDes, Immersive|Digital Environments|O.P. Jindal Global University|Class of 2028; width: 0.64;
-        lines: #WALK|Right stick: walk and turn|Hold trigger: speed up|Left stick forward: teleport||#FLY (press A to switch)|Trigger: thrust where you aim|Stick up / down: climb|Point wrist to steer||#RESET|B or Y button;
-        version: 1.03"
-        position="1.53 2.4 3.70"></a-entity>
+    <!-- The plaque: a freestanding board beside the front steps (template: plaque.js). Bump `version` on every publish. -->
+    <a-entity id="plaque" plaque="title: KERALAM HOUSE XR; name: Aritra Mitra;
+        detail: BDes, Immersive Digital Environments|O.P. Jindal Global University, Class of 2028;
+        columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: thrust|Aim: where you go|Stick up/down: climb|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Stairs: left side up|to the upper floor, roof;
+        version: 1.04"
+        position="2.3 0 6.6"></a-entity>
 
     <!-- How-to board near the start (you start at z = 14.5, the gate is at z = 12) -->
     <a-entity position="-2.4 1.1 13.2" rotation="0 25 0">
-      <a-plane color="#000" opacity="0.6" width="1.9" height="1.05"></a-plane>
+      <a-plane color="#000" opacity="0.6" width="1.9" height="1.04"></a-plane>
       <a-text id="board-text" align="center" color="#fff" position="0 0 0.01" width="1.7"
               value="WALK: right stick = walk and turn.&#10;Hold TRIGGER to speed up.&#10;Left stick forward: teleport.&#10;A: switch WALK / FLY.&#10;FLY: trigger thrusts where you aim,&#10;stick up/down = climb.&#10;B or Y: reset.&#10;&#10;Front door in, kitchen back door&#10;out. Stairs up the left side."></a-text>
     </a-entity>
@@ -81,7 +81,7 @@
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
-  <script src="plaque.js?v=1.03"></script>
+  <script src="plaque.js?v=1.04"></script>
   <script>
     var T = AFRAME.THREE;
     function $(id) { return document.getElementById(id); }
@@ -108,7 +108,7 @@
     }
 
     var BX = 34, BZ = 34;                               // you cannot walk or teleport outside this square
-    var MODEL_URL = 'url(house.glb?v=6)';
+    var MODEL_URL = 'url(house.glb?v=8)';
     var START = [0, 0, 14.5];
 
     function loco() { return $('rig').components.locomotion; }
@@ -282,6 +282,7 @@
         this.hand.addEventListener('triggerup', function () { self.trig = 0; });
         this.hand.addEventListener('thumbstickmoved', function (e) { self.sx = e.detail.x; self.sy = e.detail.y; });
         $('lhand').addEventListener('ybuttondown', function () { openDialog(); });
+        $('lhand').addEventListener('xbuttondown', function () { self.goToPlaque(); });
         // Right hand: A switches walk / fly, B opens reset. (The Meta/Oculus button is reserved by the
         // system for its own menu; browsers cannot read it.)
         this.hand.addEventListener('abuttondown', function () { self.toggleMode(); });
@@ -298,6 +299,7 @@
           if (e.code === 'Space') { self.keyTrig = 1; e.preventDefault(); }
           else if (e.code === 'KeyR') openDialog();
           else if (e.code === 'KeyF') self.toggleMode();
+          else if (e.code === 'KeyP') self.goToPlaque();
           else if (e.code === 'Escape') closeDialog();
         });
         window.addEventListener('keyup', function (e) {
@@ -378,6 +380,19 @@
         }
         var g = this.groundAt(head.x + dx * (len + 0.15), head.z + dz * (len + 0.15), base + MAX_STEP_UP + 0.1);
         return g !== null && g - base <= MAX_STEP_UP;
+      },
+
+      // Stand in front of the plaque, facing it, in walk mode. (Left X button, P on desktop.)
+      goToPlaque: function () {
+        if (this.paused) return;
+        var rig = this.el.object3D, p = $('plaque').object3D.position, head = this._h;
+        this.mode = 'walk'; this.vel.set(0, 0, 0); this.yawRate = 0;
+        this.rotateRig(0);
+        this.cam.object3D.getWorldPosition(head);
+        rig.position.x += p.x - head.x;
+        rig.position.z += p.z + 1.8 - head.z;
+        var g = this.groundAt(p.x, p.z + 1.8, rig.position.y + 30);
+        this.groundY = g !== null ? g : 0; rig.position.y = this.groundY;
       },
 
       toggleMode: function () {
@@ -563,7 +578,7 @@
     var statusEl = $('status');
     var house = $('house');
     function loaded() {
-      statusEl.textContent = 'Loaded. Space = trigger, arrows/WASD = thumbstick, F = walk/fly, R resets. In VR: tap Enter VR.';
+      statusEl.textContent = 'Loaded. Space = trigger, arrows/WASD = thumbstick, F = walk/fly, R resets, P = back to the board. In VR: tap Enter VR.';
       statusEl.className = 'done';
       var L = loco(); if (L) L.collect();
     }
