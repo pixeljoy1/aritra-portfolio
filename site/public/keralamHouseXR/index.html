@@ -39,10 +39,14 @@
       <a-entity id="house" gltf-model="url(house.glb?v=6)"></a-entity>
     </a-entity>
 
-    <!-- Entrance gate sign and a how-to board (the gate is at z = 12, you start at z = 14.5) -->
-    <a-text value="HELLO WORLD" align="center" color="#ffd84d" position="0 3.8 12" width="6"></a-text>
-    <a-text value="Aritra  |  Immersive Digital Environments" align="center"
-            color="#222" position="0 3.3 12" width="4"></a-text>
+    <!-- Plaque beside the front door (template: plaque.js). Bump `version` on every publish. -->
+    <a-entity plaque="title: KERALAM HOUSE XR; name: Aritra Mitra;
+        detail: BDes, Immersive|Digital Environments|O.P. Jindal Global University|Class of 2028; width: 0.64;
+        lines: #WALK|Right stick: walk and turn|Hold trigger: speed up|Left stick forward: teleport||#FLY (press A to switch)|Trigger: thrust where you aim|Stick up / down: climb|Point wrist to steer||#RESET|B or Y button;
+        version: 1.03"
+        position="1.53 2.4 3.70"></a-entity>
+
+    <!-- How-to board near the start (you start at z = 14.5, the gate is at z = 12) -->
     <a-entity position="-2.4 1.1 13.2" rotation="0 25 0">
       <a-plane color="#000" opacity="0.6" width="1.9" height="1.05"></a-plane>
       <a-text id="board-text" align="center" color="#fff" position="0 0 0.01" width="1.7"
@@ -77,6 +81,7 @@
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
+  <script src="plaque.js?v=1.03"></script>
   <script>
     var T = AFRAME.THREE;
     function $(id) { return document.getElementById(id); }
