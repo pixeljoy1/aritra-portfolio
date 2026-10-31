@@ -36,14 +36,14 @@
          (floors, steps, stairs, paving, play surfaces). Walls, furniture and roof block. -->
     <a-entity id="world">
       <a-plane class="walkable" rotation="-90 0 0" width="160" height="160" color="#5d8a3f"></a-plane>
-      <a-entity id="house" gltf-model="url(house.glb?v=8)"></a-entity>
+      <a-entity id="house" gltf-model="url(house.glb?v=10)"></a-entity>
     </a-entity>
 
     <!-- The plaque: a freestanding board beside the front steps (template: plaque.js). Bump `version` on every publish. -->
     <a-entity id="plaque" plaque="title: KERALAM HOUSE XR; name: Aritra Mitra;
         detail: BDes, Immersive Digital Environments|O.P. Jindal Global University, Class of 2028;
-        columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: thrust|Aim: where you go|Stick up/down: climb|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Stairs: left side up|to the upper floor, roof;
-        version: 1.04"
+        columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: glide ahead|Stick back: reverse|Left stick: up / down|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Stairs: left side up|to the upper floor, roof;
+        version: 1.05"
         position="2.3 0 6.6"></a-entity>
 
     <!-- How-to board near the start (you start at z = 14.5, the gate is at z = 12) -->
@@ -70,6 +70,7 @@
     <!-- Player rig: moving the rig moves the player, never the camera itself -->
     <a-entity id="rig" position="0 0 14.5" locomotion>
       <a-camera id="cam">
+        <a-plane id="fade" width="2" height="2" position="0 0 -0.1" visible="false" material="shader: flat; color: #000; transparent: true; opacity: 0; depthTest: false" render-order="999"></a-plane>
         <a-text id="modetxt" value="" align="center" color="#ffd84d" position="0 -0.3 -1" width="1.6" visible="false"></a-text>
       </a-camera>
       <!-- Left hand: teleport (stick forward), Y = reset -->
@@ -81,7 +82,7 @@
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
-  <script src="plaque.js?v=1.04"></script>
+  <script src="plaque.js?v=1.05"></script>
   <script>
     var T = AFRAME.THREE;
     function $(id) { return document.getElementById(id); }
@@ -108,7 +109,7 @@
     }
 
     var BX = 34, BZ = 34;                               // you cannot walk or teleport outside this square
-    var MODEL_URL = 'url(house.glb?v=8)';
+    var MODEL_URL = 'url(house.glb?v=10)';
     var START = [0, 0, 14.5];
 
     function loco() { return $('rig').components.locomotion; }
@@ -197,7 +198,8 @@
       },
       onStick: function (x, y) {
         var L = loco();
-        if (!this.aiming && y < -0.75 && !(L && L.paused)) {
+        if (L) L.ls = y;                                   // fly mode uses the left stick for altitude
+        if (!this.aiming && y < -0.75 && !(L && (L.paused || L.mode === 'fly'))) {
           this.aiming = true;
           this.collect();
           this.line.visible = this.dots.visible = true;
@@ -246,11 +248,12 @@
     var WALK_ACCEL = 10, WALK_BRAKE = 14;           // how fast velocity follows the target (1/s)
     var STICK_YAW = 1.9;                            // rad/s at full stick (about 110 deg/s)
     var WALK_BOOST = 1.2, WALK_RAMP = 3.5;          // trigger adds up to +120% speed, building up at this rate (1/s)
-    var FLY_SPEED = 9, CLIMB_SPEED = 4, FLY_ACCEL = 3.2, FLY_BRAKE = 5.5;   // fly mode (m/s, 1/s)
+    var FLY_SPEED = 4.5, FLY_BACK = 2.2, CLIMB_SPEED = 1.4, FLY_PITCH = 0.2;   // fly mode (m/s); aim pitch only adds 20% as climb
+    var FLY_ACCEL = 1.0, FLY_BRAKE = 3.5;                                      // 1/s: slow to build up, gentle to stop
     var AIM_DEAD = 0.1, AIM_GAIN = 3.4, AIM_MAX = 2.6;                      // wrist steering: dead zone, gain, max rad/s
     var FLY_RADIUS = 0.4, FLY_MIN_ALT = 0.7, BY = 36, BSOFT = 8;
-    var WALK_RADIUS = 0.3, MAX_STEP_UP = 0.36;
-    var BODY_RAYS = [0.2, 0.43, 0.7, 1.1, 1.5];     // heights above the floor that must be clear
+    var WALK_RADIUS = 0.3, MAX_STEP_UP = 0.36, MAX_DROP = 0.6;   // you cannot step off an edge higher than this
+    var BODY_RAYS = [0.2, 0.55, 1.05, 1.5];     // heights above the floor that must be clear
 
     AFRAME.registerComponent('locomotion', {
       init: function () {
@@ -258,7 +261,7 @@
         this.paused = false; this.dialogOpen = false; this.mode = 'walk';
         this.trig = 0; this.keyTrig = 0;      // right trigger 0..1, Space on desktop
         this.sx = 0; this.sy = 0;             // right thumbstick
-        this.kx = 0; this.ky = 0;             // desktop keys standing in for the stick
+        this.kx = 0; this.ky = 0; this.ls = 0; this.kls = 0;             // desktop keys standing in for the stick
         this.vel = new T.Vector3();
         this.yawRate = 0; this.groundY = 0;
         this.aimOverride = null; this.vrTest = false;   // test hooks
@@ -293,6 +296,7 @@
         function stickKeys() {
           self.kx = (keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0);
           self.ky = (keys.ArrowDown || keys.KeyS ? 1 : 0) - (keys.ArrowUp || keys.KeyW ? 1 : 0);
+          self.kls = (keys.KeyQ ? 1 : 0) - (keys.KeyE ? 1 : 0);      // desktop: E = up, Q = down while flying
         }
         window.addEventListener('keydown', function (e) {
           keys[e.code] = true; stickKeys();
@@ -336,6 +340,13 @@
           (isWalkMesh(o) ? floors : solid).push(o);
         });
         this.all = all; this.solid = solid; this.floors = floors; this.flyHit = solid.concat(floors);
+        // The house never moves, so keep each chunk's world-space bounding box. Per frame we then test
+        // only the few chunks near the player instead of all ~560 (this is what keeps the Quest frame rate up).
+        this.world.object3D.updateMatrixWorld(true);
+        all.forEach(function (o) {
+          if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+          o.userData.box = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld);
+        });
       },
 
       // Turn the rig about the player's head so the head stays put in the world.
@@ -372,14 +383,21 @@
       passable: function (head, base, sx, sz) {
         var len = Math.hypot(sx, sz);
         if (len < 1e-6) return true;
-        var dx = sx / len, dz = sz / len;
+        var dx = sx / len, dz = sz / len, px = -dz, pz = dx;
         this.raycaster.far = len + WALK_RADIUS;
+        // three rays side by side so thin railings and bars cannot be squeezed between
         for (var i = 0; i < BODY_RAYS.length; i++) {
-          this.raycaster.set(this._o.set(head.x, base + BODY_RAYS[i], head.z), this._d.set(dx, 0, dz));
-          if (this.raycaster.intersectObjects(this.solid, false).length) return false;
+          var wide = BODY_RAYS[i] > 0.3 && BODY_RAYS[i] < 1.3;      // railings live at knee to chest height
+          for (var s = 0; s < 3; s++) {
+            if (!wide && s !== 1) continue;
+            var off = (s - 1) * 0.25;
+            this.raycaster.set(this._o.set(head.x + px * off, base + BODY_RAYS[i], head.z + pz * off), this._d.set(dx, 0, dz));
+            if (this.raycaster.intersectObjects(this.nearS, false).length) return false;
+          }
         }
+        // floor ahead: not too high to step up, and no drop off an edge
         var g = this.groundAt(head.x + dx * (len + 0.15), head.z + dz * (len + 0.15), base + MAX_STEP_UP + 0.1);
-        return g !== null && g - base <= MAX_STEP_UP;
+        return g !== null && g - base <= MAX_STEP_UP && base - g <= MAX_DROP;
       },
 
       // Stand in front of the plaque, facing it, in walk mode. (Left X button, P on desktop.)
@@ -431,15 +449,20 @@
         if (Math.abs(this.yawRate) > 1e-3) this.rotateRig(rig.rotation.y + this.yawRate * dt);
 
         if (fly) {
-          // thrust along the aim in full 3D; stick forward/back climbs and dives
-          var tg = this._t.copy(aim).multiplyScalar(FLY_SPEED * Math.pow(trig, 1.3));
-          tg.y += -sy * CLIMB_SPEED;
-          var braking = trig < 0.05 && Math.abs(sy) < 0.05, k = braking ? FLY_BRAKE : FLY_ACCEL;
-          var ke = 1 - Math.exp(-k * dt), kv = 1 - Math.exp(-Math.max(k, 6) * dt);
+          // trigger glides ahead, right stick back reverses, left stick up/down changes height gently
+          var c = clamp(trig - sy, -1, 1), ls = dead(this.ls + this.kls);
+          var hh = this._u.set(aim.x, 0, aim.z);
+          if (hh.lengthSq() < 1e-4) { this.cam.object3D.getWorldQuaternion(this._q); hh.set(0, 0, -1).applyQuaternion(this._q); hh.y = 0; }
+          hh.normalize();
+          var sp = c >= 0 ? FLY_SPEED * Math.pow(c, 1.3) : FLY_BACK * c;
+          var tg = this._t.copy(hh).multiplyScalar(sp);
+          tg.y = clamp((c > 0 ? clamp(aim.y, -1, 1) * sp * FLY_PITCH : 0) - ls * CLIMB_SPEED, -CLIMB_SPEED, CLIMB_SPEED);
+          var braking = Math.abs(c) < 0.05 && Math.abs(ls) < 0.05, k = braking ? FLY_BRAKE : FLY_ACCEL;
+          var ke = 1 - Math.exp(-k * dt), kv = 1 - Math.exp(-Math.max(k, 2.5) * dt);
           vel.x += (tg.x - vel.x) * ke; vel.z += (tg.z - vel.z) * ke; vel.y += (tg.y - vel.y) * kv;
           if (braking && vel.lengthSq() < 0.0004) vel.set(0, 0, 0);
           this.stepFly(dt);
-          this.keepInside();
+          this.keepInside(); this.fadeNearWalls();
           return;
         }
 
@@ -457,7 +480,32 @@
         if (Math.abs(fwd) < 0.02 && vel.lengthSq() < 0.0004) vel.set(0, 0, 0);
 
         this.stepWalk(dt);
-        this.keepInside();
+        this.keepInside(); this.fadeNearWalls();
+      },
+
+      // The chunks within R metres of p (cheap box test, no raycasting).
+      near: function (list, p, R) {
+        var out = [];
+        for (var i = 0; i < list.length; i++) {
+          var b = list[i].userData.box;
+          if (b && b.distanceToPoint(p) < R) out.push(list[i]);
+        }
+        return out;
+      },
+
+      // Head too close to a wall (leaning in room scale): fade to black instead of showing the inside of the wall.
+      fadeNearWalls: function () {
+        var f = $('fade'), head = this._h, near = 1, i;
+        this.cam.object3D.getWorldPosition(head);
+        var ns = this.near(this.solid, head, 0.3);
+        this.raycaster.far = 0.14;
+        for (i = 0; i < 4; i++) {
+          this.raycaster.set(head, this._d.set(i === 0 ? 1 : i === 1 ? -1 : 0, 0, i === 2 ? 1 : i === 3 ? -1 : 0));
+          var h = this.raycaster.intersectObjects(ns, false)[0];
+          if (h) near = Math.min(near, h.distance / 0.14);
+        }
+        var a = near < 1 ? Math.min(0.95, 1 - near) : 0;
+        if (a !== this._fa) { this._fa = a; f.setAttribute('material', 'opacity', a); f.setAttribute('visible', a > 0.01); }
       },
 
       // Flying: slide along anything solid, stay above the floor, never leave the play box.
@@ -479,11 +527,11 @@
           u.normalize().multiplyScalar(FLY_RADIUS * 0.7);
           var w = this._w1.copy(dir).cross(u);
           var offs = [[0, 0, 0], [u.x, u.y, u.z], [-u.x, -u.y, -u.z], [w.x, w.y, w.z], [-w.x, -w.y, -w.z]];
-          var best = null;
+          var best = null, fl = this.near(this.flyHit, head, 1.2);
           this.raycaster.far = speed * dt + FLY_RADIUS;
           for (var j = 0; j < offs.length; j++) {
             this.raycaster.set(this._o.set(head.x + offs[j][0], head.y + offs[j][1], head.z + offs[j][2]), dir);
-            var hit = this.raycaster.intersectObjects(this.flyHit, false)[0];
+            var hit = this.raycaster.intersectObjects(fl, false)[0];
             if (hit && (!best || hit.distance < best.distance)) best = hit;
           }
           if (best && best.face) {
@@ -517,10 +565,18 @@
         var base = Math.max(rig.position.y, this.groundY);
         if (this.vel.lengthSq() > 0) {
           var sx = this.vel.x * dt, sz = this.vel.z * dt;
-          if (this.passable(head, base, sx, sz)) { rig.position.x += sx; rig.position.z += sz; }
-          else if (Math.abs(sx) > 1e-5 && this.passable(head, base, sx, 0)) rig.position.x += sx;   // slide along walls
-          else if (Math.abs(sz) > 1e-5 && this.passable(head, base, 0, sz)) rig.position.z += sz;
-        }
+          // The wall test is the expensive part, so it runs every other frame and its answer is reused
+          // on the frame in between (movement per frame is only a few centimetres).
+          this.frame = (this.frame || 0) + 1;
+          if (this.frame % 2 === 0 || this.mv === undefined) {
+            this.nearS = this.near(this.solid, head, 0.75);
+            this.mv = this.passable(head, base, sx * 2, sz * 2) ? 3
+                    : (Math.abs(sx) > 1e-5 && this.passable(head, base, sx * 2, 0)) ? 1      // slide along walls
+                    : (Math.abs(sz) > 1e-5 && this.passable(head, base, 0, sz * 2)) ? 2 : 0;
+          }
+          if (this.mv & 1) rig.position.x += sx;
+          if (this.mv & 2) rig.position.z += sz;
+        } else this.mv = undefined;
         // Follow the floor: smooth over stairs, and cap how fast you can drop or climb.
         var st = (this.groundY - rig.position.y) * (1 - Math.exp(-12 * dt));
         rig.position.y += Math.max(-6 * dt, Math.min(3 * dt, st));
@@ -578,7 +634,7 @@
     var statusEl = $('status');
     var house = $('house');
     function loaded() {
-      statusEl.textContent = 'Loaded. Space = trigger, arrows/WASD = thumbstick, F = walk/fly, R resets, P = back to the board. In VR: tap Enter VR.';
+      statusEl.textContent = 'Loaded. Space = trigger, arrows/WASD = thumbstick, F = walk/fly, R resets, P = board, E/Q = up/down when flying. In VR: tap Enter VR.';
       statusEl.className = 'done';
       var L = loco(); if (L) L.collect();
     }
