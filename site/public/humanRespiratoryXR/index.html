@@ -6,7 +6,7 @@
   <title>Aritra: Human Respiratory XR</title>
   <!-- Pinned A-Frame release. WebXR needs HTTPS; GitHub Pages provides it. -->
   <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
-  <script src="museum-display.js?v=1"></script>
+  <script src="museum-display.js?v=2"></script>
   <style>
     /* Flat-view overlays. The Quest has no console, so status and errors are printed on the page. */
     #brand { position: fixed; left: 12px; top: 12px; z-index: 10; display: flex; align-items: center; gap: 8px;
@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <div id="brand">Human Respiratory XR <span class="pill">v1.03</span></div>
+  <div id="brand">Human Respiratory XR <span class="pill">v1.04</span></div>
   <div id="status">Loading the anatomy…</div>
   <button id="reset-btn" type="button" title="Reset the experience (R)">Reset</button>
   <div id="hud"></div>
@@ -160,6 +160,7 @@
       breath: function () { APP.bpm = BPM_STEPS[(BPM_STEPS.indexOf(APP.bpm) + 1) % BPM_STEPS.length]; },
       speed: function () { var L = loco(); if (L) L.speedIdx = (L.speedIdx + 1) % SPEEDS.length; },
       labels: function () { APP.labels = !APP.labels; },
+      exit: function () { focusOrgan('ALL'); },
       home: function () { APP.scaleT = 1; APP.spin = 0; APP.auto = false; rigC().home(); focusOrgan('ALL'); },
       audio: function () {
         APP.audio = !APP.audio;
@@ -523,6 +524,7 @@
         this.lh.addEventListener('xbuttondown', function () { act('home'); });
         this.lh.addEventListener('ybuttondown', function () { openDialog(); });
         this.lh.addEventListener('gripdown', function () { act('anchor'); });
+        ['lh', 'rh'].forEach(function (h) { self[h].addEventListener('thumbstickdown', function () { act('exit'); }); });   // click a stick = back to the whole body
         this.rh.addEventListener('gripdown', function () { act('anchor'); });
 
         // every full lap of the focused organ counts towards its first task
@@ -535,7 +537,7 @@
 
         // Desktop: A D / arrows circle, W S closer/further, Q E lower/raise; the rest are panel buttons
         var keys = {}, KEYMAP = { KeyG: 'explode', KeyI: 'isolate', KeyV: 'view', KeyT: 'rotate', KeyN: 'breath', KeyL: 'labels',
-                                  KeyM: 'audio', KeyF: 'speed', KeyX: 'home', BracketRight: 'scaleUp', BracketLeft: 'scaleDown', KeyP: 'anchor', KeyO: 'orbit', KeyU: 'func',
+                                  KeyM: 'audio', KeyF: 'speed', KeyX: 'home', Backspace: 'exit', KeyB: 'exit', BracketRight: 'scaleUp', BracketLeft: 'scaleDown', KeyP: 'anchor', KeyO: 'orbit', KeyU: 'func',
                                   Digit1: 'f_ALL', Digit2: 'f_AIRWAY', Digit3: 'f_TRACHEA', Digit4: 'f_BRONCHI', Digit5: 'f_LUNGS', Digit6: 'f_HEART', Digit7: 'f_DIAPHRAGM' };
         function sync() {
           var k = rigC().key;
@@ -619,16 +621,18 @@
       { id: 'labels', r: 6, c: 1, label: function () { return 'LABELS: ' + (APP.labels ? 'ON' : 'OFF'); }, on: function () { return APP.labels; } },
       { id: 'speed', r: 7, c: 0, label: function () { var L = loco(); return 'SPEED: ' + SPEED_NAME[L ? L.speedIdx : 0]; } },
       { id: 'rotate', r: 7, c: 1, label: function () { return 'ROTATE: ' + (APP.auto ? 'ON' : 'OFF'); }, on: function () { return APP.auto; } },
+      { id: 'exit', r: 0, c: 0, x: 30, y: 1292, w: 580, h: 54, show: function () { return APP.iso !== 'ALL'; }, label: function () { return '\u25C0  EXIT FOCUS: BACK TO WHOLE BODY'; } },
       { id: 'home', r: 8, c: 0, label: function () { return 'RESET VIEW'; } },
       { id: 'audio', r: 8, c: 1, label: function () { return 'AUDIO GUIDE: ' + (APP.audio ? 'ON' : 'OFF'); }, on: function () { return APP.audio; } }
     ];
-    BTNS.forEach(function (b) { b.x = 30 + b.c * 299; b.y = 148 + b.r * 88; b.w = 281; b.h = 76; });
+    BTNS.forEach(function (b) { if (b.id === 'exit') return; b.x = 30 + b.c * 299; b.y = 148 + b.r * 88; b.w = 281; b.h = 76; });
 
     var pickRay = new T.Raycaster();
     function hitPanel(hit) {                                   // panel uv -> button (or scale half)
       var px = hit.uv.x * PW, py = (1 - hit.uv.y) * PH;
       for (var i = 0; i < BTNS.length; i++) {
         var b = BTNS[i];
+        if (b.show && !b.show()) continue;
         if (px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) {
           if (b.id === 'scale') return px < b.x + 70 ? 'scaleDown' : px > b.x + b.w - 70 ? 'scaleUp' : 'scale';
           return b.id;
@@ -747,7 +751,8 @@
         g.fillText(this.el.sceneEl.is('vr-mode') ? 'POINT EITHER HAND, PULL ITS TRIGGER' : 'CLICK A BUTTON', PW / 2, 82);
         g.fillStyle = '#00e5ff'; g.font = '700 21px system-ui, sans-serif'; g.fillText('FOCUS AN ORGAN', PW / 2, 124);
         for (var i = 0; i < BTNS.length; i++) {
-          var b = BTNS[i], hov = this.hoverId && (this.hoverId === b.id || (b.id === 'scale' && /^scale/.test(this.hoverId)));
+          var b = BTNS[i]; if (b.show && !b.show()) continue;
+          var hov = this.hoverId && (this.hoverId === b.id || (b.id === 'scale' && /^scale/.test(this.hoverId)));
           var fl = this.flash[b.id] && now - this.flash[b.id] < 220, on = b.on && b.on(), dim = b.dim && b.dim();
           g.fillStyle = fl ? 'rgba(0,229,255,0.55)' : hov ? 'rgba(0,229,255,0.28)' : on ? 'rgba(0,229,255,0.16)' : 'rgba(20,48,72,0.7)';
           g.strokeStyle = hov || on ? '#00e5ff' : '#2f6f8c'; g.lineWidth = hov ? 4 : 2.5;

@@ -134,7 +134,7 @@
       ],
       [
         "Locomotion.",
-        "A museum display, not a world to walk around: you ride a smooth circle round the organ you pick, always facing it. Pick an organ in the menu and you glide to it while everything else goes translucent. Hold either stick to the side to circle it, run its function, and finish its two tasks."
+        "A museum display, not a world to walk around: you ride a smooth circle round the organ you pick, always facing it. Pick an organ in the menu and you glide to it while everything else goes translucent. Hold either stick to the side to circle it, click a stick to exit, run its function, and finish its two tasks."
       ],
       [
         "Reset.",
@@ -153,6 +153,10 @@
       [
         "Left stick forward or back",
         "Move closer or further away"
+      ],
+      [
+        "Click either stick",
+        "Exit the focused organ and return to the whole body (also the EXIT FOCUS button)"
       ],
       [
         "Right stick forward or back",
