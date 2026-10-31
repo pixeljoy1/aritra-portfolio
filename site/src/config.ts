@@ -13,6 +13,7 @@ export const SITE = {
 
 export const NAV = [
   { label: 'Work', href: '/work/' },
+  { label: 'Experiences', href: '/experiences/' },
   { label: 'Years', href: '/years/' },
   { label: 'Play', href: '/play/' },
   { label: 'Resume', href: '/resume/' },

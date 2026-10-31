@@ -1,0 +1,71 @@
+---
+import { u, SITE } from '../../config';
+import Base from '../../layouts/Base.astro';
+import Panel from '../../components/Panel.astro';
+import Chip from '../../components/Chip.astro';
+import ExperienceCard from '../../components/ExperienceCard.astro';
+import items from '../../data/experiences.json';
+const f = items[0];
+const controls = [
+  ['Right trigger', 'Walk where you aim'],
+  ['Right stick, left or right', 'Turn'],
+  ['Left stick forward, then release', 'Teleport to the green marker'],
+  ['Left Y button', 'Reset the experience'],
+  ['Desktop', 'Space to walk, arrows or WASD to steer, R to reset'],
+];
+---
+<Base title="Experiences" description="VR and XR experiences by Aritra Mitra: walkable immersive builds that run in a headset or a browser tab.">
+  <div class="wrap">
+    <h1 class="display">EXPERIENCES</h1>
+    <p class="lede">Builds you can step into: VR and XR walkthroughs that run in a headset or a plain browser tab.</p>
+
+    <section class="xp-hero" aria-labelledby="xpTitle">
+      <a class="xp-hero__img" href={u(f.hero)} data-lb data-lb-group="kerala" data-lb-src={u(f.hero)} data-lb-alt={f.heroAlt} data-lb-title={f.title} data-lb-meta="Experience 01 · VR">
+        <img src={u(f.hero)} alt={f.heroAlt} width="1170" height="850" />
+        <span class="label label--indigo">TAP TO ENLARGE</span>
+      </a>
+      <div class="xp-hero__body">
+        <p class="label label--pink">FEATURED EXPERIENCE · {f.kind}</p>
+        <h2 id="xpTitle" class="xp-hero__title">{f.title}</h2>
+        <p>A two-storey Kerala house with a timber veranda, a balcony ring, an outside staircase, a walled garden and a play yard. Walk the gate, the hall and the kitchen, climb to the balcony, or teleport around the grounds.</p>
+        <div class="tags">{f.tags.map((t: string) => <Chip>{t}</Chip>)}</div>
+        <p class="xp-hero__cta">
+          <a class="btn btn--primary" href={u(f.url)} target="_blank" rel="noopener">ENTER THE WALKTHROUGH ↗</a>
+          <a class="btn btn--secondary" href={u(f.caseStudy)}>SPATIAL NARRATIVE CASE STUDY</a>
+        </p>
+        <p class="label muted">OPENS IN A NEW TAB · BEST ON META QUEST 3, ALSO WORKS ON DESKTOP</p>
+      </div>
+    </section>
+
+    <h2 class="h2">All experiences</h2>
+    <div class="grid" id="cards">
+      {items.map((x) => <ExperienceCard {...x} />)}
+    </div>
+    <p class="muted">More VR and XR builds will be added here as the course goes on.</p>
+
+    <h2 class="h2">From grey blockout to walkable house</h2>
+    <p class="lede">The house was modelled in Blender, then exported as one small file with flat colours and no textures, so it loads fast even on a headset.</p>
+    <div class="gallery">
+      {f.gallery.map((g) => <a href={u(g.src)} class="gallery__item" data-lb data-lb-group="kerala" data-lb-src={u(g.src)} data-lb-alt={g.alt} data-lb-title={g.alt} data-lb-meta={f.title}><img src={u(g.src)} alt={g.alt} width="1170" height="850" loading="lazy" /></a>)}
+    </div>
+
+    <h2 class="h2">How it works</h2>
+    <Panel label="HOW IT IS BUILT">
+      <ul>
+        <li><strong>Model.</strong> Built in Blender with a script, so the whole house can be rebuilt in one run. About 61,000 triangles, 39 flat-colour materials, 1.2 MB.</li>
+        <li><strong>Engine.</strong> A-Frame (WebXR), loaded from a fixed version. No app to install: it is a web page.</li>
+        <li><strong>Walkable by name.</strong> Anything named for walking (floors, steps, stairs, paths) can be stood on or teleported to. Everything else blocks you, so walls, furniture and railings behave.</li>
+        <li><strong>Smooth stairs.</strong> The floor under you is followed with easing, so climbing the outside stairs to the balcony feels steady.</li>
+        <li><strong>Reset.</strong> One button clears the model from memory and reloads it, which keeps a long headset session stable.</li>
+      </ul>
+    </Panel>
+    <Panel variant="indigo" label="CONTROLS">
+      <ul>{controls.map(([k, v]) => <li><strong>{k}.</strong> {v}</li>)}</ul>
+    </Panel>
+    <Panel variant="pink" label="STATUS">
+      <p>Checked on desktop: the route from the gate to the hall, kitchen and back door, the stairs up to the balcony, wall and furniture blocking, and reset. Next pass: tuning controller aim, comfort and frame rate on the headset.</p>
+      <p>Strategy and design are Aritra's; the code was written with Claude as the enabler. See <a href={u('/about/')}>how this site was made</a>.</p>
+    </Panel>
+    <p>Questions or want a demo? <a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
+  </div>
+</Base>

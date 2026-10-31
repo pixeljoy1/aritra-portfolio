@@ -1,0 +1,20 @@
+[
+  {
+    "slug": "kerala-house-vr",
+    "n": 1,
+    "kind": "VR",
+    "title": "Kerala House: VR walkthrough",
+    "oneLiner": "Walk through a two-storey Kerala house, its garden and play yard, in VR on a Meta Quest 3 or in any desktop browser.",
+    "url": "/vr/",
+    "caseStudy": "/work/spatial-narrative-environment/",
+    "thumb": "/img/experiences/kerala-house/thumb.webp",
+    "hero": "/img/experiences/kerala-house/hero.webp",
+    "heroAlt": "The Kerala house model: a two-storey house with a tiled roof, timber veranda and balcony, set in a walled garden with a play yard",
+    "tags": ["WEBXR", "META QUEST 3", "BLENDER", "A-FRAME"],
+    "gallery": [
+      { "src": "/img/experiences/kerala-house/01.webp", "alt": "Close view of the house in flat colour: carved fascia, shuttered windows, brass-banded pillars and a balcony ring" },
+      { "src": "/img/experiences/kerala-house/02.webp", "alt": "Grey overview of the whole compound: house, walled garden, play yard and palms outside the wall" },
+      { "src": "/img/experiences/kerala-house/03.webp", "alt": "Early grey blockout of the house, staircase, paths, trees and fence" }
+    ]
+  }
+]
