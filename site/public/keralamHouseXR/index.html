@@ -36,7 +36,7 @@
          (floors, steps, stairs, paving, play surfaces). Walls, furniture and roof block. -->
     <a-entity id="world">
       <a-plane class="walkable" rotation="-90 0 0" width="160" height="160" color="#5d8a3f"></a-plane>
-      <a-entity id="house" gltf-model="url(house.glb?v=5)"></a-entity>
+      <a-entity id="house" gltf-model="url(house.glb?v=6)"></a-entity>
     </a-entity>
 
     <!-- Entrance gate sign and a how-to board (the gate is at z = 12, you start at z = 14.5) -->
@@ -46,7 +46,7 @@
     <a-entity position="-2.4 1.1 13.2" rotation="0 25 0">
       <a-plane color="#000" opacity="0.6" width="1.9" height="1.05"></a-plane>
       <a-text id="board-text" align="center" color="#fff" position="0 0 0.01" width="1.7"
-              value="WALK&#10;Hold the right TRIGGER to walk&#10;where you aim. Right stick: turn.&#10;Left stick forward: teleport.&#10;Y button: reset.&#10;&#10;Front door in, kitchen back door&#10;out. Stairs up the left side."></a-text>
+              value="WALK: right stick = walk and turn.&#10;Hold TRIGGER to speed up.&#10;Left stick forward: teleport.&#10;A: switch WALK / FLY.&#10;FLY: trigger thrusts where you aim,&#10;stick up/down = climb.&#10;B or Y: reset.&#10;&#10;Front door in, kitchen back door&#10;out. Stairs up the left side."></a-text>
     </a-entity>
 
     <!-- Reset dialog. Opens in front of you (Y button, R key or the Reset button). -->
@@ -65,7 +65,9 @@
 
     <!-- Player rig: moving the rig moves the player, never the camera itself -->
     <a-entity id="rig" position="0 0 14.5" locomotion>
-      <a-camera id="cam"></a-camera>
+      <a-camera id="cam">
+        <a-text id="modetxt" value="" align="center" color="#ffd84d" position="0 -0.3 -1" width="1.6" visible="false"></a-text>
+      </a-camera>
       <!-- Left hand: teleport (stick forward), Y = reset -->
       <a-entity id="lhand" oculus-touch-controls="hand: left" teleport></a-entity>
       <!-- Right hand: trigger walks, stick turns. Its pointer ray is only on while the reset dialog is open. -->
@@ -101,7 +103,7 @@
     }
 
     var BX = 34, BZ = 34;                               // you cannot walk or teleport outside this square
-    var MODEL_URL = 'url(house.glb?v=5)';
+    var MODEL_URL = 'url(house.glb?v=6)';
     var START = [0, 0, 14.5];
 
     function loco() { return $('rig').components.locomotion; }
@@ -238,13 +240,17 @@
     var WALK_SPEED = 2.1, WALK_BACK = 1.2;          // metres per second
     var WALK_ACCEL = 10, WALK_BRAKE = 14;           // how fast velocity follows the target (1/s)
     var STICK_YAW = 1.9;                            // rad/s at full stick (about 110 deg/s)
+    var WALK_BOOST = 1.2, WALK_RAMP = 3.5;          // trigger adds up to +120% speed, building up at this rate (1/s)
+    var FLY_SPEED = 9, CLIMB_SPEED = 4, FLY_ACCEL = 3.2, FLY_BRAKE = 5.5;   // fly mode (m/s, 1/s)
+    var AIM_DEAD = 0.1, AIM_GAIN = 3.4, AIM_MAX = 2.6;                      // wrist steering: dead zone, gain, max rad/s
+    var FLY_RADIUS = 0.4, FLY_MIN_ALT = 0.7, BY = 36, BSOFT = 8;
     var WALK_RADIUS = 0.3, MAX_STEP_UP = 0.36;
     var BODY_RAYS = [0.2, 0.43, 0.7, 1.1, 1.5];     // heights above the floor that must be clear
 
     AFRAME.registerComponent('locomotion', {
       init: function () {
         var self = this;
-        this.paused = false; this.dialogOpen = false;
+        this.paused = false; this.dialogOpen = false; this.mode = 'walk';
         this.trig = 0; this.keyTrig = 0;      // right trigger 0..1, Space on desktop
         this.sx = 0; this.sy = 0;             // right thumbstick
         this.kx = 0; this.ky = 0;             // desktop keys standing in for the stick
@@ -271,6 +277,10 @@
         this.hand.addEventListener('triggerup', function () { self.trig = 0; });
         this.hand.addEventListener('thumbstickmoved', function (e) { self.sx = e.detail.x; self.sy = e.detail.y; });
         $('lhand').addEventListener('ybuttondown', function () { openDialog(); });
+        // Right hand: A switches walk / fly, B opens reset. (The Meta/Oculus button is reserved by the
+        // system for its own menu; browsers cannot read it.)
+        this.hand.addEventListener('abuttondown', function () { self.toggleMode(); });
+        this.hand.addEventListener('bbuttondown', function () { openDialog(); });
 
         // Desktop fallback: Space = trigger, arrows / WASD = thumbstick, R = reset, Esc = close dialog.
         var keys = {};
@@ -282,6 +292,7 @@
           keys[e.code] = true; stickKeys();
           if (e.code === 'Space') { self.keyTrig = 1; e.preventDefault(); }
           else if (e.code === 'KeyR') openDialog();
+          else if (e.code === 'KeyF') self.toggleMode();
           else if (e.code === 'Escape') closeDialog();
         });
         window.addEventListener('keyup', function (e) {
@@ -317,7 +328,7 @@
           all.push(o);
           (isWalkMesh(o) ? floors : solid).push(o);
         });
-        this.all = all; this.solid = solid; this.floors = floors;
+        this.all = all; this.solid = solid; this.floors = floors; this.flyHit = solid.concat(floors);
       },
 
       // Turn the rig about the player's head so the head stays put in the world.
@@ -364,27 +375,109 @@
         return g !== null && g - base <= MAX_STEP_UP;
       },
 
+      toggleMode: function () {
+        if (this.paused) return;
+        this.mode = this.mode === 'walk' ? 'fly' : 'walk';
+        this.vel.set(0, 0, 0); this.yawRate = 0;
+        this.rotateRig(this.el.object3D.rotation.y);
+        if (this.mode === 'walk') {                       // land: stand on whatever floor is below
+          this.cam.object3D.getWorldPosition(this._h);
+          var g = this.groundAt(this._h.x, this._h.z, this._h.y + 0.05);
+          this.groundY = g !== null ? g : 0;
+        }
+        var t = $('modetxt');
+        t.setAttribute('value', this.mode === 'fly' ? 'FLY MODE   (A = walk)' : 'WALK MODE   (A = fly)');
+        t.setAttribute('visible', true);
+        clearTimeout(this._mt); this._mt = setTimeout(function () { t.setAttribute('visible', false); }, 2200);
+      },
+
       tick: function (time, dtMs) {
         if (this.paused) return;
         var dt = Math.min(dtMs, 50) / 1000, rig = this.el.object3D, head = this._h, vel = this.vel;
         var trig = Math.max(this.trig, this.keyTrig);
         var sx = dead(this.sx + this.kx), sy = dead(this.sy + this.ky);   // sy < 0 = stick pushed forward
+        var fly = this.mode === 'fly';
+        var aim = this.getAim();
 
-        // turn with the stick
-        this.yawRate += (-sx * STICK_YAW - this.yawRate) * (1 - Math.exp(-9 * dt));
+        // turn with the stick (and, flying with the trigger held, by pointing the wrist left or right)
+        var yawT = -sx * STICK_YAW;
+        if (fly && trig > 0.15 && (this.vrTest || this.el.sceneEl.is('vr-mode'))) {
+          var off = Math.atan2(-aim.x, -aim.z) - rig.rotation.y;
+          off = Math.atan2(Math.sin(off), Math.cos(off));
+          var ex = Math.abs(off) - AIM_DEAD;
+          if (ex > 0) yawT += Math.sign(off) * Math.min(ex * AIM_GAIN, AIM_MAX);
+        }
+        this.yawRate += (yawT - this.yawRate) * (1 - Math.exp(-9 * dt));
         if (Math.abs(this.yawRate) > 1e-3) this.rotateRig(rig.rotation.y + this.yawRate * dt);
 
-        // walk where the controller points, level
-        var fwd = clamp(trig - sy, -1, 1);
-        var aim = this.getAim(), h = this._u.set(aim.x, 0, aim.z);
+        if (fly) {
+          // thrust along the aim in full 3D; stick forward/back climbs and dives
+          var tg = this._t.copy(aim).multiplyScalar(FLY_SPEED * Math.pow(trig, 1.3));
+          tg.y += -sy * CLIMB_SPEED;
+          var braking = trig < 0.05 && Math.abs(sy) < 0.05, k = braking ? FLY_BRAKE : FLY_ACCEL;
+          var ke = 1 - Math.exp(-k * dt), kv = 1 - Math.exp(-Math.max(k, 6) * dt);
+          vel.x += (tg.x - vel.x) * ke; vel.z += (tg.z - vel.z) * ke; vel.y += (tg.y - vel.y) * kv;
+          if (braking && vel.lengthSq() < 0.0004) vel.set(0, 0, 0);
+          this.stepFly(dt);
+          this.keepInside();
+          return;
+        }
+
+        // walk: stick forward/back walks; the trigger alone also walks; the trigger on top adds speed
+        var stick = Math.abs(sy) > 0.02;
+        var fwd = clamp(stick ? -sy : trig, -1, 1);
+        var h = this._u.set(aim.x, 0, aim.z);
         if (h.lengthSq() < 1e-4) { this.cam.object3D.getWorldQuaternion(this._q); h.set(0, 0, -1).applyQuaternion(this._q); h.y = 0; }
         h.normalize();
-        var tgt = this._t.copy(h).multiplyScalar(fwd >= 0 ? WALK_SPEED * fwd : WALK_BACK * fwd);
-        vel.lerp(tgt, 1 - Math.exp(-(Math.abs(fwd) > 0.02 ? WALK_ACCEL : WALK_BRAKE) * dt));
+        var boost = fwd > 0 ? 1 + WALK_BOOST * trig : 1;
+        var speed = fwd >= 0 ? WALK_SPEED * fwd * boost : WALK_BACK * fwd;
+        var tgt = this._t.copy(h).multiplyScalar(speed);
+        var acc = Math.abs(fwd) < 0.02 ? WALK_BRAKE : (trig > 0.05 && fwd > 0 ? WALK_RAMP : WALK_ACCEL);
+        vel.lerp(tgt, 1 - Math.exp(-acc * dt));
         if (Math.abs(fwd) < 0.02 && vel.lengthSq() < 0.0004) vel.set(0, 0, 0);
 
         this.stepWalk(dt);
         this.keepInside();
+      },
+
+      // Flying: slide along anything solid, stay above the floor, never leave the play box.
+      stepFly: function (dt) {
+        var rig = this.el.object3D, head = this._h, vel = this.vel;
+        this.cam.object3D.getWorldPosition(head);
+        // soft wall: speed fades out over the last BSOFT metres towards each edge
+        var lim = [[head.x, BX, 'x'], [head.z, BZ, 'z'], [head.y, BY, 'y']];
+        for (var i = 0; i < 3; i++) {
+          var p = lim[i][0], L = lim[i][1], ax = lim[i][2], v = vel[ax];
+          var d = v > 0 ? L - p : v < 0 && ax !== 'y' ? L + p : 99;
+          if (d < BSOFT) vel[ax] *= Math.exp(-(1 - Math.max(d, 0) / BSOFT) * 8 * dt);
+        }
+        var speed = vel.length();
+        if (speed > 0.001) {
+          var dir = this._d.copy(vel).divideScalar(speed);
+          var u = this._u.set(0, 1, 0).cross(dir);
+          if (u.lengthSq() < 1e-4) u.set(1, 0, 0);
+          u.normalize().multiplyScalar(FLY_RADIUS * 0.7);
+          var w = this._w1.copy(dir).cross(u);
+          var offs = [[0, 0, 0], [u.x, u.y, u.z], [-u.x, -u.y, -u.z], [w.x, w.y, w.z], [-w.x, -w.y, -w.z]];
+          var best = null;
+          this.raycaster.far = speed * dt + FLY_RADIUS;
+          for (var j = 0; j < offs.length; j++) {
+            this.raycaster.set(this._o.set(head.x + offs[j][0], head.y + offs[j][1], head.z + offs[j][2]), dir);
+            var hit = this.raycaster.intersectObjects(this.flyHit, false)[0];
+            if (hit && (!best || hit.distance < best.distance)) best = hit;
+          }
+          if (best && best.face) {
+            var n = best.face.normal.clone().transformDirection(best.object.matrixWorld);
+            var vn = vel.dot(n);
+            if (vn < 0) vel.addScaledVector(n, -vn);
+          }
+          rig.position.addScaledVector(vel, dt);
+        }
+        // keep above the floor below (balcony, roof deck, ground)
+        this.cam.object3D.getWorldPosition(head);
+        var g = this.groundAt(head.x, head.z, head.y + 0.05);
+        var minY = (g !== null ? g : 0) + FLY_MIN_ALT;
+        if (head.y < minY) { rig.position.y += minY - head.y; if (vel.y < 0) vel.y = 0; }
       },
 
       // Hard stop at the edge of the grounds.
@@ -393,6 +486,7 @@
         this.cam.object3D.getWorldPosition(head);
         rig.position.x += clamp(head.x, -BX, BX) - head.x;
         rig.position.z += clamp(head.z, -BZ, BZ) - head.z;
+        if (head.y > BY) { rig.position.y -= head.y - BY; if (this.vel.y > 0) this.vel.y = 0; }
       },
 
       stepWalk: function (dt) {
@@ -414,7 +508,7 @@
 
       // Back to the gate. The house model is thrown away and loaded again (frees its GPU memory).
       reset: function () {
-        this.vel.set(0, 0, 0); this.yawRate = 0;
+        this.vel.set(0, 0, 0); this.yawRate = 0; this.mode = 'walk';
         this.trig = this.keyTrig = this.sx = this.sy = 0;
         var rig = this.el.object3D;
         this.rotateRig(0);
@@ -422,7 +516,7 @@
         var house = $('house'), mesh = house.getObject3D('mesh');
         if (mesh) disposeTree(mesh);
         house.removeAttribute('gltf-model');
-        this.all = []; this.solid = []; this.floors = [];
+        this.all = []; this.solid = []; this.floors = []; this.flyHit = [];
         T.Cache.clear();
         var r = this.el.sceneEl.renderer;
         if (r) { r.renderLists.dispose(); if (r.info.reset) r.info.reset(); }
@@ -464,7 +558,7 @@
     var statusEl = $('status');
     var house = $('house');
     function loaded() {
-      statusEl.textContent = 'Loaded. Space = trigger (walks where you look), arrows/WASD = thumbstick, R resets. In VR: tap Enter VR.';
+      statusEl.textContent = 'Loaded. Space = trigger, arrows/WASD = thumbstick, F = walk/fly, R resets. In VR: tap Enter VR.';
       statusEl.className = 'done';
       var L = loco(); if (L) L.collect();
     }
