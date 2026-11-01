@@ -88,8 +88,8 @@
     <!-- The plaque: the ONE board, standing just outside the front gate beside the start point, angled to face the player (template: plaque.js). Bump `version` on every publish. -->
     <a-entity id="plaque" plaque="title: KERALAM HOUSE XR; name: Aritra Mitra;
         detail: BDes, Immersive Digital Environments|O.P. Jindal Global University, Class of 2028;
-        columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: glide ahead|Stick back: reverse|Left stick: up / down|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Stairs: left side up|to the upper floor, roof;
-        version: 1.08"
+        columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: glide ahead|L trigger: reverse|Left stick: up / down|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Stairs: left side up|to the upper floor, roof;
+        version: 1.09"
         position="3.5 0 13.7" rotation="0 -22 0"></a-entity>
 
     <!-- Reset dialog. Opens in front of you (Y button, R key or the Reset button). -->
@@ -121,8 +121,8 @@
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
-  <script src="plaque.js?v=1.08"></script>
-  <script src="play.js?v=1.08"></script>
+  <script src="plaque.js?v=1.09"></script>
+  <script src="play.js?v=1.09"></script>
   <script>
     var T = AFRAME.THREE;
     function $(id) { return document.getElementById(id); }
@@ -288,7 +288,7 @@
     var WALK_ACCEL = 10, WALK_BRAKE = 14;           // how fast velocity follows the target (1/s)
     var STICK_YAW = 1.9;                            // rad/s at full stick (about 110 deg/s)
     var WALK_BOOST = 1.2, WALK_RAMP = 3.5;          // trigger adds up to +120% speed, building up at this rate (1/s)
-    var FLY_SPEED = 4.5, FLY_BACK = 3.4, CLIMB_SPEED = 1.4, FLY_PITCH = 0.2;   // fly mode (m/s); aim pitch only adds 20% as climb
+    var FLY_SPEED = 4.5, FLY_BACK = 3.4, CLIMB_SPEED = 1.4;   // fly mode (m/s)
     var FLY_ACCEL = 2.4, FLY_REV = 5.0, FLY_BRAKE = 3.5;                        // 1/s: smooth build up, quick reverse, gentle stop
     var AIM_DEAD = 0.1, AIM_GAIN = 3.4, AIM_MAX = 2.6;                      // wrist steering: dead zone, gain, max rad/s
     var FLY_RADIUS = 0.4, FLY_MIN_ALT = 0.7, BY = 36, BSOFT = 8;
@@ -299,7 +299,7 @@
       init: function () {
         var self = this;
         this.paused = false; this.dialogOpen = false; this.mode = 'walk';
-        this.trig = 0; this.keyTrig = 0;      // right trigger 0..1, Space on desktop
+        this.trig = 0; this.keyTrig = 0; this.ltrig = 0; this.keyLTrig = 0;      // right trigger 0..1, Space on desktop
         this.sx = 0; this.sy = 0;             // right thumbstick
         this.kx = 0; this.ky = 0; this.ls = 0; this.kls = 0;             // desktop keys standing in for the stick
         this.vel = new T.Vector3();
@@ -323,6 +323,10 @@
           }
         });
         this.hand.addEventListener('triggerup', function () { self.trig = 0; });
+        // left trigger = reverse thrust while flying (same smooth build-up as the right trigger)
+        $('lhand').addEventListener('triggerchanged', function (e) { self.ltrig = e.detail.value; });
+        $('lhand').addEventListener('triggerdown', function () { self.ltrig = 1; });
+        $('lhand').addEventListener('triggerup', function () { self.ltrig = 0; });
         this.hand.addEventListener('thumbstickmoved', function (e) { self.sx = e.detail.x; self.sy = e.detail.y; });
         $('lhand').addEventListener('ybuttondown', function () { openDialog(); });
         $('lhand').addEventListener('xbuttondown', function () { self.goToPlaque(); });
@@ -336,6 +340,7 @@
         function stickKeys() {
           self.kx = (keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0);
           self.ky = (keys.ArrowDown || keys.KeyS ? 1 : 0) - (keys.ArrowUp || keys.KeyW ? 1 : 0);
+          self.keyLTrig = (keys.ShiftLeft || keys.ShiftRight) ? 1 : 0;     // desktop: Shift = reverse
           self.kls = (keys.KeyQ ? 1 : 0) - (keys.KeyE ? 1 : 0);      // desktop: E = up, Q = down while flying
         }
         window.addEventListener('keydown', function (e) {
@@ -492,13 +497,13 @@
 
         if (fly) {
           // trigger glides ahead, right stick back reverses, left stick up/down changes height gently
-          var c = clamp(trig - sy, -1, 1), ls = dead(this.ls + this.kls);
+          var c = clamp(trig - Math.max(this.ltrig, this.keyLTrig) - sy, -1, 1), ls = dead(this.ls + this.kls);
           var hh = this._u.set(aim.x, 0, aim.z);
           if (hh.lengthSq() < 1e-4) { this.cam.object3D.getWorldQuaternion(this._q); hh.set(0, 0, -1).applyQuaternion(this._q); hh.y = 0; }
           hh.normalize();
-          var sp = c >= 0 ? FLY_SPEED * c * c * (3 - 2 * c) : FLY_BACK * c;
+          var sp = c >= 0 ? FLY_SPEED * c * c * (3 - 2 * c) : -FLY_BACK * c * c * (3 + 2 * c);
           var tg = this._t.copy(hh).multiplyScalar(sp);
-          tg.y = clamp((c > 0 ? clamp(aim.y, -1, 1) * sp * FLY_PITCH : 0) - ls * CLIMB_SPEED, -CLIMB_SPEED, CLIMB_SPEED);
+          tg.y = -ls * CLIMB_SPEED;                               // height comes only from the left stick, up and down alike
           var braking = Math.abs(c) < 0.05 && Math.abs(ls) < 0.05, k = braking ? FLY_BRAKE : (c < -0.05 ? FLY_REV : FLY_ACCEL);
           var ke = 1 - Math.exp(-k * dt), kv = 1 - Math.exp(-Math.max(k, 2.5) * dt);
           vel.x += (tg.x - vel.x) * ke; vel.z += (tg.z - vel.z) * ke; vel.y += (tg.y - vel.y) * kv;
