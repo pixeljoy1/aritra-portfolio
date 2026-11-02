@@ -283,5 +283,113 @@
       ]
     ],
     "status": "Checked on desktop by driving the page's own components, not the camera: the walk from the lobby through the corridor into the hall (it stops at the bench at z 5.3), a full circle round Nefertiti still clear at 2.2 m, all four stands raycast-tested as standing inside nothing, and flight driven at a fixed timestep, climbing 1.6 to 5.2 m in three seconds and gliding at the full 4.5 m/s. Not yet felt on the headset: controller aim, frame rate, and whether the board and the three labels read at the right distance."
+  },
+  {
+    "slug": "kolkata-street-vr",
+    "n": 4,
+    "kind": "VR",
+    "title": "Kolkata Street: a monsoon tram scene",
+    "oneLiner": "Stand in a wet Kolkata street under monsoon cloud, with trams, Ambassador taxis and a mosque at the end of the road, in VR on a Meta Quest 3 or in any browser.",
+    "url": "/kolkataStreetXR/",
+    "caseStudy": null,
+    "thumb": "/img/experiences/kolkata-street/thumb.webp",
+    "hero": "/img/experiences/kolkata-street/hero.webp",
+    "heroAlt": "Looking down a wet Kolkata street from above a tram: shuttered shopfronts and balconies on both sides, yellow Ambassador taxis, trolley wires, and a white mosque with a dome at the far end",
+    "tags": [
+      "WEBXR",
+      "META QUEST 3",
+      "BLENDER",
+      "A-FRAME",
+      "WORLD BUILD"
+    ],
+    "gallery": [
+      {
+        "src": "/img/experiences/kolkata-street/01.webp",
+        "alt": "From a second-floor balcony, looking down through the scaffold at a red tram and yellow taxis on the wet road"
+      },
+      {
+        "src": "/img/experiences/kolkata-street/02.webp",
+        "alt": "A hand-span above the road: the wet street, the tram tracks and the tram ahead are reflected in the puddles"
+      },
+      {
+        "src": "/img/experiences/kolkata-street/03.webp",
+        "alt": "A red Calcutta tram number 5 facing you, an Ambassador taxi close in the foreground and the mosque dome behind"
+      },
+      {
+        "src": "/img/experiences/kolkata-street/04.webp",
+        "alt": "The street running live in the browser, with the viewpoint list on the right and the controls panel at the bottom left"
+      }
+    ],
+    "blurb": "A stretch of Kolkata about 250 metres long, built as a world rather than a model: two lines of shuttered shopfronts and balconies, tram tracks down the middle, trolley wire overhead, a scatter of small figures, and a white domed mosque closing the far end. Walk it at street level, fly up to the balcony and the wires, or jump between ten camera viewpoints, each named for a lens.",
+    "cta": "ENTER THE STREET ↗",
+    "ctaNote": "OPENS IN A NEW TAB · BEST ON META QUEST 3, ALSO WORKS ON DESKTOP AND PHONE",
+    "galleryHeading": "One street, ten ways to stand in it",
+    "galleryLede": "The street was modelled and lit in Blender, then rebuilt for the browser from the same layout. The first three pictures are renders; the last is the street running live.",
+    "galleryGroup": "kolkata",
+    "how": [
+      [
+        "Kit of parts.",
+        "The street is 25 assets: six building types, a mosque, sheds and hoardings, two trees, tram poles, a handcart, an auto-rickshaw, eight figures, the Ambassador taxi and the tram. Each is modelled once in Blender and exported to the web."
+      ],
+      [
+        "Placed from a layout.",
+        "A single layout file lists 118 placements. The page loads each model once and clones it wherever it is used, so 45 buildings cost one building's worth of memory."
+      ],
+      [
+        "Streams in.",
+        "The ground arrives first, so within a second there is a road to stand on and the rest builds up around you. About 8.5 MB of models, under 2 MB over the wire once compressed."
+      ],
+      [
+        "Walkable by name.",
+        "The road and footpaths are meshes named for walking. A ray follows them under your feet, so the kerb and the camber of the road feel steady."
+      ],
+      [
+        "Wet road.",
+        "The carriageway is near-black with very low roughness and a strong sky reflection, which is what makes a monsoon street look wet from a low angle."
+      ],
+      [
+        "Viewpoints.",
+        "Ten saved cameras, from a tram nose at 85 mm to a wide 24 mm in the road, reproduce the shots of the Blender render. In VR only your heading is set, never your pitch, so it stays comfortable."
+      ],
+      [
+        "Trams.",
+        "Press T and the two trams run the length of the street and loop. In VR the shadows are switched off to hold frame rate."
+      ]
+    ],
+    "controls": [
+      [
+        "Left stick",
+        "Walk"
+      ],
+      [
+        "Right stick, left or right",
+        "Turn in steps"
+      ],
+      [
+        "Trigger",
+        "Run"
+      ],
+      [
+        "A",
+        "Switch between walking and flying"
+      ],
+      [
+        "X",
+        "Next viewpoint"
+      ],
+      [
+        "B or Y",
+        "Reset to the start"
+      ],
+      [
+        "Desktop",
+        "W A S D walk, drag to look, Shift run, F walk or fly, E and Q up and down, 1 to 0 for the viewpoints, V next view, R reset, T run the trams"
+      ],
+      [
+        "Phone",
+        "Drag to look, and the View buttons step between the ten viewpoints"
+      ]
+    ],
+    "status": "Checked on desktop: loading from the page, the ten viewpoints, walking and flying, the trams, and reset. Not yet felt on the headset: comfort, frame rate and controller response."
   }
 ]
