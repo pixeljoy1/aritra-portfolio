@@ -13,14 +13,21 @@
               border-radius: 6px; pointer-events: none; max-width: 70vw; }
     #status.done { opacity: 0; transition: opacity 1.5s 2s; }
     #status.error { background: #a01818; }
-    #reset-btn { position: fixed; right: 12px; top: 12px; z-index: 10; padding: 7px 14px;
+    #reset-btn, #fly-btn { position: fixed; top: 12px; z-index: 10; padding: 7px 14px;
                  font: 600 13px system-ui, sans-serif; color: #fff; background: rgba(0,0,0,.6);
                  border: 1px solid rgba(255,255,255,.4); border-radius: 6px; cursor: pointer; }
+    #reset-btn { right: 12px; }
     #reset-btn:hover { background: #b3261e; }
+    /* The fly toggle needs somewhere to live that does not fade away: the status line does,
+       and the in-world board can only name the Quest's A button. */
+    #fly-btn { right: 84px; }
+    #fly-btn:hover { background: #1d4e89; }
+    #fly-btn.on { background: #1d4e89; border-color: #7fb3f0; }
   </style>
 </head>
 <body>
   <div id="status">Loading the museum…</div>
+  <button id="fly-btn" type="button" title="Walk or fly (F)">Fly</button>
   <button id="reset-btn" type="button" title="Reset the experience (R)">Reset</button>
 
   <a-scene background="color: #07070a" renderer="colorManagement: true"
@@ -40,12 +47,12 @@
     <a-entity light="type: point; intensity: 9; distance: 10; decay: 2; color: #ffe0ba" position="6.27 5.40 3.62"></a-entity>
 
     <!-- The board is lit geometry too, and the corridor no longer spills enough on it. -->
-    <a-entity light="type: point; intensity: 4; distance: 3.4; decay: 2; color: #ffdcb0" position="0.2 2.2 17.6"></a-entity>
+    <a-entity light="type: point; intensity: 4; distance: 3.4; decay: 2; color: #ffdcb0" position="-2.80 2.2 21.3"></a-entity>
 
     <!-- Everything the teleport ray and walking can hit lives under #world.
          WALK_* meshes inside museum.glb (the floors) are standable; every other mesh blocks. -->
     <a-entity id="world">
-      <a-entity id="museum" gltf-model="url(models/museum.glb?v=1.03)"></a-entity>
+      <a-entity id="museum" gltf-model="url(models/museum.glb?v=1.04)"></a-entity>
       <!-- Invisible blockers so you cannot walk your head through a masterpiece. The plinths
            themselves are solid geometry in the model; these cover the piece standing on top. -->
       <a-box class="blocker" position="0 1.37 -7.94" rotation="0 0 0" width="0.5" height="0.62" depth="0.6"
@@ -59,30 +66,35 @@
     <!-- The three masterpieces. They sit outside #world: they are 55-70k triangles each and the
          per-frame collision raycasts must never see them (the blockers above stand in for them). -->
     <a-entity id="art">
-      <a-entity gltf-model="url(models/nefertiti.glb?v=1.03)" position="0 1.074 -7.943" rotation="0 0 0"></a-entity>
-      <a-entity gltf-model="url(models/caesar.glb?v=1.03)"    position="-9.579 0.974 5.531" rotation="0 120 0"></a-entity>
-      <a-entity gltf-model="url(models/rocket.glb?v=1.03)"    position="9.579 0.224 5.531" rotation="0 -120 0"></a-entity>
+      <a-entity gltf-model="url(models/nefertiti.glb?v=1.04)" position="0 1.074 -7.943" rotation="0 0 0"></a-entity>
+      <a-entity gltf-model="url(models/caesar.glb?v=1.04)"    position="-9.579 0.974 5.531" rotation="0 120 0"></a-entity>
+      <a-entity gltf-model="url(models/rocket.glb?v=1.04)"    position="9.579 0.224 5.531" rotation="0 -120 0"></a-entity>
     </a-entity>
 
-    <!-- The ONE board, standing just inside the mouth of the long corridor, against its right
-         wall, so you read it as you enter the corridor (template: plaque.js).
+    <!-- The ONE board, standing in the lobby a stride short of the corridor mouth and square
+         across the route, so you meet it face-on walking in rather than reading it sideways.
+         Off the walk line to the left, so the doorway stays open (template: plaque.js).
          Bump `version` on every publish. -->
     <a-entity id="plaque" plaque="title: XR MUSEUM; name: Aritra Mitra;
         detail: BDes, Immersive Digital Environments|O.P. Jindal Global University, Class of 2028|After the Bihar Museum, Patna;
-        columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: glide ahead|Stick back: reverse|Left stick: up / down|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Three corners,|three masterpieces;
-        version: 1.03"
-        position="1.02 0 17.6" rotation="0 -90 0"></a-entity>
+        columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (A or grip)|Trigger: glide ahead|Stick back: reverse|Left stick: up / down|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|On a screen: F flies||Three corners,|three masterpieces;
+        version: 1.04"
+        position="-2.80 0 20.40" rotation="0 0 0"></a-entity>
 
-    <!-- Gallery labels: the same plaque construct, scaled down to label size. -->
+    <!-- Gallery labels: the same plaque construct, scaled down to label size.
+         All three stand in the SAME place in their own alcove's frame: 2.47 m out from the
+         plinth along the alcove's normal and 1.42 m along its tangent, turned a quarter turn
+         off the alcove's facing. That triple is measured off the rocket, which reads best, so
+         the other two are now the rocket rotated 120 and 240 degrees round the hall. -->
     <a-entity plaque="title: NEFERTITI; name: Bust of Nefertiti;
         detail: Thutmose, c. 1345 BCE|Limestone and stucco|Amarna, Egypt;
-        version: 1.03" position="0.9 0 -11.55" rotation="0 -18 0" scale="0.55 0.55 0.55"></a-entity>
+        version: 1.04" position="1.424 0 -5.475" rotation="0 0 0" scale="0.55 0.55 0.55"></a-entity>
     <a-entity plaque="title: CAESAR; name: Bust of Julius Caesar;
         detail: Roman, 1st century BCE|Marble|Musee du Louvre, Paris;
-        version: 1.03" position="-7.95 0 4.95" rotation="0 120 0" scale="0.55 0.55 0.55"></a-entity>
+        version: 1.04" position="-8.154 0 3.064" rotation="0 120 0" scale="0.55 0.55 0.55"></a-entity>
     <a-entity plaque="title: ROCKET; name: Stephensons Rocket;
         detail: Robert Stephenson, 1829|Iron, copper and brass|Rainhill Trials, England;
-        version: 1.03" position="6.73 0 5.53" rotation="0 -120 0" scale="0.55 0.55 0.55"></a-entity>
+        version: 1.04" position="6.730 0 5.530" rotation="0 -120 0" scale="0.55 0.55 0.55"></a-entity>
 
     <!-- Reset dialog. Opens in front of you (Y button, R key or the Reset button). -->
     <a-entity id="dialog" visible="false">
@@ -113,7 +125,7 @@
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
-  <script src="plaque.js?v=1.03"></script>
+  <script src="plaque.js?v=1.04"></script>
   <script>
     var T = AFRAME.THREE;
     function $(id) { return document.getElementById(id); }
@@ -140,7 +152,7 @@
     }
 
     var BX = 17, BZ = 28;                               // you cannot walk or teleport outside this box
-    var MODEL_URL = 'url(models/museum.glb?v=1.03)';
+    var MODEL_URL = 'url(models/museum.glb?v=1.04)';
     var START = [0, 0, 25.2];
 
     function loco() { return $('rig').components.locomotion; }
@@ -316,8 +328,11 @@
         this.hand.addEventListener('thumbstickmoved', function (e) { self.sx = e.detail.x; self.sy = e.detail.y; });
         $('lhand').addEventListener('ybuttondown', function () { openDialog(); });
         $('lhand').addEventListener('xbuttondown', function () { self.goToPlaque(); });
-        // Right hand: A switches walk / fly, B opens reset.
+        // Right hand: A switches walk / fly, B opens reset. The grip switches too: A is the
+        // one button whose mapping differs between Touch generations, and losing flight
+        // altogether because of it is worse than spending an otherwise unused button on it.
         this.hand.addEventListener('abuttondown', function () { self.toggleMode(); });
+        this.hand.addEventListener('gripdown', function () { self.toggleMode(); });
         this.hand.addEventListener('bbuttondown', function () { openDialog(); });
 
         // Desktop fallback: Space = trigger, arrows / WASD = thumbstick, R = reset, Esc = close dialog.
@@ -355,9 +370,14 @@
           });
         }
         $('reset-btn').addEventListener('click', function () { openDialog(); });
+        $('fly-btn').addEventListener('click', function () { self.toggleMode(); });
         var sc = this.el.sceneEl;
-        sc.addEventListener('enter-vr', function () { $('reset-btn').style.display = 'none'; });
-        sc.addEventListener('exit-vr', function () { $('reset-btn').style.display = ''; });
+        sc.addEventListener('enter-vr', function () {
+          $('reset-btn').style.display = $('fly-btn').style.display = 'none';
+        });
+        sc.addEventListener('exit-vr', function () {
+          $('reset-btn').style.display = $('fly-btn').style.display = '';
+        });
       },
 
       // Sort every mesh under #world into floors (can stand on) and solid (blocks you).
@@ -454,6 +474,8 @@
           var g = this.groundAt(this._h.x, this._h.z, this._h.y + 0.05);
           this.groundY = g !== null ? g : 0;
         }
+        var fb = $('fly-btn'), flying = this.mode === 'fly';
+        if (fb) { fb.textContent = flying ? 'Walk' : 'Fly'; fb.className = flying ? 'on' : ''; }
         var t = $('modetxt');
         t.setAttribute('value', this.mode === 'fly' ? 'FLY MODE   (A = walk)' : 'WALK MODE   (A = fly)');
         t.setAttribute('visible', true);
@@ -665,7 +687,7 @@
     var statusEl = $('status');
     var museumEl = $('museum');
     function loaded() {
-      statusEl.textContent = 'Loaded. Space = trigger, arrows/WASD = thumbstick, F = walk/fly, R resets, P = board, E/Q = up/down when flying. In VR: tap Enter VR.';
+      statusEl.textContent = 'Loaded. Space = trigger, arrows/WASD = thumbstick, F or the Fly button = walk/fly, E/Q = up/down when flying, R resets, P = board. In VR: tap Enter VR.';
       statusEl.className = 'done';
       var L = loco(); if (L) L.collect();
     }

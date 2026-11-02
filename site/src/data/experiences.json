@@ -216,7 +216,7 @@
         "alt": "The bust of Julius Caesar on a plinth in the south-west alcove, his label stand beside him"
       }
     ],
-    "blurb": "A gallery floor after the Bihar Museum in Patna: a lobby with backlit teak screens, a corridor that tapers open with light slots cut into leaning sandstone, and a triangular hall whose three corners are cut back into alcoves. A bust of Julius Caesar and Stephenson's Rocket stand one to a corner, and the bust of Nefertiti stands free in front of hers, under an elliptical skylight, where you can walk a full circle round her.",
+    "blurb": "A gallery floor after the Bihar Museum in Patna: a lobby with backlit teak screens, a corridor that tapers open with light slots cut into leaning sandstone, and a triangular hall whose three corners are cut back into alcoves. A bust of Julius Caesar and Stephenson's Rocket stand one to a corner, and the bust of Nefertiti stands free in front of hers, under an elliptical skylight, where you can walk a full circle round her. Each of the three labels stands in the same place in its own corner.",
     "cta": "ENTER THE MUSEUM ↗",
     "ctaNote": "OPENS IN A NEW TAB · BEST ON META QUEST 3, ALSO WORKS ON DESKTOP",
     "galleryHeading": "A sequence, not a room",
@@ -240,12 +240,16 @@
         "The floors are one mesh named for walking; everything else blocks. The masterpieces sit outside the collision world, with three invisible boxes standing in for them, so no raycast ever touches their 384,000 triangles."
       ],
       [
+        "One rule for three corners.",
+        "Each alcove shares the same local frame, so the label stand that reads best, the Rocket's, is measured once in that frame and the other two are that same stand rotated 120 and 240 degrees round the hall. Caesar and the Rocket end up with identical clearance, 1.12 m, which is how you know they match."
+      ],
+      [
         "Compressed, not simplified.",
         "Caesar and the Rocket ship at the full resolution of their scans, 160,000 and 169,000 triangles, Draco-compressed to 1.3 and 1.4 MB. The decoder is served from the site rather than a CDN."
       ],
       [
         "Walk and fly.",
-        "The same locomotion as the Kerala house. Fly up through the skylight opening and you end up inside the dome."
+        "The same locomotion as the Kerala house. Fly up through the skylight opening and you end up inside the dome. Flight is bound three ways, because A is a Quest button and a strafe key at the same time: the A button, the right grip, and a Fly button that stays on screen in the flat view."
       ]
     ],
     "controls": [
@@ -278,6 +282,6 @@
         "Space to walk, arrows or WASD to steer, F to fly, E and Q for height, P for the board, R to reset"
       ]
     ],
-    "status": "Checked on desktop: the walk from the lobby through the corridor into the hall, a full circle round Nefertiti at four radii with the page's own collision test, every label and the board measured clear of the walls, fly and the climb through the skylight, and teleport validity on the museum floor. Not yet felt on the headset: controller aim, frame rate, and whether the board and the three labels read at the right distance."
+    "status": "Checked on desktop by driving the page's own components, not the camera: the walk from the lobby through the corridor into the hall (it stops at the bench at z 5.3), a full circle round Nefertiti still clear at 2.2 m, all four stands raycast-tested as standing inside nothing, and flight driven at a fixed timestep, climbing 1.6 to 5.2 m in three seconds and gliding at the full 4.5 m/s. Not yet felt on the headset: controller aim, frame rate, and whether the board and the three labels read at the right distance."
   }
 ]
