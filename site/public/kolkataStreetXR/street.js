@@ -17,7 +17,7 @@
 
   var THREE = AFRAME.THREE;
   var hud = document.getElementById('hud');
-  var VERSION = '1.02';
+  var VERSION = '1.01';
 
   // Resolve data files against THIS SCRIPT's URL, not the document's.
   // A host may serve the page at a path with no trailing slash
@@ -144,6 +144,7 @@
       // instead. GLTFLoader sniffs the content, not the name.
       var ext = L.asset_ext || '.glb';
       var walk = [], trams = [], batches = 0;
+      var allBatches = self.el.sceneEl.batches = {};
 
       var byAsset = {};
       L.instances.forEach(function (inst) {
@@ -156,10 +157,41 @@
       var done = 0, total = names.length;
       setProgress(0, total);
 
+      var foot = self.el.sceneEl.footprints = {};
+
+      // Two boxes per asset, both in the model's own frame.
+      //  walk  only the geometry below 2.2 m, so you can walk under a tree's
+      //        canopy or a hoarding and are stopped by its trunk and legs.
+      //  fly   the whole thing, so you cannot fly through the third floor.
+      function footprint(root) {
+        var lo = new THREE.Box3(), hi = new THREE.Box3(), any = false;
+        lo.makeEmpty(); hi.makeEmpty();
+        root.updateMatrixWorld(true);
+        root.traverse(function (o) {
+          if (!o.isMesh || !o.geometry) { return; }
+          if (!o.geometry.boundingBox) { o.geometry.computeBoundingBox(); }
+          var b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld);
+          hi.union(b);
+          if (b.min.y < 2.2) { lo.union(b); any = true; }
+        });
+        if (hi.isEmpty()) { return null; }
+        if (!any) { lo.copy(hi); }
+        var box = function (x) {
+          return { cx: (x.min.x + x.max.x) / 2, cz: (x.min.z + x.max.z) / 2,
+                   hx: (x.max.x - x.min.x) / 2, hz: (x.max.z - x.min.z) / 2,
+                   top: x.max.y };
+        };
+        return { walk: box(lo), fly: box(hi) };
+      }
+
       function placeOne(name, root) {
         prepare(root);
+        if (name !== 'ground') {
+          var f = footprint(root);
+          if (f) { foot[name] = f; }
+        }
         if (name === 'ground') {
-          city.add(root);
+          document.getElementById('world').object3D.add(root);
           root.traverse(function (o) {
             if (o.isMesh && /^WALK_/.test(o.name)) { walk.push(o); }
           });
@@ -183,14 +215,17 @@
         // spans the whole 250 m can never be frustum-culled, so every triangle
         // in it is submitted every frame; a batch of two is a draw call that
         // may as well have stayed a clone.
-        var span = CHUNK_M * (list.length > 14 ? 1 : 1e6);
+        var split = list.length > 14;
         var chunks = {};
         list.forEach(function (inst) {
-          var c = Math.floor(inst.pos[0] / span);
+          var c = split ? Math.floor(inst.pos[0] / CHUNK_M) : 0;
           (chunks[c] = chunks[c] || []).push(inst);
         });
         Object.keys(chunks).forEach(function (c) {
-          batches += instanceBatch(root, chunks[c], city);
+          var b = instanceBatch(root, chunks[c], city);
+          if (!b) { return; }
+          batches += b.meshes.length;
+          (allBatches[name] = allBatches[name] || []).push(b);
         });
       }
 
@@ -212,17 +247,28 @@
         });
       })).then(function () {
         hideProgress();
-        say('Kolkata street v' + VERSION + ' - ' + L.instances.length + ' placements in ' +
-            batches + ' batches. Drag to look around.');
+        var proxyMap = self.el.sceneEl.proxies = {};
+        var proxies = buildProxies(L, foot, proxyMap);
+        // The module caches a world box per collision mesh, so it has to be told
+        // the world changed. Everything above was added after it loaded.
+        var xrl = self.el.sceneEl.components['xr-locomotion'];
+        if (xrl) { xrl.collect(); }
+        self.el.sceneEl.setAttribute('traffic', '');
+        document.getElementById('views').hidden = false;
+        document.getElementById('keys').hidden = false;
+        buildViewMenu(L.viewpoints);
+        hostChrome();
+        pageKeys();
+        diagnostics();
+        goToView(0);
+        var M = loco();
+        say('Kolkata street - ' + L.instances.length + ' placements, ' +
+            batches + ' batches, ' + proxies + ' collision proxies.' +
+            (M ? '' : '\nxr-locomotion did not attach: movement will not work.'));
         setTimeout(function () {
           hud.style.transition = 'opacity 1.2s';
           hud.style.opacity = '0';
-        }, 7000);
-        document.getElementById('views').hidden = false;
-        document.getElementById('keys').hidden = false;
-        document.getElementById('stepper').hidden = false;
-        wireStepper();
-        buildViewMenu(L.viewpoints);
+        }, 9000);
         self.el.sceneEl.emit('city-ready');
       });
     }
@@ -232,7 +278,7 @@
   // every placement in this chunk. Forty-five buildings stop being five hundred
   // draw calls and become about a dozen.
   function instanceBatch(src, placements, parent) {
-    if (!src) { return 0; }
+    if (!src) { return null; }
     src.updateMatrixWorld(true);
     var parts = [];
     src.traverse(function (o) {
@@ -241,26 +287,41 @@
                      cast: o.castShadow, recv: o.receiveShadow });
       }
     });
-    var tmp = new THREE.Matrix4(), q = new THREE.Quaternion(),
-        pos = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1),
-        eul = new THREE.Euler();
+    var batch = { parts: parts, meshes: [], list: placements };
     parts.forEach(function (p) {
       var im = new THREE.InstancedMesh(p.g, p.m, placements.length);
-      placements.forEach(function (inst, i) {
-        pos.set(inst.pos[0], inst.pos[1], inst.pos[2]);
-        eul.set(0, THREE.MathUtils.degToRad(inst.rotY), 0);
-        q.setFromEuler(eul);
-        tmp.compose(pos, q, one);
-        tmp.multiply(p.local);
-        im.setMatrixAt(i, tmp);
-      });
-      im.instanceMatrix.needsUpdate = true;
       im.castShadow = p.cast;
       im.receiveShadow = p.recv;
-      im.computeBoundingSphere();      // instance-aware, so culling is correct
       parent.add(im);
+      batch.meshes.push(im);
     });
-    return parts.length;
+    applyBatch(batch, null);
+    return batch;
+  }
+
+  // Write every instance matrix. `offsets` moves each placement along its own
+  // heading, which is how the traffic drives: the layout stays the source of
+  // truth and only a distance is animated.
+  var _m = new THREE.Matrix4(), _q = new THREE.Quaternion();
+  var _p = new THREE.Vector3(), _one = new THREE.Vector3(1, 1, 1);
+  var _e = new THREE.Euler();
+  function applyBatch(batch, offsets) {
+    for (var k = 0; k < batch.meshes.length; k++) {
+      var im = batch.meshes[k], local = batch.parts[k].local;
+      for (var i = 0; i < batch.list.length; i++) {
+        var inst = batch.list[i];
+        var r = THREE.MathUtils.degToRad(inst.rotY);
+        var d = offsets ? offsets[i] : 0;
+        _p.set(inst.pos[0] + Math.cos(r) * d, inst.pos[1],
+               inst.pos[2] - Math.sin(r) * d);
+        _e.set(0, r, 0); _q.setFromEuler(_e);
+        _m.compose(_p, _q, _one);
+        _m.multiply(local);
+        im.setMatrixAt(i, _m);
+      }
+      im.instanceMatrix.needsUpdate = true;
+      im.computeBoundingSphere();      // instance-aware, so culling stays correct
+    }
   }
 
   // Materials come out of glTF as MeshStandardMaterial. A few need adjusting for
@@ -292,11 +353,90 @@
     return root;
   }
 
-  // Previous / next viewpoint buttons: the only way to move on a phone, and handy anywhere.
-  function wireStepper() {
-    var rig = function () { return document.getElementById('rig').components['street-rig']; };
-    document.getElementById('prev').addEventListener('click', function () { rig().goToView(rig().view - 1); });
-    document.getElementById('next').addEventListener('click', function () { rig().goToView(rig().view + 1); });
+  function buildViewMenu(views) {
+    var box = document.getElementById('views');
+    views.forEach(function (v, i) {
+      var b = document.createElement('button');
+      b.innerHTML = '<b>' + ((i + 1) % 10) + '</b> &nbsp;' + v.label +
+                    ' <span>' + v.lens + 'mm</span>';
+      b.title = v.note;
+      b.addEventListener('click', function () {
+        document.getElementById('rig').components.locomotion.goToView(i);
+      });
+      box.appendChild(b);
+    });
+  }
+
+  // ---------------------------------------------------------------- collision
+  //
+  // Movement is xr-locomotion.js, unmodified. Its world contract is: every mesh
+  // under `world` is collision geometry, WALK_* is standable, everything else
+  // blocks. That contract cannot be met by the visible city, because the city is
+  // drawn with InstancedMesh -- forty-five buildings share one geometry in a
+  // handful of batches, so a per-mesh world box, which is what the module caches
+  // to cull its raycasts, does not exist for any single building.
+  //
+  // So the visible city stays outside #world, and #world gets the ground plus
+  // one invisible proxy box per placement, sized from that model's own bounds as
+  // it loads. The module then works exactly as written, against 118 cheap boxes.
+  function buildProxies(layout, foot, out) {
+    var world = document.getElementById('world').object3D;
+    var made = 0;
+    var mat = new THREE.MeshBasicMaterial({ visible: false });
+    (layout.instances || []).forEach(function (inst) {
+      var f = foot[inst.asset];
+      if (!f) { return; }
+      // Footprint at ground level (so you walk under a tree's canopy and are
+      // stopped by its trunk), run up to the full height of the thing.
+      var w = f.walk, hi = f.fly;
+      var h = Math.max(0.4, hi.top - 0.0);
+      var g = new THREE.BoxGeometry(w.hx * 2, h, w.hz * 2);
+      var m = new THREE.Mesh(g, mat);
+      m.name = 'PROXY_' + inst.asset;                 // not WALK_: it blocks
+      var r = THREE.MathUtils.degToRad(inst.rotY);
+      var c = Math.cos(r), sn = Math.sin(r);
+      m.position.set(inst.pos[0] + w.cx * c + w.cz * sn,
+                     inst.pos[1] + h / 2,
+                     inst.pos[2] - w.cx * sn + w.cz * c);
+      m.userData.bx = m.position.x;
+      m.userData.bz = m.position.z;
+      m.rotation.y = r;
+      m.visible = false;
+      world.add(m);
+      inst.proxy = m;              // the placement carries its own proxy
+      if (out) { (out[inst.asset] = out[inst.asset] || []).push(m); }
+      made++;
+    });
+    return made;
+  }
+
+  // ---------------------------------------------------------------- viewpoints
+  function loco() {
+    var c = document.querySelector('a-scene').components['xr-locomotion'];
+    return c && c.loco;
+  }
+
+  function goToView(i) {
+    var scene = document.querySelector('a-scene');
+    var L = scene.layout, M = loco();
+    if (!L || !M || !L.viewpoints.length) { return; }
+    i = ((i % L.viewpoints.length) + L.viewpoints.length) % L.viewpoints.length;
+    scene.viewIndex = i;
+    var v = L.viewpoints[i], rig = M.el.object3D;
+    // A three.js camera looks down its local -Z, so an object yawed by t faces
+    // (-sin t, -cos t). To face (dx, dz): t = atan2(-dx, -dz).
+    var dx = v.aim[0] - v.pos[0], dz = v.aim[2] - v.pos[2];
+    M.rotateRig(Math.atan2(-dx, -dz));
+    rig.position.set(v.pos[0], v.pos[1] - 1.6, v.pos[2]);
+    M.vel.set(0, 0, 0); M.yawRate = 0;
+    // Hold height for shots that are not at standing eye level -- the camera a
+    // hand-span above the road, the balcony, the one up among the wires.
+    var wantFly = (v.pos[1] < 1.15 || v.pos[1] > 2.6);
+    if ((M.mode === 'fly') !== wantFly) { M.toggleMode(); }
+    rig.position.set(v.pos[0], v.pos[1] - 1.6, v.pos[2]);
+    M.groundY = rig.position.y;
+    say(v.label + ' - ' + v.lens + ' mm. ' + v.note);
+    hud.style.opacity = '1';
   }
 
   function buildViewMenu(views) {
@@ -306,241 +446,207 @@
       b.innerHTML = '<b>' + ((i + 1) % 10) + '</b> &nbsp;' + v.label +
                     ' <span>' + v.lens + 'mm</span>';
       b.title = v.note;
-      b.addEventListener('click', function () {
-        document.getElementById('rig').components['street-rig'].goToView(i);
-      });
+      b.addEventListener('click', function () { goToView(i); });
       box.appendChild(b);
     });
   }
 
-  // ---------------------------------------------------------------- locomotion
-  AFRAME.registerComponent('street-rig', {
-    schema: {
-      walkSpeed: { default: 2.4 },
-      runSpeed: { default: 6.5 },
-      flySpeed: { default: 9.0 },
-      eye: { default: 1.62 },
-      snap: { default: 30 }
-    },
+  // The host page may wrap this one. `data-back` on the scene turns on a link
+  // back to wherever it is embedded; the stepper is the viewpoint list for a
+  // phone, where that list is hidden. Both live here rather than in the host's
+  // copy of the file, so a redeploy cannot drop them.
+  function hostChrome() {
+    var scene = document.querySelector('a-scene');
+    var href = scene.dataset.back ||
+               new URLSearchParams(location.search).get('back');
+    if (href) {
+      var a = document.getElementById('back');
+      a.href = href;
+      a.hidden = false;
+      document.body.classList.add('has-back');
+    }
+    document.getElementById('stepper').hidden = false;
+    document.getElementById('prev').addEventListener('click', function () {
+      goToView((document.querySelector('a-scene').viewIndex || 0) - 1);
+    });
+    document.getElementById('next').addEventListener('click', function () {
+      goToView((document.querySelector('a-scene').viewIndex || 0) + 1);
+    });
+  }
+
+  // ---------------------------------------------------------------- traffic
+  //
+  // The street moves. Trams trudge -- a Kolkata tram does about 10 km/h and
+  // looks it -- and the taxis and autos run a good deal quicker, which is most
+  // of what makes the street feel like a street rather than a model of one.
+  //
+  // Nothing is re-placed: the layout stays the source of truth and only a
+  // distance along each vehicle's own heading is animated. Instanced traffic is
+  // moved by rewriting its instance matrices; the two trams are clones and move
+  // directly. Each vehicle's collision proxy is carried along with it, and its
+  // cached world box is refreshed, or the module would keep testing you against
+  // where the taxi used to be.
+  var SPEED = {                       // metres per second
+    TRAM_CTC: 3.0,                    // ~11 km/h: a trudge
+    AMBASSADOR_TAXI: 7.2,             // ~26 km/h
+    KIT_AUTO: 5.6                     // ~20 km/h
+  };
+
+  AFRAME.registerComponent('traffic', {
+    schema: { on: { default: true } },
 
     init: function () {
-      this.keys = {};
-      this.fly = false;
-      this.view = -1;
-      this.stick = { x: 0, y: 0 };
-      this.turnStick = 0;
-      this.turnReady = true;
-      this.run = false;
-      this.tramsRun = false;   // T sets them running
-      this.down = new THREE.Raycaster();
-      this.down.far = 60;
-      this.tmp = new THREE.Vector3();
-      this.start = this.el.object3D.position.clone();
-      this.startRotY = this.el.object3D.rotation.y;
-      this.head = document.getElementById('head');
+      var scene = this.el, L = scene.layout;
+      this.movers = [];
+      if (!L) { return; }
+      var proxies = scene.proxies || {};
+      var batches = scene.batches || {};
 
-      var self = this;
-      window.addEventListener('keydown', function (e) {
-        self.keys[e.code] = true;
-        self.onKey(e);
-      });
-      window.addEventListener('keyup', function (e) { self.keys[e.code] = false; });
-      this.el.sceneEl.addEventListener('city-ready', function () {
-        self.goToView(0);
-      });
-      // In VR the shadow pass is the first thing worth giving up.
-      this.el.sceneEl.addEventListener('enter-vr', function () {
-        self.setShadows(false);
-      });
-      this.el.sceneEl.addEventListener('exit-vr', function () {
-        self.setShadows(true);
-      });
-      this.help();
+      // instanced traffic
+      Object.keys(SPEED).forEach(function (asset) {
+        (batches[asset] || []).forEach(function (b) {
+          this.movers.push({
+            kind: 'batch', batch: b, speed: SPEED[asset],
+            dist: b.list.map(function () { return 0; }),
+            asset: asset
+          });
+        }, this);
+      }, this);
+
+      // the trams are clones. buildProxies walks layout.instances in order and
+      // appends per asset, and scene.trams is filled the same way, so the i-th
+      // tram and the i-th tram proxy are the same vehicle.
+      var tramProxies = proxies[L.tram_asset] || [];
+      (scene.trams || []).forEach(function (t, i) {
+        this.movers.push({ kind: 'clone', obj: t.obj, dir: t.dir,
+                           speed: SPEED.TRAM_CTC, base: t.obj.position.x, dist: 0,
+                           proxy: tramProxies[i] || null });
+      }, this);
+
+
+      this.x0 = L.street.x0; this.x1 = L.street.x1;
+      this._box = new THREE.Box3();
     },
 
-    onKey: function (e) {
-      if (e.code === 'KeyF') { this.fly = !this.fly; this.help(); }
-      if (e.code === 'KeyR') { this.reset(); }
-      if (e.code === 'KeyV') { this.goToView(this.view + 1); }
-      if (e.code === 'KeyT') { this.tramsRun = !this.tramsRun; this.help(); }
-      if (e.code === 'KeyL') { this.setShadows(null); }
-      if (e.code === 'KeyH') {
-        var p = document.getElementById('helppanel');
-        p.setAttribute('visible', !p.getAttribute('visible'));
+    // A proxy that has moved must have its cached world box refreshed, because
+    // the module culls its raycasts against that box and a stale one means you
+    // are tested against where the vehicle was, not where it is.
+    refresh: function (m) {
+      m.updateMatrixWorld(true);
+      if (!m.geometry.boundingBox) { m.geometry.computeBoundingBox(); }
+      m.userData.box = m.geometry.boundingBox.clone().applyMatrix4(m.matrixWorld);
+    },
+
+    tick: function (t, dtMs) {
+      if (!this.data.on || !dtMs || !this.movers.length) { return; }
+      var dt = Math.min(dtMs, 50) / 1000, span = this.x1 - this.x0;
+      for (var k = 0; k < this.movers.length; k++) {
+        var mv = this.movers[k];
+        if (mv.kind === 'clone') {
+          mv.dist += mv.speed * dt;
+          var x = mv.base + mv.dir * mv.dist;
+          // wrap round the street rather than stopping at the end
+          while (x > this.x1) { x -= span; mv.dist -= span; }
+          while (x < this.x0) { x += span; mv.dist += span; }
+          var dx = x - mv.obj.position.x;
+          mv.obj.position.x = x;
+          if (mv.proxy) { mv.proxy.position.x += dx; this.refresh(mv.proxy); }
+          continue;
+        }
+        var list = mv.batch.list, moved = false;
+        for (var i = 0; i < list.length; i++) {
+          var r = THREE.MathUtils.degToRad(list[i].rotY);
+          var fx = Math.cos(r), fz = -Math.sin(r);
+          var before = mv.dist[i];
+          mv.dist[i] += mv.speed * dt;
+          var nx = list[i].pos[0] + fx * mv.dist[i];
+          while (nx > this.x1) { mv.dist[i] -= span / (Math.abs(fx) || 1); nx -= span; }
+          while (nx < this.x0) { mv.dist[i] += span / (Math.abs(fx) || 1); nx += span; }
+          if (mv.dist[i] !== before) { moved = true; }
+          var px = list[i].proxy;
+          if (px) {
+            px.position.x = px.userData.bx + fx * mv.dist[i];
+            px.position.z = px.userData.bz + fz * mv.dist[i];
+            this.refresh(px);
+          }
+        }
+        if (moved) { applyBatch(mv.batch, mv.dist); }
       }
-      var m = /^Digit([0-9])$/.exec(e.code);
-      if (m) { this.goToView((parseInt(m[1], 10) + 9) % 10); }
-    },
+    }
+  });
 
-    setShadows: function (on) {
-      var r = this.el.sceneEl.renderer;
-      if (!r) { return; }
-      r.shadowMap.enabled = (on === null) ? !r.shadowMap.enabled : on;
-      r.shadowMap.needsUpdate = true;
-      this.help();
-    },
-
-    help: function () {
-      var t = document.getElementById('helptext');
-      if (!t) { return; }
-      t.setAttribute('value',
-        'KOLKATA STREET\n\n' + (this.fly ? 'FLY' : 'WALK') +
-        '   trams ' + (this.tramsRun ? 'running' : 'held') +
-        '\n\nleft stick  move\nright stick  turn\ntrigger  run\n' +
-        'A  walk / fly\nX  next viewpoint\nB or Y  reset');
-    },
-
-    reset: function () {
-      this.el.object3D.position.copy(this.start);
-      this.el.object3D.rotation.y = this.startRotY;
-      this.fly = false;
-      this.view = -1;
-      this.help();
-    },
-
-    goToView: function (i) {
-      var L = this.el.sceneEl.layout;
-      if (!L || !L.viewpoints.length) { return; }
-      i = ((i % L.viewpoints.length) + L.viewpoints.length) % L.viewpoints.length;
-      this.view = i;
-      var v = L.viewpoints[i];
-      var o = this.el.object3D;
-      o.position.set(v.pos[0], v.pos[1] - this.data.eye, v.pos[2]);
-      // Yaw only: in VR the headset owns pitch, and forcing it is what makes
-      // people ill. The viewpoint height and heading are enough to reproduce
-      // the shot; look up and the wires are where they were.
-      // A three.js camera looks down its local -Z, so an object yawed by t faces
-      // (-sin t, -cos t). To face (dx, dz): t = atan2(-dx, -dz). Adding PI here
-      // is the classic slip, and it points you back down an empty street.
-      var dx = v.aim[0] - v.pos[0], dz = v.aim[2] - v.pos[2];
-      o.rotation.y = Math.atan2(-dx, -dz);
-      // Hold height for shots that are not at standing eye level -- the camera a
-      // hand-span above the road, the balcony, the one up among the wires --
-      // otherwise ground-following snaps them all back to 1.62 m.
-      this.fly = (v.pos[1] < 1.15 || v.pos[1] > 2.6);
-      say(v.label + ' - ' + v.lens + ' mm. ' + v.note);
-      hud.style.opacity = '1';
-      this.help();
-    },
-
-    // --- VR controller events, forwarded by vr-input
-    onStick: function (hand, x, y) {
-      if (hand === 'left') { this.stick.x = x; this.stick.y = y; }
-      else { this.turnStick = x; }
-    },
-    onButton: function (name) {
-      if (name === 'a') { this.fly = !this.fly; this.help(); }
-      if (name === 'x') { this.goToView(this.view + 1); }
-      if (name === 'b' || name === 'y') { this.reset(); }
-      if (name === 'trigger-down') { this.run = true; }
-      if (name === 'trigger-up') { this.run = false; }
-    },
-
-    tick: function (time, dt) {
-      if (!dt) { return; }
-      var s = Math.min(dt, 50) / 1000;
-      var o = this.el.object3D;
-      var k = this.keys;
-
-      // --- snap turn, right stick or arrow keys
-      var turn = this.turnStick;
-      if (Math.abs(turn) > 0.6 && this.turnReady) {
-        o.rotation.y -= Math.sign(turn) * THREE.MathUtils.degToRad(this.data.snap);
-        this.turnReady = false;
-      } else if (Math.abs(turn) < 0.3) {
-        this.turnReady = true;
+  // ---------------------------------------------------------------- diagnostics
+  //
+  // The Quest browser has no console. When a behaviour does not work on the
+  // headset there is otherwise no way to tell a dead event from a dead handler,
+  // so this shows the live controller state and the last error. I, or ?diag=1.
+  function diagnostics() {
+    var el = document.getElementById('diag');
+    var on = /[?&]diag=1/.test(location.search);
+    var lastErr = '';
+    window.addEventListener('error', function (e) {
+      lastErr = (e.message || 'error') + ' @' +
+                String(e.filename || '').split('/').pop() + ':' + e.lineno;
+    });
+    window.addEventListener('keydown', function (e) {
+      if (e.code === 'KeyI') { on = !on; el.hidden = !on; }
+    });
+    el.hidden = !on;
+    // Report what the module sees AND what the raw WebXR gamepads say, because
+    // a stick that moves in the gamepad but not in the module means the
+    // controller component is not emitting, which is a different bug entirely.
+    setInterval(function () {
+      if (el.hidden) { return; }
+      var M = loco(), scene = document.querySelector('a-scene');
+      var out = [];
+      out.push('vr      ' + (scene.is('vr-mode') ? 'yes' : 'no'));
+      if (!M) {
+        out.push('loco    NOT ATTACHED');
+      } else {
+        out.push('mode    ' + M.mode + (M.paused ? '  (paused)' : ''));
+        out.push('trigger R ' + (+M.trig).toFixed(2) + '   L ' + (+M.ltrig).toFixed(2));
+        out.push('stick R ' + (+M.sx).toFixed(2) + ' ' + (+M.sy).toFixed(2) +
+                 '   L ' + (+M.ls).toFixed(2));
+        out.push('floors  ' + M.floors.length + '   solid ' + M.solid.length);
+        var p = M.el.object3D.position;
+        out.push('rig     ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ' ' + p.z.toFixed(1));
       }
-      if (k.ArrowLeft) { o.rotation.y += 1.6 * s; }
-      if (k.ArrowRight) { o.rotation.y -= 1.6 * s; }
-
-      // --- movement, in the direction the head is facing
-      var fwd = (k.KeyW ? 1 : 0) - (k.KeyS ? 1 : 0) + this.stick.y * -1;
-      var side = (k.KeyD ? 1 : 0) - (k.KeyA ? 1 : 0) + this.stick.x;
-      var lift = (k.KeyE ? 1 : 0) - (k.KeyQ ? 1 : 0);
-      var running = this.run || k.ShiftLeft || k.ShiftRight;
-      var speed = this.fly ? this.data.flySpeed
-                           : (running ? this.data.runSpeed : this.data.walkSpeed);
-
-      if (fwd || side) {
-        var yaw = o.rotation.y + (this.head.object3D ? this.head.object3D.rotation.y : 0);
-        var len = Math.min(1, Math.hypot(fwd, side));
-        var dirX = (Math.sin(yaw) * -fwd + Math.cos(yaw) * side);
-        var dirZ = (Math.cos(yaw) * -fwd - Math.sin(yaw) * side);
-        var n = Math.hypot(dirX, dirZ) || 1;
-        o.position.x += (dirX / n) * len * speed * s;
-        o.position.z += (dirZ / n) * len * speed * s;
+      var xr = scene.renderer && scene.renderer.xr;
+      var ss = xr && xr.getSession && xr.getSession();
+      var srcs = (ss && ss.inputSources) || [];
+      out.push('sources ' + srcs.length);
+      for (var i = 0; i < srcs.length; i++) {
+        var gp = srcs[i].gamepad;
+        if (!gp) { out.push('  ' + srcs[i].handedness + '  no gamepad'); continue; }
+        var ax = [].slice.call(gp.axes).map(function (a) { return a.toFixed(1); });
+        var bt = [].slice.call(gp.buttons).map(function (b) {
+          return b.pressed ? '1' : (b.value > 0.05 ? 'v' : '0'); }).join('');
+        out.push('  ' + srcs[i].handedness.padEnd(5) + ' ax ' + ax.join(',') );
+        out.push('        bt ' + bt);
       }
-      if (this.fly && lift) { o.position.y += lift * speed * s; }
+      if (lastErr) { out.push('ERROR   ' + lastErr); }
+      el.textContent = out.join('\n');
+    }, 200);
+  }
 
-      // --- stay in the street, and on the ground
-      var L = this.el.sceneEl.layout;
-      if (L) {
-        var st = L.street;
-        o.position.x = clamp(o.position.x, st.x0 + 4, st.x1 - 4);
-        if (!this.fly) {
-          // the corridor between the two building lines
-          o.position.z = clamp(o.position.z, -9.0, 9.0);
-          o.position.y = this.groundAt(o.position);
-        } else {
-          o.position.y = clamp(o.position.y, 0.2, 34);
-          o.position.z = clamp(o.position.z, -40, 40);
+  // ---------------------------------------------------------------- page keys
+  function pageKeys() {
+    window.addEventListener('keydown', function (e) {
+      var scene = document.querySelector('a-scene');
+      if (e.code === 'KeyV') { goToView((scene.viewIndex || 0) + 1); }
+      else if (e.code === 'KeyT') {
+        var c = scene.components.traffic;
+        if (c) {
+          c.data.on = !c.data.on;
+          say(c.data.on ? 'Traffic moving (T to hold)' : 'Traffic held (T to move)');
         }
       }
-
-      this.moveTrams(s);
-    },
-
-    // Ground following: one ray straight down onto the WALK_ meshes. The road has
-    // a camber and the footpath a kerb, so a fixed height would float or sink.
-    groundAt: function (p) {
-      var walk = this.el.sceneEl.walkables;
-      if (!walk || !walk.length) { return p.y; }
-      this.tmp.set(p.x, p.y + 6, p.z);
-      this.down.set(this.tmp, new THREE.Vector3(0, -1, 0));
-      var hits = this.down.intersectObjects(walk, false);
-      if (!hits.length) { return p.y; }
-      // ease, so stepping on and off the kerb is not a jolt
-      return p.y + (hits[0].point.y - p.y) * 0.35;
-    },
-
-    moveTrams: function (s) {
-      if (!this.tramsRun) { return; }
-      var trams = this.el.sceneEl.trams;
-      var L = this.el.sceneEl.layout;
-      if (!trams || !L) { return; }
-      var x0 = L.street.x0, x1 = L.street.x1;
-      for (var i = 0; i < trams.length; i++) {
-        var t = trams[i];
-        t.obj.position.x += t.dir * 4.0 * s;     // ~14 km/h
-        if (t.obj.position.x > x1) { t.obj.position.x = x0; }
-        if (t.obj.position.x < x0) { t.obj.position.x = x1; }
+      else if (e.code === 'KeyL') {
+        var r = scene.renderer;
+        if (r) { r.shadowMap.enabled = !r.shadowMap.enabled; r.shadowMap.needsUpdate = true; }
       }
-    }
-  });
-
-  function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
-
-  // ---------------------------------------------------------------- VR input
-  AFRAME.registerComponent('vr-input', {
-    schema: { hand: { default: 'left' } },
-    init: function () {
-      var hand = this.data.hand;
-      var rig = function () {
-        return document.getElementById('rig').components['street-rig'];
-      };
-      var self = this;
-      this.el.addEventListener('thumbstickmoved', function (e) {
-        rig().onStick(hand, e.detail.x, e.detail.y);
-      });
-      ['abuttondown', 'bbuttondown', 'xbuttondown', 'ybuttondown'].forEach(function (ev) {
-        self.el.addEventListener(ev, function () { rig().onButton(ev[0]); });
-      });
-      this.el.addEventListener('triggerdown', function () {
-        rig().onButton('trigger-down');
-      });
-      this.el.addEventListener('triggerup', function () {
-        rig().onButton('trigger-up');
-      });
-    }
-  });
+      var m = /^Digit([0-9])$/.exec(e.code);
+      if (m) { goToView((parseInt(m[1], 10) + 9) % 10); }
+    });
+  }
 })();
