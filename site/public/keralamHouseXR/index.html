@@ -88,8 +88,8 @@
     <!-- The plaque: the ONE board, standing just outside the front gate beside the start point, angled to face the player (template: plaque.js). Bump `version` on every publish. -->
     <a-entity id="plaque" plaque="title: KERALAM HOUSE XR; name: Aritra Mitra;
         detail: BDes, Immersive Digital Environments|O.P. Jindal Global University, Class of 2028;
-        columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: glide ahead|L trigger: reverse|Left stick: back = up|Left stick: fwd = dive|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Stairs: left side up|to the upper floor, roof;
-        version: 1.10"
+        columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: glide ahead|L trigger: reverse|L stick back: up|L stick fwd: dive|Grips: L up, R down|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Stairs: left side up|to the upper floor, roof;
+        version: 1.11"
         position="3.5 0 13.7" rotation="0 -22 0"></a-entity>
 
     <!-- Reset dialog. Opens in front of you (Y button, R key or the Reset button). -->
@@ -110,6 +110,7 @@
     <a-entity id="rig" position="0 0 14.5" locomotion>
       <a-camera id="cam">
         <a-plane id="fade" width="2" height="2" position="0 0 -0.1" visible="false" material="shader: flat; color: #000; transparent: true; opacity: 0; depthTest: false" render-order="999"></a-plane>
+        <a-text id="flyhud" value="" align="center" color="#9fe3ff" position="0 -0.42 -1" width="1.1" visible="false"></a-text>
         <a-text id="modetxt" value="" align="center" color="#ffd84d" position="0 -0.3 -1" width="1.6" visible="false"></a-text>
       </a-camera>
       <!-- Left hand: teleport (stick forward), Y = reset -->
@@ -121,8 +122,8 @@
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
-  <script src="plaque.js?v=1.10"></script>
-  <script src="play.js?v=1.10"></script>
+  <script src="plaque.js?v=1.11"></script>
+  <script src="play.js?v=1.11"></script>
   <script>
     var T = AFRAME.THREE;
     function $(id) { return document.getElementById(id); }
@@ -299,7 +300,7 @@
       init: function () {
         var self = this;
         this.paused = false; this.dialogOpen = false; this.mode = 'walk';
-        this.trig = 0; this.keyTrig = 0; this.ltrig = 0; this.keyLTrig = 0;      // right trigger 0..1, Space on desktop
+        this.trig = 0; this.keyTrig = 0; this.ltrig = 0; this.keyLTrig = 0; this.gUp = 0; this.gDn = 0; this._hud = 0;      // right trigger 0..1, Space on desktop
         this.sx = 0; this.sy = 0;             // right thumbstick
         this.kx = 0; this.ky = 0; this.ls = 0; this.kls = 0;             // desktop keys standing in for the stick
         this.vel = new T.Vector3();
@@ -323,6 +324,13 @@
           }
         });
         this.hand.addEventListener('triggerup', function () { self.trig = 0; });
+        // grips also change height while flying: left grip = up, right grip = down
+        $('lhand').addEventListener('gripchanged', function (e) { self.gUp = e.detail.value; });
+        $('lhand').addEventListener('gripdown', function () { self.gUp = 1; });
+        $('lhand').addEventListener('gripup', function () { self.gUp = 0; });
+        this.hand.addEventListener('gripchanged', function (e) { self.gDn = e.detail.value; });
+        this.hand.addEventListener('gripdown', function () { self.gDn = 1; });
+        this.hand.addEventListener('gripup', function () { self.gDn = 0; });
         // left trigger = reverse thrust while flying (same smooth build-up as the right trigger)
         $('lhand').addEventListener('triggerchanged', function (e) { self.ltrig = e.detail.value; });
         $('lhand').addEventListener('triggerdown', function () { self.ltrig = 1; });
@@ -463,6 +471,7 @@
       toggleMode: function () {
         if (this.paused) return;
         this.mode = this.mode === 'walk' ? 'fly' : 'walk';
+        $('flyhud').setAttribute('visible', this.mode === 'fly');
         this.vel.set(0, 0, 0); this.yawRate = 0;
         this.rotateRig(this.el.object3D.rotation.y);
         if (this.mode === 'walk') {                       // land: stand on whatever floor is below
@@ -483,7 +492,8 @@
         for (var i = 0; i < ss.inputSources.length; i++) {
           var src = ss.inputSources[i], gp = src.gamepad;
           if (src.handedness !== 'left' || !gp || !gp.axes) continue;
-          this.ls = gp.axes.length > 3 ? gp.axes[3] : (gp.axes[1] || 0);
+          var a3 = gp.axes[3] || 0, a1 = gp.axes[1] || 0;
+          this.ls = Math.abs(a3) >= Math.abs(a1) ? a3 : a1;
         }
       },
 
@@ -509,7 +519,7 @@
 
         if (fly) {
           // trigger glides ahead, right stick back reverses, left stick up/down changes height gently
-          var c = clamp(trig - Math.max(this.ltrig, this.keyLTrig) - sy, -1, 1), ls = dead(this.ls + this.kls);
+          var c = clamp(trig - Math.max(this.ltrig, this.keyLTrig) - sy, -1, 1), ls = clamp(dead(this.ls + this.kls) + this.gUp - this.gDn, -1, 1);
           var hh = this._u.set(aim.x, 0, aim.z);
           if (hh.lengthSq() < 1e-4) { this.cam.object3D.getWorldQuaternion(this._q); hh.set(0, 0, -1).applyQuaternion(this._q); hh.y = 0; }
           hh.normalize();
@@ -520,6 +530,11 @@
           var ke = 1 - Math.exp(-k * dt), kv = 1 - Math.exp(-Math.max(k, 2.5) * dt);
           vel.x += (tg.x - vel.x) * ke; vel.z += (tg.z - vel.z) * ke; vel.y += (tg.y - vel.y) * kv;
           if (braking && vel.lengthSq() < 0.0004) vel.set(0, 0, 0);
+          this._hud += dt;
+          if (this._hud > 0.15) {                                // small readout so the height controls can be checked
+            this._hud = 0;
+            $('flyhud').setAttribute('value', 'height ' + rig.position.y.toFixed(1) + ' m   stick ' + (this.ls || 0).toFixed(2) + '  grip ' + (this.gUp - this.gDn).toFixed(1));
+          }
           this.stepFly(dt);
           this.keepInside(); this.fadeNearWalls();
           return;
