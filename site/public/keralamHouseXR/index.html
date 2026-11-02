@@ -89,7 +89,7 @@
     <a-entity id="plaque" plaque="title: KERALAM HOUSE XR; name: Aritra Mitra;
         detail: BDes, Immersive Digital Environments|O.P. Jindal Global University, Class of 2028;
         columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: glide ahead|L trigger: reverse|Tilt hand up: climb|Tilt hand down: dive|L stick back: up|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Stairs: left side up|to the upper floor, roof;
-        version: 1.12"
+        version: 1.13"
         position="3.5 0 13.7" rotation="0 -22 0"></a-entity>
 
     <!-- Reset dialog. Opens in front of you (Y button, R key or the Reset button). -->
@@ -122,8 +122,8 @@
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
-  <script src="plaque.js?v=1.12"></script>
-  <script src="play.js?v=1.12"></script>
+  <script src="plaque.js?v=1.13"></script>
+  <script src="play.js?v=1.13"></script>
   <script>
     var T = AFRAME.THREE;
     function $(id) { return document.getElementById(id); }
@@ -289,8 +289,8 @@
     var WALK_ACCEL = 10, WALK_BRAKE = 14;           // how fast velocity follows the target (1/s)
     var STICK_YAW = 1.9;                            // rad/s at full stick (about 110 deg/s)
     var WALK_BOOST = 1.2, WALK_RAMP = 3.5;          // trigger adds up to +120% speed, building up at this rate (1/s)
-    var FLY_SPEED = 4.5, FLY_BACK = 3.4, CLIMB_SPEED = 1.4, TILT_DEAD = 0.1, TILT_FULL = 0.5, TILT_CLIMB = 3.0;   // fly mode (m/s)
-    var FLY_ACCEL = 2.4, FLY_REV = 5.0, FLY_BRAKE = 3.5;                        // 1/s: smooth build up, quick reverse, gentle stop
+    var FLY_SPEED = 8.0, FLY_BACK = 6.0, CLIMB_SPEED = 1.4, TILT_DEAD = 0.05, TILT_FULL = 0.42, TILT_CLIMB = 5.0;   // fly mode (m/s)
+    var FLY_ACCEL = 4.5, FLY_REV = 9.0, FLY_BRAKE = 3.5;                        // 1/s: smooth build up, quick reverse, gentle stop
     var AIM_DEAD = 0.1, AIM_GAIN = 3.4, AIM_MAX = 2.6;                      // wrist steering: dead zone, gain, max rad/s
     var FLY_RADIUS = 0.4, FLY_MIN_ALT = 0.7, BY = 36, BSOFT = 8;
     var WALK_RADIUS = 0.3, MAX_STEP_UP = 0.36, MAX_DROP = 0.6;   // you cannot step off an edge higher than this
@@ -300,7 +300,7 @@
       init: function () {
         var self = this;
         this.paused = false; this.dialogOpen = false; this.mode = 'walk';
-        this.trig = 0; this.keyTrig = 0; this.ltrig = 0; this.keyLTrig = 0; this.gUp = 0; this.gDn = 0; this._hud = 0;      // right trigger 0..1, Space on desktop
+        this.trig = 0; this.keyTrig = 0; this.ltrig = 0; this.keyLTrig = 0; this.gUp = 0; this.gDn = 0; this._hud = 0; this._tilt = 0;      // right trigger 0..1, Space on desktop
         this.sx = 0; this.sy = 0;             // right thumbstick
         this.kx = 0; this.ky = 0; this.ls = 0; this.kls = 0;             // desktop keys standing in for the stick
         this.vel = new T.Vector3();
@@ -531,11 +531,12 @@
           if (thr && !this._thr) this._pn = aim.y;
           this._thr = thr;
           var dp = thr ? aim.y - this._pn : 0, ad = Math.abs(dp), g = 0;
-          if (ad > TILT_DEAD) { g = clamp((ad - TILT_DEAD) / (TILT_FULL - TILT_DEAD), 0, 1); g = g * g * (3 - 2 * g) * Math.sign(dp); }
-          this._tilt = g;
+          if (ad > TILT_DEAD) { g = clamp((ad - TILT_DEAD) / (TILT_FULL - TILT_DEAD), 0, 1); g = Math.pow(g, 1.5) * Math.sign(dp); }                  // fine control near level, full authority at the edge
+          this._tilt += (g - this._tilt) * (1 - Math.exp(-14 * dt));   // low-pass: smooth hand jitter, still responsive
+          g = this._tilt;
           tg.y = clamp(ls * CLIMB_SPEED + g * TILT_CLIMB, -TILT_CLIMB, TILT_CLIMB);   // plus left stick: pull back = up
           var braking = Math.abs(c) < 0.05 && Math.abs(ls) < 0.05, k = braking ? FLY_BRAKE : (c < -0.05 ? FLY_REV : FLY_ACCEL);
-          var ke = 1 - Math.exp(-k * dt), kv = 1 - Math.exp(-Math.max(k, 2.5) * dt);
+          var ke = 1 - Math.exp(-k * dt), kv = 1 - Math.exp(-Math.max(k, 5) * dt);
           vel.x += (tg.x - vel.x) * ke; vel.z += (tg.z - vel.z) * ke; vel.y += (tg.y - vel.y) * kv;
           if (braking && vel.lengthSq() < 0.0004) vel.set(0, 0, 0);
           this._hud += dt;
