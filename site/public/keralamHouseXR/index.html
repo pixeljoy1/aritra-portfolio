@@ -88,8 +88,8 @@
     <!-- The plaque: the ONE board, standing just outside the front gate beside the start point, angled to face the player (template: plaque.js). Bump `version` on every publish. -->
     <a-entity id="plaque" plaque="title: KERALAM HOUSE XR; name: Aritra Mitra;
         detail: BDes, Immersive Digital Environments|O.P. Jindal Global University, Class of 2028;
-        columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: glide ahead|L trigger: reverse|Left stick: up / down|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Stairs: left side up|to the upper floor, roof;
-        version: 1.09"
+        columns: #WALK|Stick: walk and turn|Trigger: go faster|Left stick fwd: jump ## #FLY  (press A)|Trigger: glide ahead|L trigger: reverse|Left stick: back = up|Left stick: fwd = dive|Wrist: steer ## #ANYTIME|B or Y: reset|X: back to this board|A: walk or fly||Stairs: left side up|to the upper floor, roof;
+        version: 1.10"
         position="3.5 0 13.7" rotation="0 -22 0"></a-entity>
 
     <!-- Reset dialog. Opens in front of you (Y button, R key or the Reset button). -->
@@ -121,8 +121,8 @@
 
   <noscript>This VR showcase needs JavaScript and a WebXR browser such as the Meta Quest Browser.</noscript>
 
-  <script src="plaque.js?v=1.09"></script>
-  <script src="play.js?v=1.09"></script>
+  <script src="plaque.js?v=1.10"></script>
+  <script src="play.js?v=1.10"></script>
   <script>
     var T = AFRAME.THREE;
     function $(id) { return document.getElementById(id); }
@@ -341,7 +341,7 @@
           self.kx = (keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0);
           self.ky = (keys.ArrowDown || keys.KeyS ? 1 : 0) - (keys.ArrowUp || keys.KeyW ? 1 : 0);
           self.keyLTrig = (keys.ShiftLeft || keys.ShiftRight) ? 1 : 0;     // desktop: Shift = reverse
-          self.kls = (keys.KeyQ ? 1 : 0) - (keys.KeyE ? 1 : 0);      // desktop: E = up, Q = down while flying
+          self.kls = (keys.KeyE ? 1 : 0) - (keys.KeyQ ? 1 : 0);      // desktop: E = up, Q = down while flying
         }
         window.addEventListener('keydown', function (e) {
           keys[e.code] = true; stickKeys();
@@ -476,10 +476,22 @@
         clearTimeout(this._mt); this._mt = setTimeout(function () { t.setAttribute('visible', false); }, 2200);
       },
 
+      // Read the left stick straight from the XR gamepad every frame (the events alone were not reliable).
+      pollSticks: function () {
+        var xr = this.el.sceneEl.renderer && this.el.sceneEl.renderer.xr, ss = xr && xr.getSession && xr.getSession();
+        if (!ss || !ss.inputSources) return;
+        for (var i = 0; i < ss.inputSources.length; i++) {
+          var src = ss.inputSources[i], gp = src.gamepad;
+          if (src.handedness !== 'left' || !gp || !gp.axes) continue;
+          this.ls = gp.axes.length > 3 ? gp.axes[3] : (gp.axes[1] || 0);
+        }
+      },
+
       tick: function (time, dtMs) {
         if (this.paused) return;
         var dt = Math.min(dtMs, 50) / 1000, rig = this.el.object3D, head = this._h, vel = this.vel;
         var trig = Math.max(this.trig, this.keyTrig);
+        this.pollSticks();
         var sx = dead(this.sx + this.kx), sy = dead(this.sy + this.ky);   // sy < 0 = stick pushed forward
         var fly = this.mode === 'fly';
         var aim = this.getAim();
@@ -503,7 +515,7 @@
           hh.normalize();
           var sp = c >= 0 ? FLY_SPEED * c * c * (3 - 2 * c) : -FLY_BACK * c * c * (3 + 2 * c);
           var tg = this._t.copy(hh).multiplyScalar(sp);
-          tg.y = -ls * CLIMB_SPEED;                               // height comes only from the left stick, up and down alike
+          tg.y = ls * CLIMB_SPEED;                                // left stick: pull back = up, push forward = dive
           var braking = Math.abs(c) < 0.05 && Math.abs(ls) < 0.05, k = braking ? FLY_BRAKE : (c < -0.05 ? FLY_REV : FLY_ACCEL);
           var ke = 1 - Math.exp(-k * dt), kv = 1 - Math.exp(-Math.max(k, 2.5) * dt);
           vel.x += (tg.x - vel.x) * ke; vel.z += (tg.z - vel.z) * ke; vel.y += (tg.y - vel.y) * kv;
